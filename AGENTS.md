@@ -1,0 +1,96 @@
+# AstroPages Base Site — Agent Runbook
+
+This site is the neutral AstroPages base customer project. It currently provides a single editable home experience, customer authentication, lead capture foundations, Project Assets, transactional email, and generated-site operations without a vertical catalog. Use the current project source and tested behavior as implementation truth; do not import branded pages or business flows from another site unless the user explicitly requests them.
+
+## Authority And Preflight
+
+The user request defines the outcome. The work package defines the allowed project, target branch, protected paths, prohibited operations, exact test command, and safety policy; all are mandatory. Never broaden its file scope, choose another branch, or weaken a constraint.
+
+Before every user-facing layout, component, typography, color, styling, imagery, responsive, or interaction change, read and follow both `DESIGN_PHILOSOPHY.md` and `DESIGN.md`. They govern visual intent; the user request and work-package constraints may coherently override their defaults within platform safety, while this `AGENTS.md`, current project behavior, and tests govern implementation.
+
+At the start of every task:
+
+1. Read the complete request and work package. Identify the environment, locale, requested publication state, acceptance criteria, target branch, protected paths, prohibited operations, and exact test command.
+2. Inspect the current branch and `git status --short`. Preserve unrelated work; never reset, restore, overwrite, reformat, or include changes outside the request.
+3. Trace every visible value from its route to its loader and canonical owner before editing. Matching source text is not proof of ownership.
+4. Read the nearest tests and relevant contracts such as `README.md`, `LEADS.md`, `docs/cloudflare-runtime.md`, `docs/openhands-playbook.md`, and `docs/product-lead-generation.md` when the task touches them.
+5. Make the smallest complete change, validate the canonical store or focused behavior, then run the exact work-package test.
+
+Explicitly selected skills are mandatory. In automatic mode, invoke only genuinely relevant pinned skills and follow their instructions. Project-local `.agents/skills` must never replace or imitate the pinned catalog.
+
+## Route Work To The Canonical Owner
+
+| Requested change | Canonical owner | Required route |
+| --- | --- | --- |
+| Existing home, chrome, 404 copy, or SEO | EmDash Builder entry for `en` | Use the content workflow below; do not edit source defaults |
+| Customer media | Project Assets | Use the asset workflow and returned `sitePath` |
+| Layout, component, styling, route, schema, or new editable field | Project code and focused tests | Extend the closest current production pattern |
+| Product-interest lead or a new visitor form | D1 source record plus `leads.v1` linkage | Read `LEADS.md`; keep contact consent, allowlists, dedupe, and conversion evidence |
+| Customer account, session, or password reset | Server-owned D1 auth flow | Preserve hashing, expiry, authorization, cookies, and safe errors |
+| Runtime configuration or a secret | Existing runtime binding or Secret Store contract | Never place values in code, content, logs, or D1 public copy |
+| Transactional email | Generated-site email tools for preview; control plane for production | Follow the email workflow below |
+| Article or blog creation | Unsupported by the current content architecture | Stop and explain the missing content model; do not invent storage or routes |
+
+Never fall back to locale defaults, raw SQL, migrations, or Astro components when an existing EmDash field owns the value. Source defaults are bootstrap/fallback code, not a shortcut for editing saved customer content.
+
+## EmDash Content Workflow
+
+`content_publish` publishes only to this project's preview EmDash environment; it never authorizes production release. Ordinary content should finish published in preview unless the user explicitly requests a draft.
+
+For existing copy or SEO:
+
+1. Resolve the physical target and field in `src/builder/registry.ts`, then confirm the consuming route through `src/builder/public-page.ts`.
+2. Use exactly: `content_get` → minimal `content_update` with `_rev` → `content_publish` → `content_get`.
+3. Send only changed fields. Verify the final value, `en` locale, published status, and rendered route using the trusted preview URL.
+4. On a revision conflict, re-read the entry, preserve concurrent changes, reapply the minimal edit with the current `_rev`, publish, and verify again.
+
+This site has a single active query-parameter locale, `en`. Its editable release targets are `site_pages/home`, `site_pages/not_found_page`, and `site_chrome/main`. Public render for `GET /` and `GET /?preview=1` is read-only and must not create schema, entries, drafts, revisions, or release rows.
+
+There is no dynamic article collection in the current project. An agent must not invent a `posts` collection, article route, static array, migration, or raw-SQL content store. If the user requests article publishing, report that the current site needs an explicitly authorized content-model and route feature before articles can be managed.
+
+Content-only work must leave Git unchanged and must not trigger a code build, commit, or preview deployment.
+
+## Project Assets
+
+Customer media belongs to Project Assets. Reuse asset references supplied by the work package and the returned `sitePath` verbatim; never persist a preview hostname.
+
+- Inspect existing records with `asset_list` and `asset_get`.
+- Create AI-provided bytes with `asset_create`; import a public HTTPS source with `asset_import_url`.
+- Change display name, folder, category, alt text, caption, or aliases with `asset_update`.
+- Replace bytes with `asset_replace` using the current `expectedRevisionId`; on conflict, read the asset again before retrying.
+- Use `asset_delete` only for an explicitly requested and confirmed soft deletion; use `asset_restore` to recover the same asset.
+- Preserve stable asset identity, aliases such as `logo`, alt text, captions, and immutable revision history.
+
+Never use raw R2 operations, bucket names, storage keys, or signed URLs, and never write directly to asset D1 tables. Customer media does not belong under `public/` or `src/assets/`. The source-controlled seed logo in `astropages/assets/` and `astropages/assets.manifest.json` is a protected, replaceable bootstrap asset; changing that seed is code work, not a one-project media edit.
+
+## Code, Data, And Safety Boundaries
+
+- Public routes are under `src/pages/`; the current visitor routes are `/`, `/login`, `/signup`, `/forgot-password`, and `/reset-password`.
+- Builder ownership is defined by `src/builder/registry.ts`; public content is loaded through `src/builder/public-page.ts`.
+- Generated-site APIs and lifecycle code live in `src/server/generated-site/` and `src/pages/api/astropages/generated-site/`.
+- Runtime business services live in `src/server/aggregator/`; durable D1 changes use the next numbered forward-only file in `migrations/`.
+- `ap_customer_accounts`, `ap_customer_sessions`, and `ap_customer_password_resets` own customer authentication. Never expose password material, session tokens, reset tokens, or private customer data.
+- `ap_leads` and `ap_business_events` implement `leads.v1`. Persist the authoritative business record before linking a lead, allowlist details, require consent where applicable, deduplicate retries, and mark conversion only after verified business evidence.
+- `ap_runtime_config` and `ap_business_settings` are not secret stores. Runtime secrets resolve only through the existing binding contract.
+- Generated-site Worker runtime uses `EMDASH_ENCRYPTION_KEY` and `ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN`. Generated-site Worker deploys must not require `BUILDER_MCP_TOKEN` or `BUILDER_MCP_PROVISION_SECRET`.
+- Keep `dist/`, `.astro/`, `.wrangler/generated/`, `node_modules/`, and work-package protected paths untouched unless the request explicitly owns them.
+
+Do not add a booking, order, payment, report, shop, provider, or generic lead endpoint by copying another site's implementation. A real feature must define its server-owned record, validation, authorization, privacy boundary, lead linkage, tests, and generated-site contract together.
+
+## Email Preview Workflow
+
+1. Inspect templates and events with `email_template_list`, `email_template_get`, and `email_event_list`.
+2. Inspect approved variables with `email_variable_catalog` and trace the real event producer before using a value.
+3. Create a missing event contract with `email_event_save`; add only non-sensitive approved mappings with `email_variable_add_mapping`.
+4. Save the active preview template with `email_template_save_preview` (`email_template_save_draft` is only a deprecated alias), then validate with `email_template_render_sample`.
+5. Verify event type, audience, locale, subject, HTML/text bodies, declared variables, representative sample data, missing-variable behavior, and `unsubscribeUrl` for marketing mail.
+
+Email tools are preview-only. Production promotion remains with the control plane; never promote by raw SQL, row copying, provider calls, or an invented publish tool.
+
+## Completion Contract
+
+- Run the exact test command supplied by the work package; it takes precedence over broader guidance. When no narrower command exists for authorized code work, the current complete local gate is `pnpm run project-assets:contract`, `pnpm run sales:contract`, `pnpm run users-data:contract`, `pnpm run secrets:contract`, `pnpm run test`, `pnpm run scan:safety`, `pnpm run d1:schema:check`, `pnpm run cloudflare:contract`, `pnpm run typecheck`, `pnpm run build`, then `git diff --check`, run serially.
+- Do not run a generated-site build when the work package prohibits it. Never weaken a test or edit protected files to obtain a pass.
+- Code changes may be committed and pushed only to the work package's provided target branch after its required checks succeed. Content-only and Project-Asset-only work must leave Git unchanged.
+- Never deploy or publish production. Preview content publication is not production release.
+- Finish with `git status --short` and the relevant diff. Provide a concise customer-facing summary of verified outcomes and genuine limitations; omit internal tool names, branches, lifecycle terminology, schemas, commands, and test counts unless the user asks for technical detail.

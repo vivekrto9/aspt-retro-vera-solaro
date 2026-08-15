@@ -1,0 +1,18 @@
+{
+  "$schema": "https://emdashcms.com/seed.schema.json",
+  "version": "1",
+  "meta": {
+    "name": "AstroPages Base Template",
+    "description": "Minimal EmDash seed for a generic AstroPages Cloudflare starter.",
+    "author": "AstroPages"
+  },
+  "settings": {
+    "title": "Base Template",
+    "tagline": "Reusable AstroPages starter"
+  },
+  "collections": [],
+  "taxonomies": [],
+  "menus": [],
+  "widgetAreas": [],
+  "content": {}
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "contract": "sales-mcp.v1",
+  "semanticModel": "commerce.v1",
+  "schemaRevision": "base-template-sales-2026-07-27-1",
+  "paymentStatuses": ["pending", "paid", "captured", "succeeded", "completed", "failed", "cancelled", "refunded"],
+  "transactionKinds": [
+    {
+      "key": "report_order",
+      "label": "Paid report orders",
+      "description": "Paid or attempted report orders.",
+      "examples": ["report order", "custom report"]
+    }
+  ],
+  "dimensions": [
+    {
+      "key": "report_type",
+      "label": "Report type",
+      "description": "The specific type of report ordered."
+    }
+  ],
+  "entities": [
+    { "type": "item", "key": "report_order", "label": "Report Order", "transactionKind": "report_order" }
+  ]
+}

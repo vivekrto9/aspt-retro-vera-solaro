@@ -1,0 +1,27 @@
+{
+  "contractVersion": "transactional-email.v1",
+  "runtimeTable": "ap_email_templates",
+  "previewMode": "active-row",
+  "eventsTable": "ap_email_events",
+  "variableMappingsTable": "ap_email_variable_mappings",
+  "mcpPath": "/_emdash/api/mcp",
+  "templates": [
+    {
+      "key": "customer_welcome_en",
+      "displayName": "Customer welcome",
+      "eventType": "customer.welcome",
+      "audience": "customer",
+      "locale": "en",
+      "variables": [
+        "customerName",
+        "siteUrl",
+        "supportFooter"
+      ]
+    }
+  ],
+  "safeVariableSources": [
+    "event.payload",
+    "business.notificationSettings",
+    "generatedSite.urls"
+  ]
+}

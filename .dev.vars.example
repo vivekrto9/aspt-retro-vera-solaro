@@ -1,0 +1,25 @@
+# Safe example only. Copy to .dev.vars locally and replace placeholders.
+
+EMDASH_ENCRYPTION_KEY=replace-with-local-development-key
+BUILDER_MCP_TOKEN=ec_pat_replace-with-builder-mcp-token
+BUILDER_MCP_PROVISION_SECRET=replace-with-builder-mcp-provision-secret
+
+# Generated-site SSO/runtime plumbing used by content studio integrations.
+ASTROPAGES_PROJECT_ID=replace-with-project-id
+ASTROPAGES_SITE_ENVIRONMENT=preview
+ASTROPAGES_SSO_PUBLIC_JWK=replace-with-control-plane-public-jwk
+ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN=replace-with-control-plane-callback-token
+ASTROPAGES_CONTROL_PLANE_CALLBACK_BASE_URL=https://astropages.example
+
+# Cloudflare deployment/resource helpers.
+CLOUDFLARE_ACCOUNT_ID=replace-with-cloudflare-account-id
+CLOUDFLARE_API_TOKEN=replace-with-cloudflare-api-token
+CLOUDFLARE_DEV_WORKERS_SUBDOMAIN=replace-with-workers-dev-subdomain
+CLOUDFLARE_SECRETS_STORE_ID=replace-with-optional-cloudflare-secret-store-id
+GH_REPOSITORY_VARIABLES_TOKEN=replace-with-github-token
+PREVIEW_SITE_D1_DATABASE_ID=replace-with-preview-d1-id
+PREVIEW_SITE_SESSION_KV_NAMESPACE_ID=replace-with-preview-kv-id
+PREVIEW_SITE_URL=https://astropages-base-template-preview.example.workers.dev
+PRODUCTION_SITE_D1_DATABASE_ID=replace-with-production-d1-id
+PRODUCTION_SITE_SESSION_KV_NAMESPACE_ID=replace-with-production-kv-id
+PRODUCTION_SITE_URL=https://astropages-base-template-production.example.workers.dev

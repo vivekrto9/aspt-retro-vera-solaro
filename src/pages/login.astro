@@ -1,0 +1,72 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = false;
+
+const seoContent = {
+  seo_title: "Login",
+  seo_description: "Login to your account.",
+  seo_canonical_path: "/login",
+  seo_robots: "index,follow",
+  og_title: "Login",
+  og_description: "Login to your account.",
+  twitter_title: "Login",
+  twitter_description: "Login to your account.",
+};
+---
+
+<BaseLayout seo={seoContent} bodyClass="auth-body">
+  <main class="auth-page" aria-labelledby="login-title">
+    <section class="auth-copy">
+      <a class="brand" href="/">Base Template</a>
+      <p class="eyebrow">Account Access</p>
+      <h1 id="login-title">Welcome back</h1>
+      <p class="lead">Login with your email and password.</p>
+    </section>
+
+    <section class="auth-panel" aria-label="Login form">
+      <h2>Login</h2>
+      <form class="auth-form" data-auth-form>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" autocomplete="current-password" required minlength="8" />
+        </label>
+        <a class="auth-form__secondary-link" href="/forgot-password">Forgot password?</a>
+        <button type="submit">Login</button>
+        <p class="auth-form__status" data-auth-status></p>
+      </form>
+      <p class="auth-page__switch">New here? <a href="/signup">Create an account</a></p>
+    </section>
+  </main>
+
+  <script>
+    document.querySelector("[data-auth-form]")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement)) return;
+      const status = document.querySelector("[data-auth-status]");
+      const formData = new FormData(form);
+      if (status instanceof HTMLElement) status.textContent = "Logging in...";
+      fetch("/api/astropages/generated-site/customer-auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: formData.get("email"),
+          password: formData.get("password"),
+        }),
+      })
+        .then(async (response) => {
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.message || "Login failed.");
+          window.location.assign("/");
+        })
+        .catch((error) => {
+          if (status instanceof HTMLElement) status.textContent = error instanceof Error ? error.message : "Login failed.";
+        });
+    });
+  </script>
+</BaseLayout>

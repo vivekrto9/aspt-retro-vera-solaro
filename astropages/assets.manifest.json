@@ -1,0 +1,17 @@
+{
+  "contractVersion": 1,
+  "seedRoot": "astropages/assets",
+  "assets": [
+    {
+      "seedKey": "logo.svg",
+      "source": "logo.svg",
+      "alias": "logo",
+      "displayName": "Logo",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:5089c93682e8ea6e80d7eca74e2fddafb6187a3b791621d869eaba7b10027b89",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    }
+  ]
+}

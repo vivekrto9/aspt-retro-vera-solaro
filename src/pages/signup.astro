@@ -1,0 +1,81 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+export const prerender = false;
+
+const seoContent = {
+  seo_title: "Sign Up",
+  seo_description: "Create your account.",
+  seo_canonical_path: "/signup",
+  seo_robots: "index,follow",
+  og_title: "Sign Up",
+  og_description: "Create your account.",
+  twitter_title: "Sign Up",
+  twitter_description: "Create your account.",
+};
+---
+
+<BaseLayout seo={seoContent} bodyClass="auth-body">
+  <main class="auth-page" aria-labelledby="signup-title">
+    <section class="auth-copy">
+      <a class="brand" href="/">Base Template</a>
+      <p class="eyebrow">Create Account</p>
+      <h1 id="signup-title">Sign up</h1>
+      <p class="lead">Create an account with your name, email, and password.</p>
+    </section>
+
+    <section class="auth-panel" aria-label="Signup form">
+      <h2>Create account</h2>
+      <form class="auth-form" data-auth-form>
+        <label>
+          Full name
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+        <label>
+          Phone
+          <input type="tel" name="phone" autocomplete="tel" />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <button type="submit">Create account</button>
+        <p class="auth-form__status" data-auth-status></p>
+      </form>
+      <p class="auth-page__switch">Already have an account? <a href="/login">Login</a></p>
+    </section>
+  </main>
+
+  <script>
+    document.querySelector("[data-auth-form]")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement)) return;
+      const status = document.querySelector("[data-auth-status]");
+      const formData = new FormData(form);
+      if (status instanceof HTMLElement) status.textContent = "Creating account...";
+      fetch("/api/astropages/generated-site/customer-auth/signup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
+          phone: formData.get("phone"),
+          password: formData.get("password"),
+        }),
+      })
+        .then(async (response) => {
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.message || "Signup failed.");
+          window.location.assign("/login");
+        })
+        .catch((error) => {
+          if (status instanceof HTMLElement) status.textContent = error instanceof Error ? error.message : "Signup failed.";
+        });
+    });
+  </script>
+</BaseLayout>

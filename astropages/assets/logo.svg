@@ -1,0 +1,8 @@
+<svg width="192" height="48" viewBox="0 0 192 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AstroPages Base Template logo</title>
+  <desc id="desc">Simple base template mark.</desc>
+  <rect x="6" y="6" width="36" height="36" rx="8" fill="#9F2F1F"/>
+  <path d="M18 24h12M24 18v12" stroke="#FFF8EA" stroke-width="3" stroke-linecap="round"/>
+  <text x="54" y="23" font-family="Arial, sans-serif" font-size="18" font-weight="800" fill="#241510">Base Template</text>
+  <text x="55" y="37" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2" fill="#9F2F1F">ASTROPAGES STARTER</text>
+</svg>
