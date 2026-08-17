@@ -30,9 +30,13 @@ const elsewhereLinks = [
 <footer class="vera-footer">
   <div class="vera-footer__grid">
     <div class="vera-footer__about">
-      <div class="vera-footer__brand" {...chromeEdit("footer_brand_name")}>
-        {content.footer_brand_name}
-      </div>
+      <img
+        class="vera-footer__logo"
+        src="/_assets/aliases/logo/logo.svg"
+        alt={content.footer_brand_name}
+        width="260"
+        height="64"
+      />
       <p {...chromeEdit("footer_about")}>{content.footer_about}</p>
     </div>
     <div class="vera-footer__column">

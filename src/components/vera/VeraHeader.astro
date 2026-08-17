@@ -26,8 +26,7 @@ const isBooking = currentPath === "/booking";
 
 <header class="vera-header">
   <a class="vera-brand" href="/" aria-label={content.brand_name}>
-    <span class="vera-brand__name" {...chromeEdit("brand_name")}>{content.brand_name}</span>
-    <span class="vera-brand__role" {...chromeEdit("brand_role")}>{content.brand_role}</span>
+    <img class="vera-brand__logo" src="/_assets/aliases/logo/logo.svg" alt={content.brand_name} width="260" height="64" />
   </a>
 
   <button

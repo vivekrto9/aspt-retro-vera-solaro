@@ -7,6 +7,9 @@ const { content, edit } = Astro.props as {
 };
 
 const signs = ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"];
+const wheelTitleWords = String(content.wheel_title ?? "").trim().split(/\s+/).filter(Boolean);
+const wheelTitleLineOne = wheelTitleWords.slice(0, 2).join(" ");
+const wheelTitleLineTwo = wheelTitleWords.slice(2).join(" ");
 ---
 
 <div class="vera-wheel" aria-hidden="true">
@@ -16,12 +19,16 @@ const signs = ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎�
   <div class="vera-wheel__inner"></div>
   <div class="vera-wheel__core">
     <span {...edit("wheel_eyebrow")}>{content.wheel_eyebrow}</span>
-    <strong {...edit("wheel_title")}>{content.wheel_title}</strong>
+    <span class="vera-wheel__title" {...edit("wheel_title")}>
+      {wheelTitleLineOne}{wheelTitleLineTwo && <><br />{wheelTitleLineTwo}</>}
+    </span>
     <span {...edit("wheel_note")}>{content.wheel_note}</span>
   </div>
   <div class="vera-wheel__signs">
     {signs.map((sign, index) => (
-      <span style={`--sign-index:${index}`}>{sign}</span>
+      <span class="vera-wheel__sign" style={`--sign-index:${index}`}>
+        <span>{sign}</span>
+      </span>
     ))}
   </div>
 </div>

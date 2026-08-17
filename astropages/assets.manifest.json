@@ -25,6 +25,28 @@
       "replaceable": true
     },
     {
+      "seedKey": "favicon.svg",
+      "source": "favicon.svg",
+      "alias": "favicon",
+      "displayName": "Favicon",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:058ec19a7d7f9243fd1be7bb9ec54d80b7fe635358587871fe918c2b2387f43a",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "logo.svg",
+      "source": "logo.svg",
+      "alias": "logo",
+      "displayName": "Logo",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:fb4eb5c423ff9d2177953368d13d19ef0c3cc2c9d13e16ca10f4ce3ba7151ae4",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
       "seedKey": "night-sky.webp",
       "source": "night-sky.webp",
       "alias": "night-sky",

@@ -48,7 +48,7 @@
 
 .vera-site {
   position: relative;
-  width: min(100%, 1440px);
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
   overflow: clip;
@@ -56,18 +56,22 @@
   isolation: isolate;
 }
 
+#vera-main {
+  width: 100%;
+  margin: 0;
+}
+
 .vera-site::before {
-  position: fixed;
+  position: absolute;
   z-index: 40;
   inset: 0;
-  width: min(100%, 1440px);
+  width: 100%;
   margin: 0 auto;
   pointer-events: none;
-  background-image: radial-gradient(rgb(44 24 16 / 0.42) 0.5px, transparent 0.6px);
+  background-image: radial-gradient(#2c1810 0.5px, transparent 0.6px);
   background-size: 4px 4px;
   content: "";
-  opacity: 0.2;
-  mix-blend-mode: multiply;
+  opacity: 0.35;
 }
 
 .vera-skip-link {
@@ -112,34 +116,23 @@
   align-items: center;
   gap: 34px;
   min-height: 82px;
-  padding: 20px var(--vera-gutter);
+  padding: 22px var(--vera-gutter);
   background: var(--vera-aubergine);
   color: var(--vera-cream);
 }
 
 .vera-brand {
   display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
   min-width: max-content;
   text-decoration: none;
 }
 
-.vera-brand__name,
-.vera-footer__brand {
-  color: var(--vera-mustard);
-  font-family: var(--vera-font-display);
-  font-size: 26px;
-  letter-spacing: 0.01em;
-}
-
-.vera-brand__role {
-  padding-bottom: 2px;
-  color: var(--vera-clay);
-  font-family: var(--vera-font-label);
-  font-size: 12px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+.vera-brand__logo {
+  display: block;
+  width: auto;
+  height: 42px;
+  flex: 0 0 auto;
 }
 
 .vera-nav {
@@ -412,7 +405,7 @@
   margin: 0;
   color: var(--vera-aubergine);
   font-family: var(--vera-font-display);
-  font-weight: 400;
+  font-weight: 700;
   text-wrap: balance;
 }
 
@@ -510,13 +503,17 @@
   text-transform: uppercase;
 }
 
+.vera-hero__badge {
+  margin: 0;
+}
+
 .vera-hero h1 {
   max-width: 720px;
   margin: 26px 0 0;
   color: var(--vera-burnt);
   font-family: var(--vera-font-display);
   font-size: clamp(58px, 6.12vw, 88px);
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0;
   line-height: 0.94;
   text-shadow: 4px 4px 0 var(--vera-mustard);
@@ -572,7 +569,6 @@
   height: 480px;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(10px 10px 0 rgb(44 24 16 / 0.22));
 }
 
 .vera-wheel__outer,
@@ -588,6 +584,7 @@
   inset: 0;
   border: 3px solid var(--vera-ink);
   background: var(--vera-aubergine);
+  box-shadow: 10px 10px 0 rgb(44 24 16 / 0.22);
 }
 
 .vera-wheel__ring {
@@ -601,7 +598,7 @@
   background: repeating-conic-gradient(
     from 0deg,
     rgb(226 162 44 / 0.22) 0deg 1.4deg,
-    transparent 1.4deg 15deg
+    rgb(59 30 54 / 0) 1.4deg 15deg
   );
 }
 
@@ -631,13 +628,19 @@
   text-transform: uppercase;
 }
 
-.vera-wheel__core strong {
-  max-width: 130px;
-  margin: 4px 0 6px;
+.vera-wheel__core .vera-wheel__title {
+  display: block;
+  margin: 4px 0 0;
   font-family: var(--vera-font-display);
   font-size: 34px;
   font-weight: 400;
+  letter-spacing: normal;
   line-height: 1.05;
+  text-transform: none;
+}
+
+.vera-wheel__title + span {
+  margin-top: 6px;
 }
 
 .vera-wheel__signs {
@@ -645,21 +648,30 @@
   inset: 0;
 }
 
-.vera-wheel__signs > span {
+.vera-wheel__sign {
   --angle: calc(var(--sign-index) * 30deg);
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 44px;
-  color: var(--vera-mustard);
-  font-family: var(--vera-font-body);
-  font-size: 24px;
-  text-align: center;
-  translate: -50% -50%;
-  transform: rotate(var(--angle)) translateY(-216px) rotate(calc(var(--angle) * -1));
+  width: 0;
+  height: 0;
+  transform: rotate(var(--angle));
 }
 
-.vera-wheel__signs > span:nth-child(even) {
+.vera-wheel__sign > span {
+  position: absolute;
+  top: -216px;
+  left: -22px;
+  width: 44px;
+  color: var(--vera-mustard);
+  font-family: "Libre Baskerville", serif, "Noto Sans Symbols 2";
+  font-size: 24px;
+  font-variant-emoji: text;
+  text-align: center;
+  transform: rotate(calc(var(--angle) * -1));
+}
+
+.vera-wheel__sign:nth-child(even) > span {
   color: var(--vera-clay);
 }
 
@@ -694,6 +706,7 @@
   grid-template-columns: 420px minmax(0, 1fr);
   align-items: center;
   gap: 72px;
+  padding-block: 90px;
 }
 
 .vera-portrait-shell {
@@ -718,10 +731,35 @@
 
 .vera-about-home p {
   max-width: 590px;
-  margin: 20px 0 0;
   color: var(--vera-ink-soft);
   font-size: 17px;
   line-height: 1.8;
+}
+
+.vera-about-home .vera-heading {
+  margin-top: 14px;
+  font-size: 56px;
+  line-height: 1.02;
+}
+
+.vera-about-home .vera-heading + p {
+  max-width: 560px;
+  margin: 24px 0 0;
+}
+
+.vera-about-home .vera-heading + p + p {
+  max-width: 560px;
+  margin: 16px 0 0;
+}
+
+.vera-about-home .vera-method-pills {
+  gap: 28px;
+  margin-top: 32px;
+}
+
+.vera-about-home .vera-pill {
+  padding: 9px 20px;
+  background: var(--vera-cream);
 }
 
 .vera-method-pills,
@@ -770,7 +808,7 @@ button.vera-pill[aria-pressed="true"] {
 
 .vera-signature {
   display: inline-block;
-  margin-top: 30px;
+  margin-top: 34px;
   color: var(--vera-burnt);
   font-family: var(--vera-font-display);
   font-size: 34px;
@@ -795,9 +833,7 @@ button.vera-pill[aria-pressed="true"] {
 }
 
 .vera-reading-card {
-  display: flex;
-  min-height: 530px;
-  flex-direction: column;
+  min-height: 0;
   padding: 34px 30px 30px;
 }
 
@@ -838,7 +874,7 @@ button.vera-pill[aria-pressed="true"] {
   color: var(--vera-aubergine);
   font-family: var(--vera-font-display);
   font-size: 30px;
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.15;
 }
 
@@ -908,8 +944,29 @@ button.vera-pill[aria-pressed="true"] {
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-top: auto;
-  padding-top: 26px;
+  margin-top: 26px;
+}
+
+#readings .vera-heading {
+  margin-top: 14px;
+  font-size: 56px;
+  line-height: 1.02;
+}
+
+#readings .vera-card-grid {
+  margin-top: 48px;
+}
+
+.vera-testimonials-home {
+  padding-block: 88px;
+  border-top: var(--vera-border);
+}
+
+.vera-testimonials-home .vera-heading,
+#journal .vera-heading {
+  margin-top: 14px;
+  font-size: 52px;
+  line-height: 1.04;
 }
 
 .vera-price {
@@ -930,6 +987,7 @@ button.vera-pill[aria-pressed="true"] {
 }
 
 .vera-testimonial {
+  margin: 0;
   border: 2px solid #7a4a5e;
   border-radius: 20px;
   padding: 30px 28px;
@@ -990,11 +1048,22 @@ button.vera-pill[aria-pressed="true"] {
   line-height: 1.7;
 }
 
+#journal .vera-card-grid {
+  margin-top: 44px;
+}
+
+#journal .vera-section-header > .vera-button {
+  min-height: 0;
+  margin-bottom: 10px;
+  padding: 12px 24px;
+}
+
 .vera-letter-band {
   position: relative;
   overflow: hidden;
   border-top: var(--vera-border);
   border-bottom: var(--vera-border);
+  padding-block: 84px;
 }
 
 .vera-letter-band::after {
@@ -1007,7 +1076,7 @@ button.vera-pill[aria-pressed="true"] {
   background: repeating-conic-gradient(
     from 0deg,
     rgb(226 162 44 / 0.55) 0deg 3deg,
-    transparent 3deg 9deg
+    rgb(198 73 31 / 0) 3deg 9deg
   );
   content: "";
 }
@@ -1092,6 +1161,37 @@ button.vera-pill[aria-pressed="true"] {
   line-height: 1.65;
 }
 
+.vera-letter-band .vera-heading {
+  margin-top: 14px;
+  font-size: 54px;
+  line-height: 1.02;
+}
+
+.vera-letter-band .vera-lede {
+  max-width: 520px;
+  margin-top: 20px;
+  color: #fbe6ca;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.vera-letter-band .vera-form-card legend {
+  margin-bottom: 2px;
+}
+
+.vera-letter-band .vera-input {
+  padding: 14px 16px;
+}
+
+.vera-letter-band .vera-button {
+  padding-block: 16px;
+}
+
+.vera-letter-band .vera-form-note {
+  line-height: 1.6;
+  text-align: center;
+}
+
 .vera-image {
   position: relative;
   display: grid;
@@ -1108,6 +1208,31 @@ button.vera-pill[aria-pressed="true"] {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.vera-image__fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  color: var(--vera-ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.vera-image--pending > img,
+.vera-image--missing > img {
+  display: none;
+}
+
+.vera-image--pending > .vera-image__fallback,
+.vera-image--missing > .vera-image__fallback {
+  display: flex;
 }
 
 .vera-image--circle {
@@ -1152,8 +1277,10 @@ button.vera-pill[aria-pressed="true"] {
   gap: 48px;
 }
 
-.vera-footer__brand {
-  font-size: 30px;
+.vera-footer__logo {
+  display: block;
+  width: auto;
+  height: 48px;
 }
 
 .vera-footer__about p {
@@ -4120,8 +4247,8 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     inset: 111px;
   }
 
-  .vera-wheel__signs > span {
-    transform: rotate(var(--angle)) translateY(-175px) rotate(calc(var(--angle) * -1));
+  .vera-wheel__sign > span {
+    top: -175px;
   }
 
   .vera-about-home {
@@ -4170,6 +4297,20 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
 }
 
 @media (max-width: 900px) {
+  .vera-about-home,
+  .vera-testimonials-home,
+  .vera-letter-band {
+    padding-block: clamp(68px, 6.4vw, 92px);
+  }
+
+  .vera-about-home .vera-heading,
+  #readings .vera-heading,
+  .vera-testimonials-home .vera-heading,
+  #journal .vera-heading,
+  .vera-letter-band .vera-heading {
+    font-size: clamp(40px, 3.9vw, 56px);
+  }
+
   .vera-header {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -4225,7 +4366,7 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     margin: 16px auto 0;
   }
 
-  .vera-wheel__signs > span {
+  .vera-wheel__sign {
     display: none;
   }
 
@@ -4352,17 +4493,8 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     padding-block: 15px;
   }
 
-  .vera-brand {
-    display: grid;
-    gap: 0;
-  }
-
-  .vera-brand__name {
-    font-size: 24px;
-  }
-
-  .vera-brand__role {
-    font-size: 10px;
+  .vera-brand__logo {
+    height: 38px;
   }
 
   .vera-hero {
@@ -4424,7 +4556,7 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     padding: 0 10px;
   }
 
-  .vera-wheel__core strong {
+  .vera-wheel__core .vera-wheel__title {
     font-size: 25px;
   }
 
