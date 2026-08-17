@@ -6,7 +6,7 @@ import { requireContentReleaseServiceAuth } from "./auth.ts";
 
 export const prerender = false;
 
-const feature = "astropages-base-template.content-release.status";
+const feature = "apt-retro-vera-solaro.content-release.status";
 
 export const GET: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);

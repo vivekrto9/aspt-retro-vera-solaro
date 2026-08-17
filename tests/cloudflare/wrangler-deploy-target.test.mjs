@@ -5,17 +5,17 @@ import { databaseNameForEnvironment } from "../../scripts/wrangler-deploy-target
 
 const config = {
   d1_databases: [
-    { binding: "DB", database_name: "astropages-base-template-site" },
+    { binding: "DB", database_name: "apt-retro-vera-solaro-site" },
   ],
   env: {
     preview: {
       d1_databases: [
-        { binding: "DB", database_name: "astropages-base-template-preview-site" },
+        { binding: "DB", database_name: "apt-retro-vera-solaro-preview-site" },
       ],
     },
     production: {
       d1_databases: [
-        { binding: "DB", database_name: "astropages-base-template-production-site" },
+        { binding: "DB", database_name: "apt-retro-vera-solaro-production-site" },
       ],
     },
   },
@@ -24,11 +24,11 @@ const config = {
 test("selects the D1 database from the requested deployment environment", () => {
   assert.equal(
     databaseNameForEnvironment(config, "preview"),
-    "astropages-base-template-preview-site",
+    "apt-retro-vera-solaro-preview-site",
   );
   assert.equal(
     databaseNameForEnvironment(config, "production"),
-    "astropages-base-template-production-site",
+    "apt-retro-vera-solaro-production-site",
   );
 });
 

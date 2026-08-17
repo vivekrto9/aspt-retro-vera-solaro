@@ -1,4 +1,5 @@
 import type { AnalyticsQueryDb } from "./analytics-query.ts";
+import { authorizeMcpBearerToken } from "./analytics-mcp.ts";
 import usersDataManifest from "../../../astropages/users-data.manifest.json" with { type: "json" };
 
 export const usersDataMcpMethods = [
@@ -35,12 +36,22 @@ const listColumns = [
   "id",
   "display_name",
   "email",
+  "phone",
+  "default_language",
+  "email_verified_at",
   "created_at",
   "updated_at",
 ] as const;
 
-const searchableColumns = ["display_name", "email"] as const;
-const sortableColumns = new Set(["display_name", "email", "created_at", "updated_at"]);
+const searchableColumns = ["display_name", "email", "phone"] as const;
+const sortableColumns = new Set([
+  "display_name",
+  "email",
+  "default_language",
+  "email_verified_at",
+  "created_at",
+  "updated_at",
+]);
 
 type RelatedSectionDef = {
   key: string;
@@ -99,17 +110,68 @@ const listUsers = async (db: AnalyticsQueryDb, rawArguments: unknown) => {
 };
 
 const relatedRows = async (db: AnalyticsQueryDb, userId: string, sectionKey: string) => {
-  if (sectionKey === "report_orders") {
+  if (sectionKey === "bookings") {
     return allRows(
       db,
-      "SELECT order_number, report_name, ROUND(amount_cents / 100.0, 2) AS total_amount, currency, payment_state, generation_status, created_at FROM ap_report_orders WHERE lower(customer_email) = lower((SELECT email FROM ap_customer_accounts WHERE id = ?)) ORDER BY created_at DESC LIMIT 100",
+      `SELECT booking.booking_number, service.name AS service_name, booking.mode,
+              booking.status, booking.payment_state, booking.selected_start_at,
+              booking.price_cents, booking.paid_cents, booking.balance_cents,
+              booking.currency, booking.created_at
+       FROM ap_vera_bookings booking
+       JOIN ap_vera_services service ON service.slug = booking.service_slug
+       WHERE booking.account_id = ?
+       ORDER BY booking.selected_start_at DESC
+       LIMIT 100`,
       [userId],
     );
   }
-  if (sectionKey === "shop_orders") {
+  if (sectionKey === "reports") {
     return allRows(
       db,
-      "SELECT order_number, product_name, ROUND(amount_cents / 100.0, 2) AS total_amount, currency, payment_state, fulfillment_status, created_at FROM ap_product_orders WHERE lower(customer_email) = lower((SELECT email FROM ap_customer_accounts WHERE id = ?)) ORDER BY created_at DESC LIMIT 100",
+      `SELECT booking.booking_number, report.title, report.status, report.published_at
+       FROM ap_vera_reports report
+       JOIN ap_vera_bookings booking ON booking.id = report.booking_id
+       WHERE report.account_id = ?
+       ORDER BY COALESCE(report.published_at, report.created_at) DESC
+       LIMIT 100`,
+      [userId],
+    );
+  }
+  if (sectionKey === "files") {
+    return allRows(
+      db,
+      `SELECT booking.booking_number, file.kind, file.file_name, file.content_type,
+              file.size_bytes, file.created_at
+       FROM ap_vera_private_files file
+       LEFT JOIN ap_vera_bookings booking ON booking.id = file.booking_id
+       WHERE file.account_id = ?
+       ORDER BY file.created_at DESC
+       LIMIT 100`,
+      [userId],
+    );
+  }
+  if (sectionKey === "messages") {
+    return allRows(
+      db,
+      `SELECT booking.booking_number, thread.subject, thread.status, thread.updated_at
+       FROM ap_vera_message_threads thread
+       LEFT JOIN ap_vera_bookings booking ON booking.id = thread.booking_id
+       WHERE thread.account_id = ?
+       ORDER BY thread.updated_at DESC
+       LIMIT 100`,
+      [userId],
+    );
+  }
+  if (sectionKey === "invoices") {
+    return allRows(
+      db,
+      `SELECT invoice.invoice_number, booking.booking_number, invoice.status,
+              invoice.amount_cents, invoice.currency, invoice.issued_at
+       FROM ap_vera_invoices invoice
+       JOIN ap_vera_bookings booking ON booking.id = invoice.booking_id
+       WHERE booking.account_id = ?
+       ORDER BY invoice.issued_at DESC
+       LIMIT 100`,
       [userId],
     );
   }
@@ -172,4 +234,81 @@ export const executeUsersDataMcpMethod = async (
   if (method === "users_list") return listUsers(db, rawArguments);
   if (method === "users_get") return getUser(db, rawArguments);
   return getRelated(db, rawArguments);
+};
+
+type UsersDataJsonRpcRequest = {
+  id?: unknown;
+  method?: unknown;
+  params?: unknown;
+};
+
+const usersDataMcpPath = "/_emdash/api/mcp";
+
+const usersDataDbFromEnv = (env: unknown): AnalyticsQueryDb | undefined => {
+  if (!isRecord(env)) return undefined;
+  const candidate = env.DB;
+  return isRecord(candidate) && typeof candidate.prepare === "function"
+    ? candidate as AnalyticsQueryDb
+    : undefined;
+};
+
+const usersDataJson = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
+
+const usersDataJsonRpcError = (id: unknown, code: number, message: string, status = 200) =>
+  usersDataJson({ jsonrpc: "2.0", id: id ?? null, error: { code, message } }, status);
+
+export const maybeHandleUsersDataMcpToolCall = async (
+  request: Request,
+  env: unknown,
+) => {
+  const url = new URL(request.url);
+  if (request.method !== "POST" || url.pathname !== usersDataMcpPath) return null;
+
+  const parsed = await request.clone().json().catch(() => null);
+  if (!isRecord(parsed)) return null;
+  const rpc = parsed as UsersDataJsonRpcRequest;
+  if (rpc.method !== "tools/call" || !isRecord(rpc.params)) return null;
+  const name = typeof rpc.params.name === "string" ? rpc.params.name : "";
+  if (!usersDataMcpMethods.includes(name as UsersDataMcpMethod)) return null;
+
+  const db = usersDataDbFromEnv(env);
+  const authorization = await authorizeMcpBearerToken(request, db, "users:read");
+  if (authorization === "unauthorized") {
+    return usersDataJsonRpcError(rpc.id, -32001, "unauthorized", 401);
+  }
+  if (authorization === "forbidden") {
+    return usersDataJsonRpcError(rpc.id, -32003, "forbidden: users:read scope is required", 403);
+  }
+
+  const argumentsValue = isRecord(rpc.params.arguments) ? rpc.params.arguments : {};
+  try {
+    const result = await executeUsersDataMcpMethod(db, name as UsersDataMcpMethod, argumentsValue);
+    return usersDataJson({
+      jsonrpc: "2.0",
+      id: rpc.id ?? null,
+      result: {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result,
+      },
+    });
+  } catch (error) {
+    const code = error instanceof UsersDataMcpMethodError
+      ? error.code
+      : "USERS_DATA_QUERY_EXECUTION_FAILED";
+    const message = error instanceof Error ? error.message : "Users Data MCP method failed";
+    const structuredContent = { error: true, code, message };
+    return usersDataJson({
+      jsonrpc: "2.0",
+      id: rpc.id ?? null,
+      result: {
+        isError: true,
+        content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+        structuredContent,
+      },
+    });
+  }
 };

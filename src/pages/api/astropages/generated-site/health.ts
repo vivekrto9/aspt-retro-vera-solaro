@@ -7,7 +7,7 @@ export const GET: APIRoute = async () =>
     JSON.stringify({
       status: "ready",
       state: "ready",
-      feature: "base-template.generated-site.health",
+      feature: "apt-retro-vera-solaro.generated-site.health",
     }),
     {
       status: 200,

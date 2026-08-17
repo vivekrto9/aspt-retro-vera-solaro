@@ -168,8 +168,7 @@ jobs:
             echo "Preview resource variables were missing; repair fallback will run." >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "Resource variable validation completed in $(($(date +%s) - started_at))s" >> "$GITHUB_STEP_SUMMARY"
-      - name: Repair missing Cloudflare resources
-        if: ${{ steps.provisioned_resources.outputs.ready != 'true' }}
+      - name: Ensure Cloudflare resources
         run: |
           set -euo pipefail
           echo "ASTROPAGES_DEPLOY_STAGE=resource_repair" >> "$GITHUB_ENV"
@@ -187,22 +186,22 @@ jobs:
           set -euo pipefail
           echo "ASTROPAGES_DEPLOY_STAGE=d1_migrations" >> "$GITHUB_ENV"
           started_at="$(date +%s)"
-          pnpm exec wrangler d1 migrations apply astropages-base-template-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc
+          pnpm exec wrangler d1 migrations apply apt-retro-vera-solaro-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc
           echo "D1 migrations completed in $(($(date +%s) - started_at))s" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify D1 EmDash schema
         run: |
           set -euo pipefail
           echo "ASTROPAGES_DEPLOY_STAGE=emdash_d1_schema_check" >> "$GITHUB_ENV"
           started_at="$(date +%s)"
-          pnpm exec wrangler d1 execute astropages-base-template-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc --command "SELECT disabled FROM users LIMIT 0;"
-          pnpm exec wrangler d1 execute astropages-base-template-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc --command "SELECT name FROM _emdash_migrations WHERE name = '009_user_disabled';"
+          pnpm exec wrangler d1 execute apt-retro-vera-solaro-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc --command "SELECT disabled FROM users LIMIT 0;"
+          pnpm exec wrangler d1 execute apt-retro-vera-solaro-preview-site --env preview --remote --config .wrangler/generated/wrangler.preview.jsonc --command "SELECT name FROM _emdash_migrations WHERE name = '009_user_disabled';"
           echo "EmDash D1 schema verified in $(($(date +%s) - started_at))s" >> "$GITHUB_STEP_SUMMARY"
       - name: Deploy Worker
         run: |
           set -euo pipefail
           echo "ASTROPAGES_DEPLOY_STAGE=worker_deploy" >> "$GITHUB_ENV"
           started_at="$(date +%s)"
-          pnpm exec wrangler deploy --env preview --config .wrangler/generated/wrangler.preview.jsonc --secrets-file "$RUNNER_TEMP/astropages-base-template-worker-secrets.json"
+          pnpm exec wrangler deploy --env preview --config .wrangler/generated/wrangler.preview.jsonc --secrets-file "$RUNNER_TEMP/apt-retro-vera-solaro-worker-secrets.json"
           echo "Worker deploy completed in $(($(date +%s) - started_at))s" >> "$GITHUB_STEP_SUMMARY"
       - name: Prepare deployed EmDash
         run: |
@@ -255,6 +254,31 @@ jobs:
           }
           smoke "/api/astropages/generated-site/health" "200"
           smoke "/api/astropages/generated-site/edit-readiness" "200"
+          verify_vera_readiness() {
+            path="/api/astropages/generated-site/vera/operations"
+            response_path="$RUNNER_TEMP/vera-preview-readiness.json"
+            deadline=$((SECONDS + 180))
+            last_status=""
+            while [ "$SECONDS" -le "$deadline" ]; do
+              status="$(curl -sS --max-time 30 -o "$response_path" -w '%{http_code}' \
+                -H "Authorization: Bearer ${ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN}" \
+                "${PREVIEW_SITE_URL}${path}" || true)"
+              last_status="$status"
+              if [ "$status" = "200" ] && node -e '
+                const fs = require("node:fs");
+                const body = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+                if (body.status !== "ready" || body.state !== "ready" || body.data?.ready !== true) process.exit(1);
+              ' "$response_path"; then
+                echo "${path} -> 200 (Vera providers and runtime ready)"
+                return 0
+              fi
+              echo "${path} returned ${status} without a ready Vera runtime; retrying..." >&2
+              sleep 5
+            done
+            echo "${path} returned ${last_status}; refusing to report preview ready while Vera provider/runtime configuration is incomplete" >&2
+            exit 1
+          }
+          verify_vera_readiness
           echo "Smoke checks completed in $(($(date +%s) - started_at))s" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Notify preview ready

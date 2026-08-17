@@ -1,9 +1,10 @@
 import { activeLocales, type SupportedLocale } from "../data/localization-contract.ts";
 import {
-  getChromeDefaults,
-  getHomeDefaults,
-  type HomePageContent,
-} from "../data/public-copy.ts";
+  veraEntries,
+  veraPageTargets,
+  type VeraContent,
+  type VeraEntryDefinition,
+} from "../data/vera/content.ts";
 
 export type BuilderFieldType = "string" | "text";
 
@@ -27,7 +28,7 @@ export type BuilderCollectionConfig = {
 export type BuilderEntryConfig = {
   collectionConfig: BuilderCollectionConfig;
   editableFields: BuilderSchemaField[];
-  defaultsByLocale: Record<SupportedLocale, HomePageContent>;
+  defaultsByLocale: Record<SupportedLocale, PageContent>;
 };
 
 export type BuilderContentTarget = {
@@ -58,6 +59,17 @@ const longTextPatterns = [
   "_body",
   "_about",
   "_description",
+  "_intro",
+  "_paragraph",
+  "_note",
+  "_dek",
+  "_bio",
+  "_text",
+  "_outro",
+  "testimonial_",
+  "disclaimer_",
+  "summary_",
+  "faq_",
   "footer_note",
   "seo_description",
   "og_description",
@@ -80,89 +92,60 @@ const schemaFieldsFor = (defaults: PageContent): BuilderSchemaField[] =>
     slug: field,
     type: fieldType(field),
     label: labelFor(field),
-    required: ["hero_title", "brand_name", "seo_title"].includes(field),
+    required: ["title", "hero_title", "brand_name", "seo_title"].includes(field),
   }));
 
-const withLocaleDefaults = (
-  defaultsFactory: (locale: SupportedLocale) => HomePageContent,
-) =>
+const withLocaleDefaults = (defaults: VeraContent) =>
   Object.fromEntries(
-    activeLocales.map((locale) => [locale.code, defaultsFactory(locale.code)]),
-  ) as Record<SupportedLocale, HomePageContent>;
+    activeLocales.map((locale) => [locale.code, { ...defaults }]),
+  ) as Record<SupportedLocale, PageContent>;
 
-const collectionFor = (
-  slug: string,
-  label: string,
-  defaults: PageContent,
-): BuilderCollectionConfig => ({
-  slug,
-  label,
-  labelSingular: label.replace(/s$/, ""),
-  supports: ["drafts", "revisions", "preview"],
-  fields: schemaFieldsFor(defaults),
-});
-
-const homeCollection = collectionFor("site_pages", "Site Pages", getHomeDefaults("en"));
-const chromeCollection = collectionFor("site_chrome", "Site Chrome", getChromeDefaults("en"));
-
-const entries: BuilderEntryConfig[] = [
-  {
-    collectionConfig: homeCollection,
-    editableFields: schemaFieldsFor(getHomeDefaults("en")),
-    defaultsByLocale: withLocaleDefaults(getHomeDefaults),
-  },
-  {
-    collectionConfig: chromeCollection,
-    editableFields: schemaFieldsFor(getChromeDefaults("en")),
-    defaultsByLocale: withLocaleDefaults(getChromeDefaults),
-  },
-];
-
-const entryMap = new Map<string, BuilderEntryConfig>([
-  ["site_pages/home", entries[0]],
-  ["site_pages/not_found_page", entries[0]],
-  ["site_chrome/main", entries[1]],
-]);
-
-const fieldTargets = new Map<string, BuilderContentTarget>();
-for (const field of Object.keys(getHomeDefaults("en"))) {
-  fieldTargets.set(field, { collection: "site_pages", entry: "home" });
+const definitionsByCollection = new Map<string, VeraEntryDefinition[]>();
+for (const definition of veraEntries) {
+  const definitions = definitionsByCollection.get(definition.collection) ?? [];
+  definitions.push(definition);
+  definitionsByCollection.set(definition.collection, definitions);
 }
-for (const field of Object.keys(getChromeDefaults("en"))) {
-  fieldTargets.set(field, { collection: "site_chrome", entry: "main" });
+
+const collectionConfigs = new Map<string, BuilderCollectionConfig>();
+for (const [collection, definitions] of definitionsByCollection) {
+  const defaults = Object.assign({}, ...definitions.map((definition) => definition.defaults));
+  const label = definitions[0]?.label ?? labelFor(collection);
+  collectionConfigs.set(collection, {
+    slug: collection,
+    label,
+    labelSingular: label.replace(/s$/, ""),
+    supports: ["drafts", "revisions", "preview"],
+    fields: schemaFieldsFor(defaults),
+  });
+}
+
+const entryMap = new Map<string, BuilderEntryConfig>();
+for (const definition of veraEntries) {
+  const collectionConfig = collectionConfigs.get(definition.collection);
+  if (!collectionConfig) continue;
+  entryMap.set(`${definition.collection}/${definition.entry}`, {
+    collectionConfig,
+    editableFields: schemaFieldsFor(definition.defaults),
+    defaultsByLocale: withLocaleDefaults(definition.defaults),
+  });
 }
 
 export const builderSeoFields = seoFields;
 export const builderSeoFieldSet = new Set(seoFields);
 export const chromeTarget = { collection: "site_chrome", entry: "main" } as const;
 
-const releaseTargets: BuilderReleaseTarget[] = [
-  {
-    collection: "site_pages",
-    entry: "home",
-    fields: Object.keys(getHomeDefaults("en")),
-  },
-  {
-    collection: "site_pages",
-    entry: "not_found_page",
-    fields: Object.keys(getHomeDefaults("en")),
-  },
-  {
-    collection: "site_chrome",
-    entry: "main",
-    fields: Object.keys(getChromeDefaults("en")),
-  },
-];
+const releaseTargets: BuilderReleaseTarget[] = veraEntries.map((definition) => ({
+  collection: definition.collection,
+  entry: definition.entry,
+  fields: Object.keys(definition.defaults),
+}));
 
 export const getBuilderEntryConfig = (collection: string, entry: string) =>
   entryMap.get(`${collection}/${entry}`);
 
-export const getBuilderPageTargets = (page: string): BuilderContentTarget[] => {
-  if (page === "not_found_page") {
-    return [{ collection: "site_pages", entry: "not_found_page" }];
-  }
-  return [{ collection: "site_pages", entry: "home" }];
-};
+export const getBuilderPageTargets = (page: string): BuilderContentTarget[] =>
+  (veraPageTargets[page] ?? veraPageTargets.home).map((target) => ({ ...target }));
 
 export const getBuilderReleaseTargets = (): BuilderReleaseTarget[] =>
   releaseTargets.map((target) => ({
@@ -171,18 +154,32 @@ export const getBuilderReleaseTargets = (): BuilderReleaseTarget[] =>
     fields: [...target.fields],
   }));
 
-export const getBuilderFieldTarget = (field: string, page = "home") => {
-  if (field.startsWith("not_found_")) {
-    return { collection: "site_pages", entry: "not_found_page" };
+const targetHasField = (target: BuilderContentTarget, field: string) =>
+  getBuilderEntryConfig(target.collection, target.entry)?.editableFields.some(
+    (schemaField) => schemaField.slug === field,
+  ) ?? false;
+
+export const getBuilderFieldTarget = (
+  field: string,
+  page?: string,
+): BuilderContentTarget | undefined => {
+  if (page === "chrome") {
+    return targetHasField(chromeTarget, field) ? { ...chromeTarget } : undefined;
   }
-  const target = fieldTargets.get(field);
-  if (!target && page === "not_found_page") {
-    return { collection: "site_pages", entry: "not_found_page" };
+
+  if (page) {
+    return getBuilderPageTargets(page).find((target) => targetHasField(target, field));
   }
-  return target;
+
+  for (const [key, config] of entryMap) {
+    if (!config.editableFields.some((schemaField) => schemaField.slug === field)) continue;
+    const [collection, entry] = key.split("/");
+    return { collection, entry };
+  }
+  return undefined;
 };
 
-export const isBuilderEditableField = (field: string) =>
-  fieldTargets.has(field) || field.startsWith("not_found_");
+export const isBuilderEditableField = (field: string, page?: string) =>
+  Boolean(getBuilderFieldTarget(field, page));
 
 export const getBuilderFieldLabel = (field: string) => labelFor(field);

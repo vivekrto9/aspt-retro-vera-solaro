@@ -9,99 +9,66 @@ export const runtimeContract = {
     kv: "SESSION",
     workerLoader: "LOADER",
     images: "IMAGES",
+    emailQueue: "EMAIL_QUEUE",
   },
   resources: {
     local: {
-      workerName: "astropages-base-template",
-      d1DatabaseName: "astropages-base-template-site",
-      r2BucketName: "astropages-base-template-media",
-      kvNamespaceName: "LOCAL_ASTROPAGES_BASE_TEMPLATE_SESSION_KV",
+      workerName: "apt-retro-vera-solaro",
+      d1DatabaseName: "apt-retro-vera-solaro-site",
+      r2BucketName: "apt-retro-vera-solaro-media",
+      kvNamespaceName: "LOCAL_APT_RETRO_VERA_SOLARO_SESSION_KV",
+      emailQueueName: "apt-retro-vera-solaro-email",
+      emailDeadLetterQueueName: "apt-retro-vera-solaro-email-dlq",
     },
     preview: {
-      workerName: "astropages-base-template-preview",
-      d1DatabaseName: "astropages-base-template-preview-site",
-      r2BucketName: "astropages-base-template-preview-media",
-      kvNamespaceName: "astropages-base-template-preview-session",
+      workerName: "apt-retro-vera-solaro-preview",
+      d1DatabaseName: "apt-retro-vera-solaro-preview-site",
+      r2BucketName: "apt-retro-vera-solaro-preview-media",
+      kvNamespaceName: "apt-retro-vera-solaro-preview-session",
+      emailQueueName: "apt-retro-vera-solaro-preview-email",
+      emailDeadLetterQueueName: "apt-retro-vera-solaro-preview-email-dlq",
     },
     production: {
-      workerName: "astropages-base-template-production",
-      d1DatabaseName: "astropages-base-template-production-site",
-      r2BucketName: "astropages-base-template-production-media",
-      kvNamespaceName: "astropages-base-template-production-session",
+      workerName: "apt-retro-vera-solaro-production",
+      d1DatabaseName: "apt-retro-vera-solaro-production-site",
+      r2BucketName: "apt-retro-vera-solaro-production-media",
+      kvNamespaceName: "apt-retro-vera-solaro-production-session",
+      emailQueueName: "apt-retro-vera-solaro-production-email",
+      emailDeadLetterQueueName: "apt-retro-vera-solaro-production-email-dlq",
     },
   },
   requiredSecretNames: ["EMDASH_ENCRYPTION_KEY", "BUILDER_MCP_TOKEN", "BUILDER_MCP_PROVISION_SECRET"],
+  generatedSiteRequiredSecretNames: ["EMDASH_ENCRYPTION_KEY", "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"],
   sensitiveProviderSecretBindings: [
-    { binding: "RAZORPAY_KEY_SECRET", provider: "RAZORPAY" },
-    { binding: "RAZORPAY_WEBHOOK_SECRET", provider: "RAZORPAY" },
     { binding: "STRIPE_SECRET_KEY", provider: "STRIPE" },
     { binding: "STRIPE_WEBHOOK_SECRET", provider: "STRIPE" },
     { binding: "AWS_ACCESS_KEY_ID", provider: "AWS_SES" },
     { binding: "AWS_SECRET_ACCESS_KEY", provider: "AWS_SES" },
-    { binding: "GA4_API_SECRET", provider: "GA4" },
     { binding: "POSTHOG_PERSONAL_API_KEY", provider: "POSTHOG" },
-    { binding: "ZAPIER_WEBHOOK_URL", provider: "ZAPIER" },
-    { binding: "ZAPIER_REST_HOOK_SUBSCRIPTIONS_JSON", provider: "ZAPIER" },
-    { binding: "GOOGLE_CALENDAR_CLIENT_ID", provider: "GOOGLE_CALENDAR" },
-    { binding: "GOOGLE_CALENDAR_CLIENT_SECRET", provider: "GOOGLE_CALENDAR" },
-    { binding: "GOOGLE_CALENDAR_REFRESH_TOKEN", provider: "GOOGLE_CALENDAR" },
     { binding: "CALENDLY_API_TOKEN", provider: "CALENDLY" },
     { binding: "CALENDLY_WEBHOOK_SIGNING_KEY", provider: "CALENDLY" },
-    { binding: "WATI_API_TOKEN", provider: "WATI" },
-    { binding: "MAILCHIMP_API_KEY", provider: "MAILCHIMP" },
-    { binding: "X_ASTROLOGYAPI_KEY", provider: "ASTROLOGYAPI" },
     { binding: "GOOGLE_PLACES_API_KEY", provider: "GOOGLE_PLACES" },
   ],
   optionalProviderBindingNames: [
-    "PAYMENT_PROVIDER",
-    "RAZORPAY_KEY_ID",
-    "RAZORPAY_KEY_SECRET",
-    "RAZORPAY_WEBHOOK_SECRET",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
+    "PUBLIC_STRIPE_PUBLISHABLE_KEY",
     "SES_SENDER_EMAIL",
     "SES_SENDER_NAME",
     "AWS_REGION",
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
-    "GA4_MEASUREMENT_ID",
-    "GA4_API_SECRET",
     "POSTHOG_PROJECT_API_KEY",
     "POSTHOG_PERSONAL_API_KEY",
     "POSTHOG_HOST",
     "POSTHOG_PROJECT_ID",
-    "ZAPIER_WEBHOOK_URL",
-    "ZAPIER_REST_HOOK_SUBSCRIPTIONS_JSON",
-    "GOOGLE_CALENDAR_CLIENT_ID",
-    "GOOGLE_CALENDAR_CLIENT_SECRET",
-    "GOOGLE_CALENDAR_REFRESH_TOKEN",
-    "GOOGLE_CALENDAR_CALENDAR_ID",
-    "GOOGLE_CALENDAR_DEFAULT_TIMEZONE",
     "CALENDLY_API_TOKEN",
     "CALENDLY_WEBHOOK_SIGNING_KEY",
-    "CALENDLY_EVENT_TYPE_URI",
-    "WATI_API_TOKEN",
-    "WATI_API_URL",
-    "WATI_TEMPLATE_NAME",
-    "WATI_CUSTOMER_TEMPLATE_NAME",
-    "WATI_ADVISOR_TEMPLATE_NAME",
-    "MAILCHIMP_API_KEY",
-    "MAILCHIMP_AUDIENCE_ID",
-    "MAILCHIMP_SERVER_PREFIX",
-    "X_ASTROLOGYAPI_KEY",
     "GOOGLE_PLACES_API_KEY",
-    "PUBLIC_GTM_CONTAINER_ID",
-    "PUBLIC_META_PIXEL_ID",
-    "PUBLIC_GOOGLE_ADS_TAG_ID",
-    "PUBLIC_GOOGLE_ADS_CONVERSION_LABEL",
   ],
-  publicRuntimeVarNames: [
-    "PUBLIC_GTM_CONTAINER_ID",
-    "PUBLIC_META_PIXEL_ID",
-    "PUBLIC_GOOGLE_ADS_TAG_ID",
-    "PUBLIC_GOOGLE_ADS_CONVERSION_LABEL",
-  ],
+  publicRuntimeVarNames: [],
   workerFirstRoutes: ["/_emdash/*", "/api/*"],
+  cronSchedules: ["*/2 * * * *"],
 };
 
 export const integrationSecretBundleBinding = "ASTROPAGES_INTEGRATION_SECRETS_JSON";
@@ -274,6 +241,34 @@ const validateEnvironmentBindings = (config, envName, failures) => {
 
   if (section.images?.binding !== runtimeContract.bindingNames.images) {
     failures.push(`${envName} Images binding must be IMAGES`);
+  }
+
+  const emailProducer = firstBinding(
+    section.queues?.producers,
+    runtimeContract.bindingNames.emailQueue,
+  );
+  if (emailProducer?.queue !== expected.emailQueueName) {
+    failures.push(`${envName} EMAIL_QUEUE producer must use ${expected.emailQueueName}`);
+  }
+  const emailConsumer = Array.isArray(section.queues?.consumers)
+    ? section.queues.consumers.find((consumer) => consumer.queue === expected.emailQueueName)
+    : undefined;
+  if (!emailConsumer) {
+    failures.push(`${envName} email Queue consumer is required`);
+  } else {
+    if (emailConsumer.dead_letter_queue !== expected.emailDeadLetterQueueName) {
+      failures.push(`${envName} email Queue consumer must use ${expected.emailDeadLetterQueueName} as its DLQ`);
+    }
+    if (emailConsumer.max_retries !== 5) {
+      failures.push(`${envName} email Queue consumer must retry five times`);
+    }
+  }
+
+  if (JSON.stringify(section.triggers?.crons) !== JSON.stringify(runtimeContract.cronSchedules)) {
+    failures.push(`${envName} must schedule the email outbox cron`);
+  }
+  if (section.observability?.enabled !== true || section.observability?.logs?.enabled !== true) {
+    failures.push(`${envName} must enable Worker observability logs`);
   }
 
   if (section.assets?.binding !== "ASSETS") {

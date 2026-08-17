@@ -45,17 +45,29 @@ const captureDb = () => {
   };
 };
 
-test("leads.v1 migration and manifest stay canonical and generic", () => {
+test("leads.v1 keeps the canonical tables with Vera's privacy-safe sources", () => {
   const manifest = JSON.parse(read("astropages/leads.manifest.json"));
   const migration = read("migrations/0005_leads.sql");
 
   assert.equal(manifest.semanticModel, "leads.v1");
   assert.equal(manifest.table, "ap_leads");
   assert.equal(manifest.eventsTable, "ap_business_events");
-  assert.deepEqual(manifest.kinds, ["consultation", "commerce", "puja", "report", "newsletter", "contact"]);
+  assert.deepEqual(manifest.kinds, ["consultation", "waitlist", "newsletter", "contact"]);
+  assert.deepEqual(Object.keys(manifest.sources), ["consultation_booking", "waitlist", "newsletter", "contact"]);
+  assert.doesNotMatch(JSON.stringify(manifest.sources), /birth|message|notes|intake/i);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS ap_business_events/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS ap_leads/);
   assert.match(migration, /CREATE UNIQUE INDEX IF NOT EXISTS idx_ap_leads_dedupe/);
+});
+
+test("Vera business flows emit only manifest-declared lead sources", () => {
+  const engagement = read("src/server/vera/engagement.ts");
+  const bookings = read("src/server/vera/bookings.ts");
+  assert.match(engagement, /kind:\s*"contact",\s*\n\s*source:\s*"contact"/);
+  assert.match(engagement, /kind:\s*"waitlist",\s*\n\s*source:\s*"waitlist"/);
+  assert.doesNotMatch(engagement, /source:\s*"support"/);
+  assert.match(bookings, /source:\s*"consultation_booking"/);
+  assert.match(bookings, /details:\s*\{[\s\S]*?paymentOption,[\s\S]*?amountCents:/);
 });
 
 test("lead contact normalization and validation reject unsafe submissions", async () => {
@@ -82,7 +94,7 @@ test("lead creation allowlists JSON, records a privacy-safe event, and deduplica
     kind: "consultation",
     source: "consultation_booking",
     formKey: "consultation-checkout",
-    pagePath: "/consultations/example",
+    pagePath: "/book",
     locale: "en",
     fullName: "Customer",
     email: "Customer@Example.com",
@@ -93,8 +105,11 @@ test("lead creation allowlists JSON, records a privacy-safe event, and deduplica
     attribution: { utmSource: "campaign", password: "must-not-persist" },
     details: {
       bookingNumber: "CB-100",
-      serviceSlug: "career-guidance",
-      amountCents: 150000,
+      serviceSlug: "natal-hour",
+      paymentOption: "deposit",
+      amountCents: 8000,
+      birthDate: "1990-01-01",
+      message: "must-not-persist",
       privateNotes: "must-not-persist",
     },
   };
@@ -113,8 +128,9 @@ test("lead creation allowlists JSON, records a privacy-safe event, and deduplica
   assert.deepEqual(JSON.parse(insert.values[19]), { utmSource: "campaign" });
   assert.deepEqual(JSON.parse(insert.values[20]), {
     bookingNumber: "CB-100",
-    serviceSlug: "career-guidance",
-    amountCents: 150000,
+    serviceSlug: "natal-hour",
+    paymentOption: "deposit",
+    amountCents: 8000,
   });
 
   const events = DB.calls.filter((call) => call.sql.includes("INSERT INTO ap_business_events"));
@@ -131,18 +147,18 @@ test("business, newsletter, and conversion helpers use deterministic source refe
   const linked = await linkBusinessLead({
     env: { DB },
     submission: {
-      kind: "commerce",
-      source: "product_order",
-      formKey: "product-checkout",
+      kind: "consultation",
+      source: "consultation_booking",
+      formKey: "booking-checkout",
       fullName: "Customer",
       email: "customer@example.com",
-      sourceReferenceType: "product_order",
-      sourceReferenceId: "order_1",
-      details: { orderNumber: "PO-1" },
+      sourceReferenceType: "consultation_booking",
+      sourceReferenceId: "booking_1",
+      details: { bookingNumber: "VS-1", serviceSlug: "natal-hour" },
     },
   });
   assert.equal(linked.ok, true);
-  assert.ok(DB.calls.find((call) => call.sql.includes("INSERT INTO ap_leads")).values.includes("product_order:order_1"));
+  assert.ok(DB.calls.find((call) => call.sql.includes("INSERT INTO ap_leads")).values.includes("consultation_booking:booking_1"));
 
   await linkNewsletterLead({
     env: { DB },
@@ -156,14 +172,14 @@ test("business, newsletter, and conversion helpers use deterministic source refe
   assert.deepEqual(
     await markLeadConvertedBySourceReference({
       env: { DB },
-      sourceReferenceType: "product_order",
-      sourceReferenceId: "order_1",
+      sourceReferenceType: "consultation_booking",
+      sourceReferenceId: "booking_1",
       conversionReference: "pay_1",
     }),
     { changed: true },
   );
   const conversion = DB.calls.find((call) => call.sql.includes("SET status = 'converted'"));
-  assert.deepEqual(conversion.values.slice(-2), ["product_order", "order_1"]);
+  assert.deepEqual(conversion.values.slice(-2), ["consultation_booking", "booking_1"]);
 });
 
 test("business lead linking and conversion do not break existing flows before migration", async () => {
@@ -178,11 +194,11 @@ test("business lead linking and conversion do not break existing flows before mi
       env: { DB },
       submission: {
         kind: "contact",
-        source: "support",
-        formKey: "support",
+        source: "contact",
+        formKey: "contact",
         email: "customer@example.com",
-        sourceReferenceType: "support_request",
-        sourceReferenceId: "support_1",
+        sourceReferenceType: "contact_request",
+        sourceReferenceId: "contact_1",
       },
     }),
     { ok: false, message: "Lead linking was skipped.", skipped: true },
@@ -191,8 +207,8 @@ test("business lead linking and conversion do not break existing flows before mi
   assert.deepEqual(
     await markLeadConvertedBySourceReference({
       env: { DB },
-      sourceReferenceType: "product_order",
-      sourceReferenceId: "order_1",
+      sourceReferenceType: "consultation_booking",
+      sourceReferenceId: "booking_1",
       conversionReference: "pay_1",
     }),
     { changed: false, skipped: true },

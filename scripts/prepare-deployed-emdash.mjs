@@ -168,8 +168,8 @@ async function configureEmDashSite() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      title: "AstroPages Base Template",
-      tagline: "Neutral AstroPages generated-site starter with EmDash content editing",
+      title: "Vera Solaro",
+      tagline: "Astrologer",
       includeContent: false,
     }),
   }, 180_000);

@@ -26,6 +26,9 @@ export async function main(envName) {
   const d1 = await ensureD1Database(resource.d1DatabaseName);
   await ensureR2Bucket(resource.r2BucketName);
   const kv = await ensureKVNamespace(resource.kvNamespaceName);
+  const queues = await listAll(`/accounts/${accountId}/queues`, "result");
+  await ensureQueue(resource.emailQueueName, queues);
+  await ensureQueue(resource.emailDeadLetterQueueName, queues);
 
   const workerUrl = `https://${resource.workerName}.${workersSubdomain}.workers.dev`;
   const variables = {
@@ -105,6 +108,24 @@ async function ensureKVNamespace(title) {
   });
   console.log(`Created KV namespace: ${title}`);
   return created.result;
+}
+
+async function ensureQueue(name, existingQueues) {
+  console.log(`Ensuring Queue: ${name}`);
+  const found = existingQueues.find((queue) => queue.queue_name === name);
+  if (found) {
+    console.log(`Found Queue: ${name}`);
+    return found;
+  }
+
+  const created = await cloudflare(`/accounts/${accountId}/queues`, {
+    method: "POST",
+    body: JSON.stringify({ queue_name: name }),
+  });
+  const queue = created.result ?? { queue_name: name };
+  existingQueues.push(queue);
+  console.log(`Created Queue: ${name}`);
+  return queue;
 }
 
 async function listAll(path, resultPath) {

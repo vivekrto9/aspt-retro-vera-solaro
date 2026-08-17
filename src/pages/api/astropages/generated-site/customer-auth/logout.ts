@@ -3,7 +3,7 @@ import { revokeCustomerSession } from "../../../../../server/aggregator/customer
 import { getRuntimeEnv, requirePost } from "../../../../../server/generated-site/request.ts";
 import { jsonResponse } from "../../../../../server/generated-site/responses.ts";
 
-const feature = "base-template.customer-auth.logout";
+const feature = "apt-retro-vera-solaro.customer-auth.logout";
 
 export const POST: APIRoute = async (context) => {
   const methodError = requirePost(context.request);

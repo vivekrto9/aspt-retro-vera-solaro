@@ -99,7 +99,7 @@ export const validateD1Schema = (root = process.cwd()) => {
 
   for (const tableName of schemaContract.forbiddenTables) {
     if (new RegExp(`CREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\s+${tableName}\\b`, "im").test(migration)) {
-      failures.push(`base template must not create ${tableName}`);
+      failures.push(`Vera Solaro must not create legacy table ${tableName}`);
     }
   }
 

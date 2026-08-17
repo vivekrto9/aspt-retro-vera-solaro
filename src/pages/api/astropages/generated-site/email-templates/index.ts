@@ -15,7 +15,7 @@ import {
 } from "../../../../../server/generated-site/responses.ts";
 
 export const prerender = false;
-const feature = "base-template.generated-site-operations.email-templates";
+const feature = "apt-retro-vera-solaro.generated-site-operations.email-templates";
 
 export const GET: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);

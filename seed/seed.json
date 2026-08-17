@@ -2,13 +2,13 @@
   "$schema": "https://emdashcms.com/seed.schema.json",
   "version": "1",
   "meta": {
-    "name": "AstroPages Base Template",
-    "description": "Minimal EmDash seed for a generic AstroPages Cloudflare starter.",
+    "name": "Vera Solaro",
+    "description": "EmDash seed for the Vera Solaro astrology site.",
     "author": "AstroPages"
   },
   "settings": {
-    "title": "Base Template",
-    "tagline": "Reusable AstroPages starter"
+    "title": "Vera Solaro",
+    "tagline": "Astrologer"
   },
   "collections": [],
   "taxonomies": [],

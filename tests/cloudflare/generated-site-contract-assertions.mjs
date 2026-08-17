@@ -114,7 +114,7 @@ const assertTemplateWorkflowOrder = (root) => {
       `pnpm exec wrangler d1 migrations apply ${databaseName} --env ${envName} --remote --config ${configPath}`,
     );
     const deploy = workflow.indexOf(
-      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/astropages-base-template-worker-secrets.json"`,
+      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/apt-retro-vera-solaro-worker-secrets.json"`,
     );
     const prepareEmdash = workflow.indexOf(`node scripts/prepare-deployed-emdash.mjs ${envName}`);
 
@@ -165,6 +165,11 @@ const assertGeneratedWorkflowBasics = (root, paths) => {
     assert.match(workflow, /ASTROPAGES_SSO_PUBLIC_JWK/);
     assert.match(workflow, /scripts\/prepare-deployed-emdash\.mjs/);
     assert.match(workflow, /\/api\/astropages\/generated-site\/edit-readiness/);
+    assert.match(workflow, /\/api\/astropages\/generated-site\/vera\/operations/);
+    assert.match(workflow, /Authorization: Bearer \$\{ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN\}/);
+    assert.match(workflow, /body\.status !== "ready"/);
+    assert.match(workflow, /body\.state !== "ready"/);
+    assert.match(workflow, /body\.data\?\.ready !== true/);
     assert.doesNotMatch(workflow, /Create Your Free Birth Chart|Start your astrology chat|\/birth-chart|\/chat|\/puja-services|\/consultations|\/reports|\/shop/);
   }
 };
@@ -179,7 +184,7 @@ const assertGeneratedWorkflowOrder = (root, pathsByEnv) => {
       `pnpm exec wrangler d1 migrations apply ${databaseName} --env ${envName} --remote --config ${configPath}`,
     );
     const deploy = workflow.indexOf(
-      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/astropages-base-template-worker-secrets.json"`,
+      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/apt-retro-vera-solaro-worker-secrets.json"`,
     );
 
     for (const [label, index] of Object.entries({ renderConfig, writeSecrets, applyMigrations, deploy })) {
@@ -189,6 +194,7 @@ const assertGeneratedWorkflowOrder = (root, pathsByEnv) => {
     assert.ok(writeSecrets < applyMigrations, `${path} must write secrets before migrations`);
     assert.ok(applyMigrations < deploy, `${path} must apply D1 migrations before deploy`);
     assert.doesNotMatch(workflow, /third-project-(preview|production)-site/);
+    assert.doesNotMatch(workflow, /astropages-base-template/);
     assert.doesNotMatch(workflow, /PREVIEW_ASTRAGURU|PROD_ASTRAGURU|ASTRAGURU_|ASTROCONNECT/);
   }
 };
@@ -321,5 +327,24 @@ export const assertWranglerRuntimeContract = (root = defaultRoot) => {
     "EMDASH_ENCRYPTION_KEY",
     "BUILDER_MCP_TOKEN",
     "BUILDER_MCP_PROVISION_SECRET",
+  ]);
+  const generatedSiteMarker = "generatedSiteRequiredSecretNames:";
+  const generatedSiteMarkerIndex = contractSource.indexOf(generatedSiteMarker);
+  assert.notEqual(
+    generatedSiteMarkerIndex,
+    -1,
+    "template runtime contract must declare generated-site Worker secrets",
+  );
+  const generatedSiteOpenBracketIndex = contractSource.indexOf("[", generatedSiteMarkerIndex);
+  const generatedSiteCloseBracketIndex = contractSource.indexOf("]", generatedSiteOpenBracketIndex);
+  const generatedSiteRequiredSecretNames = Array.from(
+    contractSource
+      .slice(generatedSiteOpenBracketIndex, generatedSiteCloseBracketIndex + 1)
+      .matchAll(/"([^"]+)"/g),
+    (match) => match[1],
+  );
+  assert.deepEqual(generatedSiteRequiredSecretNames, [
+    "EMDASH_ENCRYPTION_KEY",
+    "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN",
   ]);
 };

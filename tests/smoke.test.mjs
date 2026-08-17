@@ -6,23 +6,26 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 const readJson = (path) => JSON.parse(read(path));
 
-test("base template exposes a minimal generic manifest", () => {
+test("Vera Solaro declares its stacked production capabilities", () => {
   const manifest = readJson("template.manifest.json");
-  assert.equal(manifest.templateKey, "astropages-base-template");
-  assert.equal(manifest.displayName, "AstroPages Base Template");
+  assert.equal(manifest.templateKey, "apt-retro-vera-solaro");
+  assert.equal(manifest.displayName, "Vera Solaro");
   assert.deepEqual(manifest.supportedCapabilities, [
+    "capability-consultation-marketplace@0.3.0",
+    "capability-checkout-and-payments@0.3.0",
     "capability-content-seo-localization@0.3.0",
     "capability-generated-site-operations@0.3.0",
     "capability-customer-auth@0.1.0",
     "capability-transactional-notifications@0.3.0",
+    "capability-growth-and-automation@0.3.0",
   ]);
-  assert.deepEqual(manifest.routes.visitorRoutes.map((route) => route.path), [
-    "/",
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/reset-password",
-  ]);
+  for (const path of ["/", "/booking", "/account", "/letters", "/login", "/signup"]) {
+    assert.equal(
+      manifest.routes.visitorRoutes.some((route) => route.path === path),
+      true,
+      `${path} visitor route must be declared`,
+    );
+  }
 });
 
 test("domain-specific pages and folders are not present", () => {
@@ -36,6 +39,18 @@ test("domain-specific pages and folders are not present", () => {
   ]) {
     assert.equal(existsSync(new URL(path, root)), false, `${path} should not be in the base template`);
   }
+});
+
+test("legacy Northstar product-interest demo is absent", () => {
+  for (const path of [
+    "src/pages/lead-generation-demo.astro",
+    "src/data/product-lead-demo.ts",
+    "src/styles/product-lead-demo.css",
+    "src/pages/api/astropages/generated-site/leads/product-interest.ts",
+  ]) {
+    assert.equal(existsSync(new URL(path, root)), false, `${path} must not be present`);
+  }
+  assert.doesNotMatch(read("src/pages/index.astro"), /lead-generation-demo|Lead demo/);
 });
 
 test("runtime schema is reduced to generic starter tables", () => {
@@ -52,15 +67,17 @@ test("runtime schema is reduced to generic starter tables", () => {
   assert.match(leadsMigration, /CREATE TABLE IF NOT EXISTS ap_leads/);
 });
 
-test("analytics MCP hook is present without project-specific analytics tables", () => {
+test("analytics MCP hook uses only fixed Vera reporting adapters", () => {
   assert.equal(existsSync(new URL("src/server/aggregator/analytics-mcp.ts", root)), true);
   assert.equal(existsSync(new URL("src/server/aggregator/analytics-query.ts", root)), true);
 
   const worker = read("src/worker.ts");
   const query = read("src/server/aggregator/analytics-query.ts");
   assert.match(worker, /maybeHandleAnalyticsMcpToolCall/);
-  assert.match(query, /no project-specific analytics adapters/i);
-  assert.doesNotMatch(query, /ap_report_orders|ap_puja_orders|ap_product_orders|ap_consultation_bookings|ap_bookings/);
+  assert.match(query, /booking_funnel/);
+  assert.match(query, /ap_vera_bookings/);
+  assert.doesNotMatch(query, /ap_report_orders|ap_puja_orders|ap_product_orders|ap_consultation_bookings/);
+  assert.doesNotMatch(query, /birth|encrypted_intake|customer_name|normalized_email|message\b/i);
 });
 
 test("customer auth pages and APIs are present", () => {

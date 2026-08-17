@@ -1,0 +1,64 @@
+---
+type Edit = (field: string) => Record<string, unknown>;
+
+const { content, chromeEdit } = Astro.props as {
+  content: Record<string, string>;
+  chromeEdit: Edit;
+};
+
+const readingLinks = [
+  { href: "/readings/natal-hour", field: "footer_reading_1" },
+  { href: "/readings/year-ahead", field: "footer_reading_2" },
+  { href: "/readings/two-charts", field: "footer_reading_3" },
+  { href: "/contact?topic=gift-certificate", field: "footer_reading_4" },
+];
+
+const roomLinks = [
+  { href: "/writing", field: "footer_room_1" },
+  { href: "/letters", field: "footer_room_2" },
+  { href: "/about", field: "footer_room_3" },
+  { href: "/questions", field: "footer_room_4" },
+];
+
+const elsewhereLinks = [
+  { href: "/letters", field: "footer_elsewhere_1" },
+  { href: "/contact", field: "footer_elsewhere_2" },
+  { href: "tel:+390405550112", field: "footer_elsewhere_3" },
+];
+---
+
+<footer class="vera-footer">
+  <div class="vera-footer__grid">
+    <div class="vera-footer__about">
+      <div class="vera-footer__brand" {...chromeEdit("footer_brand_name")}>
+        {content.footer_brand_name}
+      </div>
+      <p {...chromeEdit("footer_about")}>{content.footer_about}</p>
+    </div>
+    <div class="vera-footer__column">
+      <h2 {...chromeEdit("footer_readings_heading")}>{content.footer_readings_heading}</h2>
+      {readingLinks.map((link) => (
+        <a href={link.href} {...chromeEdit(link.field)}>{content[link.field]}</a>
+      ))}
+    </div>
+    <div class="vera-footer__column">
+      <h2 {...chromeEdit("footer_room_heading")}>{content.footer_room_heading}</h2>
+      {roomLinks.map((link) => (
+        <a href={link.href} {...chromeEdit(link.field)}>{content[link.field]}</a>
+      ))}
+    </div>
+    <div class="vera-footer__column">
+      <h2 {...chromeEdit("footer_elsewhere_heading")}>{content.footer_elsewhere_heading}</h2>
+      {elsewhereLinks.map((link) => (
+        <a href={link.href} {...chromeEdit(link.field)}>{content[link.field]}</a>
+      ))}
+    </div>
+  </div>
+  <div class="vera-footer__fineprint">
+    <span {...chromeEdit("footer_copyright")}>{content.footer_copyright}</span>
+    <span class="vera-footer__ornament" {...chromeEdit("footer_ornament")}>
+      {content.footer_ornament}
+    </span>
+    <span {...chromeEdit("footer_disclaimer")}>{content.footer_disclaimer}</span>
+  </div>
+</footer>

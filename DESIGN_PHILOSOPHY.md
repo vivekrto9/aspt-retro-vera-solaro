@@ -1,27 +1,30 @@
-# Design Philosophy — Warm Editorial Foundation
+# Design Philosophy — Vera Solaro Warm Almanac
 
-> Scope: The public customer-facing visual identity across home, account, lead-capture, and not-found journeys.
+> Scope: every public, booking, letter, account, auth, error, and closed-state surface in this template.
 
 ## Identity
 
-Warm Editorial Foundation pairs calm, paper-like surfaces with strong editorial hierarchy. It feels considered before it feels decorated: confident serif statements, practical sans-serif copy, disciplined warm accents, generous space, and quiet boundaries. A page belongs when that hierarchy makes its message and next action immediately clear.
+Vera Solaro is a specific warm printed world: a Trieste astrologer’s working almanac, built from cream paper, dark ink, burnt annotations, mustard markers, aubergine chapter bands, hand-drawn astronomical forms, and honest photographic or placeholder slots. It should feel kept, annotated, and personal—not generically “retro,” mystical, corporate, or app-like.
 
 ## Principles
 
-1. **Lead with hierarchy.** Let scale, rhythm, and contrast establish meaning before adding ornament.
-2. **Keep warmth disciplined.** Use natural neutrals and a focused accent so the experience stays welcoming without becoming nostalgic or themed.
-3. **Pair editorial expression with practical reading.** Use serif type for dominant statements and sans serif for supporting content so drama never overwhelms comprehension.
-4. **Compose with breathing room.** Prefer measured widths, open vertical rhythm, and a few clearly weighted elements over dense visual packing.
-5. **Reflow instead of shrinking.** On small screens, stack and simplify while preserving readable type, image focus, and the intended order of attention.
+1. **The source is the composition.** Preserve its words, section order, scale relationships, color roles, borders, shadows, and purposeful ornament.
+2. **Production truth sits behind the pixels.** Replace prototype clicks with semantic, accessible controls and authoritative Calendly, Stripe, D1, email, account, and file behavior without replacing the source UI.
+3. **Editing is complete, not decorative.** Visitor-visible static copy and SEO resolve through the existing Content Studio entries; runtime facts resolve from APIs. There is no second content system.
+4. **Paper carries hierarchy.** Shrikhand makes the statement, Libre Baskerville carries the reading, and Barlow Condensed labels the working parts. Ink boundaries and offset shadows make state legible.
+5. **Missing media stays honest.** Use the four supplied images only in their supplied slots. Every other source image position remains a designed placeholder until real media arrives.
+6. **Reflow without erasing identity.** Mobile keeps the Book path, key ornament, authoritative summaries, readable editorial rhythm, and accessible state changes.
+7. **Privacy is visible.** Sensitive customer, booking, birth, provider, and capability data never becomes analytics or decorative UI. Consent is meaningful and reversible.
 
 ## Avoid
 
-- Generic corporate gloss, dashboard aesthetics, or decoration without hierarchy.
-- Unfounded industry motifs, cultural symbols, or assumed customer verticals.
-- Dense navigation, competing calls to action, and unexplained visual variants.
-- Tiny type, crowded panels, weak contrast, or motion used as visual camouflage.
-- Treating sample campaign content as the permanent identity.
+- Dark Midnight Ledger/Verdigris styling, generic wellness gradients, dashboard chrome, or component-library defaults.
+- Raw Calendly embeds, hand-built card inputs, fixture slots, fake confirmations, or browser-owned payment truth.
+- Invented article bodies, testimonials, legal claims, gift-purchase flows, or imagery absent from the source.
+- Hard-coded public copy outside the Vera registry, parallel JSON/sidecar contracts, or duplicated asset/content manifests.
+- Reusing supplied home images in unrelated missing slots.
+- Hiding the primary booking action, critical price information, or focus inside mobile/state transitions.
 
-## Adaptation
+## Adaptation boundary
 
-Warm Editorial Foundation is the default when no explicit customer visual direction is supplied. Customer color, imagery, language, and campaign intensity may adapt it without inheriting any sample brand. An explicit customer direction may also replace the family coherently, including its palette, typography, geometry, imagery, composition, and expressive character, within user, work-package, and platform constraints. Follow that direction rather than forcing warm-editorial conventions onto a deliberate redesign.
+Project owners may replace media through Project Assets and edit text through Content Studio while retaining the template’s schema and interaction contract. A deliberate future redesign must replace the visual system coherently and be explicitly authorized; incremental work must not dilute the source into a generic warm-editorial foundation.

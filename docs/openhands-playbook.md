@@ -1,6 +1,6 @@
 # OpenHands Playbook
 
-Use this playbook when an AI agent edits a generated site created from the base template or a derived template.
+Use this playbook when an AI agent edits this generated Vera Solaro site.
 
 ## Code Changes
 

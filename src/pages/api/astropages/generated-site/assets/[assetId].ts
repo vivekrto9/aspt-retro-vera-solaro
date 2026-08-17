@@ -4,7 +4,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 import { requireContentReleaseServiceAuth } from "../content-release/auth.ts";
 
 export const prerender = false;
-const feature = "astropages-base-template.project-assets.item";
+const feature = "apt-retro-vera-solaro.project-assets.item";
 
 export const PATCH: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);

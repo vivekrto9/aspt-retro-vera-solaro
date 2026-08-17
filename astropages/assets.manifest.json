@@ -3,12 +3,45 @@
   "seedRoot": "astropages/assets",
   "assets": [
     {
-      "seedKey": "logo.svg",
-      "source": "logo.svg",
-      "alias": "logo",
-      "displayName": "Logo",
-      "mimeType": "image/svg+xml",
-      "contentHash": "sha256:5089c93682e8ea6e80d7eca74e2fddafb6187a3b791621d869eaba7b10027b89",
+      "seedKey": "brass-protractor.webp",
+      "source": "brass-protractor.webp",
+      "alias": "brass-protractor",
+      "displayName": "Brass Protractor",
+      "mimeType": "image/webp",
+      "contentHash": "sha256:de9af6ec01e12130565ca5674996450eb8eb039f7ad03ff18f1cd20a3a38cd94",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "ephemeris-pages.webp",
+      "source": "ephemeris-pages.webp",
+      "alias": "ephemeris-pages",
+      "displayName": "Ephemeris Pages",
+      "mimeType": "image/webp",
+      "contentHash": "sha256:ebacf116c671487b9815eda4f8222426ed07b758288c185c9c6d1e6b96390387",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "night-sky.webp",
+      "source": "night-sky.webp",
+      "alias": "night-sky",
+      "displayName": "Night Sky",
+      "mimeType": "image/webp",
+      "contentHash": "sha256:bb712472e0a5bc9c59ec87fd44547400866b034b912d57307a2d2e113f2c26e6",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "vera-portrait.webp",
+      "source": "vera-portrait.webp",
+      "alias": "vera-portrait",
+      "displayName": "Vera Portrait",
+      "mimeType": "image/webp",
+      "contentHash": "sha256:8488cc8f617dfa29a8278578c13d7295921ef43291a0386104f318c6eb3320eb",
       "visibility": "customer",
       "protected": true,
       "replaceable": true

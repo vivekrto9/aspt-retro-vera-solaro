@@ -1,6 +1,6 @@
 # AstroPages Leads (`leads.v1`)
 
-This file is the implementation reference for agents deriving a theme from `base-template`. The base provides the generic D1 contract and server helpers, but intentionally does not expose a standalone public lead endpoint or ship vertical forms.
+This file is the implementation reference for the Vera Solaro site. Its inherited AstroPages substrate provides the generic D1 contract and server helpers, but intentionally does not expose a standalone public lead endpoint or ship unbounded vertical forms.
 
 ## Source of truth
 
@@ -16,40 +16,43 @@ Do not create a second lead table, put unbounded request bodies into `details_js
 
 | Source | Kind | When to link |
 | --- | --- | --- |
-| `consultation_booking` | `consultation` | After the booking row is created |
-| `product_order` | `commerce` | After the product order row is created |
-| `puja_order` | `puja` | After the puja order row is created |
-| `report_order` | `report` | After the report order row is created |
-| `newsletter` | `newsletter` | After newsletter validation/subscription |
-| `support` | `contact` | After the support/contact request is accepted |
+| `consultation_booking` | `consultation` | After the `ap_vera_bookings` row and slot hold are created |
+| `waitlist` | `waitlist` | After the `ap_vera_waitlist_entries` row is created or idempotently updated |
+| `newsletter` | `newsletter` | After double opt-in confirmation activates the subscription |
+| `contact` | `contact` | After the validated `ap_vera_contact_requests` row is created |
 
 The manifest lists the allowed `details` keys for each source. Add a key to the manifest only when the product flow genuinely needs it and add a test proving unexpected fields are discarded.
 
 ## Wiring a business form
 
-Persist the authoritative booking/order/support record first. Then call `linkBusinessLead`; the source record remains successful if the lead migration is temporarily unavailable.
+Persist the authoritative Vera booking, waitlist, or contact row first. Then call `linkBusinessLead`; the source record remains successful if the lead migration is temporarily unavailable.
 
 ```ts
-import { linkBusinessLead } from "./lead-records.ts";
+import { linkBusinessLead } from "../aggregator/lead-records.ts";
 
 await linkBusinessLead({
   env,
   submission: {
     kind: "consultation",
     source: "consultation_booking",
-    formKey: "consultation-checkout",
-    pagePath: "/consultations/example",
+    formKey: "vera-booking",
+    pagePath: "/booking",
     locale: "en",
-    fullName: input.fullName,
-    email: input.email,
-    phone: input.phone,
-    sourceReferenceType: "consultation_booking",
+    fullName: name,
+    email,
+    phone: rawPhone,
+    sourceReferenceType: "vera_booking",
     sourceReferenceId: booking.id,
     details: {
-      bookingNumber: booking.bookingNumber,
-      serviceSlug: booking.serviceSlug,
-      amountCents: booking.amountCents,
-      currency: booking.currency,
+      bookingNumber: number,
+      serviceSlug: selection.slug,
+      serviceName: selection.name,
+      consultationMode: input.mode === "in_person" ? "in person" : "call",
+      consultationDate: startAt.slice(0, 10),
+      consultationSlot: startAt,
+      paymentOption,
+      amountCents: selection.priceCents,
+      currency: selection.currency,
     },
   },
 });
@@ -57,9 +60,9 @@ await linkBusinessLead({
 
 `linkBusinessLead` uses `<sourceReferenceType>:<sourceReferenceId>` as the deterministic dedupe key. Retries update the same lead instead of creating duplicates.
 
-For a direct contact form without an authoritative source row, call `createLead` and require `consentContact: true`. Send a stable `idempotencyKey` from the validated form submission.
+For contact and waitlist forms, require `consentContact: true`, write the authoritative Vera row, and link it using `sourceReferenceType` values `vera_contact_request` and `vera_waitlist_entry`. The source row ID is the deterministic lead reference; never send message bodies, birth details, or arbitrary form payloads in lead details.
 
-For newsletters, use `linkNewsletterLead`. It deduplicates by normalized email and records both contact and marketing consent.
+For newsletters, call `linkNewsletterLead` only after the confirmation token succeeds and the subscription becomes active. It deduplicates by normalized email and records both contact and marketing consent; the initial subscription request is not a confirmed marketing lead.
 
 ## Payment conversion
 
@@ -68,7 +71,7 @@ After a verified payment transition succeeds, mark the linked lead converted:
 ```ts
 await markLeadConvertedBySourceReference({
   env,
-  sourceReferenceType: "consultation_booking",
+  sourceReferenceType: "vera_booking",
   sourceReferenceId: booking.id,
   conversionReference: paymentReference,
 });
@@ -78,8 +81,8 @@ Call this after the authoritative paid-state update. The helper is non-blocking 
 
 ## Privacy and validation
 
-- At least one valid email, phone, or WhatsApp number is required.
-- Direct lead capture requires explicit contact consent.
+- Booking, contact, and waitlist capture require a name, valid email, and explicit contact consent; an optional phone must pass the shared phone validator.
+- Newsletter capture requires a valid email, explicit marketing consent, and successful double opt-in confirmation before lead linkage.
 - Store marketing consent separately; never infer it from ordinary contact consent.
 - `attribution_json` accepts only UTM fields and `referrer`.
 - `details_json` accepts only the source fields declared in the manifest plus `tool`.
@@ -87,10 +90,10 @@ Call this after the authoritative paid-state update. The helper is non-blocking 
 - Do not expose a generic unauthenticated endpoint that accepts arbitrary lead payloads.
 - Never print contact fields, birth details, tokens, or payment payloads in logs.
 
-## Agent checklist for a derived template
+## Agent checklist for this site
 
 1. Read the existing form/order implementation before changing it.
-2. Keep the `leads.v1` table contract and manifest semantics aligned with this base.
+2. Keep the `leads.v1` table contract and the exact four manifest sources aligned with the Vera implementation.
 3. Create the authoritative source row before linking the lead.
 4. Map the source to one canonical kind and source name.
 5. Pass only manifest-allowlisted `details`.
@@ -113,7 +116,7 @@ pnpm run d1:verify:local
 Inspect the latest records:
 
 ```sh
-pnpm wrangler d1 execute astropages-base-template-site --local --command \
+pnpm wrangler d1 execute apt-retro-vera-solaro-site --local --command \
 "SELECT id, kind, source, full_name, email, phone, details_json, created_at
  FROM ap_leads
  ORDER BY created_at DESC

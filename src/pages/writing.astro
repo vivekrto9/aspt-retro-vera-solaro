@@ -1,0 +1,161 @@
+---
+import { loadPublicPageContent } from "../builder/public-page.ts";
+import VeraFrame from "../components/vera/VeraFrame.astro";
+import VeraImage from "../components/vera/VeraImage.astro";
+
+export const prerender = false;
+
+const page = await loadPublicPageContent(Astro, "writing");
+const { content, builderEdit, chromeEdit } = page;
+const categories = ["all", "transits", "craft", "basics", "houses", "method", "practice"];
+const articles = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+---
+
+<VeraFrame {...page} currentPath="/writing">
+  <section class="vera-page-hero vera-writing-hero">
+    <div class="vera-writing-hero__intro">
+      <p class="vera-eyebrow" {...builderEdit("writing_eyebrow")}>{content.writing_eyebrow}</p>
+      <h1 class="vera-display" {...builderEdit("writing_title")}>{content.writing_title}</h1>
+      <p class="vera-lede" {...builderEdit("writing_intro")}>{content.writing_intro}</p>
+    </div>
+    <p class="vera-writing-hero__meta">
+      <span {...builderEdit("writing_meta_count")}>{content.writing_meta_count}</span><br />
+      <span {...builderEdit("writing_meta_note")}>{content.writing_meta_note}</span>
+    </p>
+    <div class="vera-filter-pills" data-writing-filters>
+      {categories.map((category, index) => (
+        <button
+          class="vera-pill"
+          type="button"
+          aria-pressed={index === 0 ? "true" : "false"}
+          data-writing-filter={category}
+          {...builderEdit(`category_${category}`)}
+        >
+          {content[`category_${category}`]}
+        </button>
+      ))}
+      <span
+        class="vera-card-meta"
+        style="align-self: center"
+        data-writing-count
+        data-filtered-template={content.count_filtered_template}
+        {...builderEdit("count_label")}
+      >
+        {content.count_label}
+      </span>
+    </div>
+  </section>
+
+  <section class="vera-section vera-section--sand" data-writing-item data-writing-featured data-category="transits">
+    <a class="vera-page-hero--split" href="/writing/saturn-is-not-punishing-you" style="color: inherit; text-decoration: none">
+      <VeraImage
+        alt={content.featured_alt}
+        altField="featured_alt"
+        edit={builderEdit}
+        class="vera-writing-featured-image"
+      />
+      <div>
+        <div class="vera-card-badge vera-writing-featured-badge" {...builderEdit("featured_badge")}>
+          {content.featured_badge}
+        </div>
+        <div class="vera-card-meta" {...builderEdit("featured_meta")}>{content.featured_meta}</div>
+        <h2 class="vera-heading" style="color: var(--vera-burnt); margin-top: 10px" {...builderEdit("featured_title")}>
+          {content.featured_title}
+        </h2>
+        <p class="vera-lede" {...builderEdit("featured_dek")}>{content.featured_dek}</p>
+        <div class="vera-card-meta" style="color: var(--vera-burnt); margin-top: 22px" {...builderEdit("featured_cta")}>
+          {content.featured_cta}
+        </div>
+      </div>
+    </a>
+  </section>
+
+  <section class="vera-section vera-section--paper">
+    <ol class="vera-list">
+      {articles.map((index) => {
+        const category = content[`article_${index}_meta`].split(" · ")[0].toLowerCase();
+        return (
+          <li data-writing-item data-category={category}>
+            <div class="vera-list-item">
+              <span class="vera-list-item__number" data-writing-number>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h2 {...builderEdit(`article_${index}_title`)}>{content[`article_${index}_title`]}</h2>
+                <p {...builderEdit(`article_${index}_dek`)}>{content[`article_${index}_dek`]}</p>
+              </div>
+              <div class="vera-list-item__category" {...builderEdit(`article_${index}_meta`)}>
+                {content[`article_${index}_meta`].split(" · ")[0]}
+              </div>
+              <div class="vera-list-item__meta" {...builderEdit(`article_${index}_meta`)}>
+                {content[`article_${index}_meta`].split(" · ").slice(1).join(" · ")}
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  </section>
+
+  <section class="vera-section vera-section--aubergine">
+    <div class="vera-letter-band__grid">
+      <div>
+        <p class="vera-eyebrow" {...builderEdit("signup_eyebrow")}>{content.signup_eyebrow}</p>
+        <h2 class="vera-heading" {...builderEdit("signup_title")}>{content.signup_title}</h2>
+        <p class="vera-lede" {...builderEdit("signup_body")}>{content.signup_body}</p>
+      </div>
+      <form class="vera-form-card" action="/letters" method="get" data-newsletter-form>
+        <label class="vera-field">
+          <span class="vera-visually-hidden">{content.signup_placeholder}</span>
+          <input
+            class="vera-input"
+            type="email"
+            name="email"
+            required
+            autocomplete="email"
+            placeholder={content.signup_placeholder}
+            {...builderEdit("signup_placeholder")}
+          />
+        </label>
+        <button class="vera-button vera-button--burnt" type="submit" {...builderEdit("signup_cta")}>
+          {content.signup_cta}
+        </button>
+        <p class="vera-form-note" data-newsletter-status hidden aria-live="polite" {...chromeEdit("newsletter_email_error")}>
+          {content.newsletter_email_error}
+        </p>
+      </form>
+    </div>
+  </section>
+</VeraFrame>
+
+<script>
+  const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-writing-filter]"));
+  const writingItems = Array.from(document.querySelectorAll<HTMLElement>("[data-writing-item]"));
+  const writingCount = document.querySelector<HTMLElement>("[data-writing-count]");
+  const updateWritingCount = (selected = "all") => {
+    const visible = writingItems.filter((item) => !item.hidden);
+    if (writingCount) {
+      writingCount.textContent = selected === "all"
+        ? writingCount.getAttribute("data-astropages-default") || writingCount.textContent
+        : (writingCount.dataset.filteredTemplate || "").replace("{{ shown }}", String(visible.length));
+    }
+    let number = visible.some((item) => item.hasAttribute("data-writing-featured")) ? 1 : 0;
+    visible.forEach((item) => {
+      if (item.hasAttribute("data-writing-featured")) return;
+      number += 1;
+      const numberNode = item.querySelector<HTMLElement>("[data-writing-number]");
+      if (numberNode) numberNode.textContent = String(number).padStart(2, "0");
+    });
+  };
+  if (writingCount) writingCount.setAttribute("data-astropages-default", writingCount.textContent || "");
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.dataset.writingFilter;
+      filterButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      writingItems.forEach((item) => {
+        item.hidden = selected !== "all" && item.dataset.category !== selected;
+      });
+      updateWritingCount(selected);
+    });
+  });
+</script>

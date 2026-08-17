@@ -21,6 +21,19 @@ type AstroLike = {
   locals: unknown;
 };
 
+export const getSafePublicNextPath = (url: URL, fallback = "/account") => {
+  const requested = url.searchParams.get("next")?.trim();
+  if (!requested || !requested.startsWith("/") || requested.startsWith("//")) return fallback;
+
+  try {
+    const destination = new URL(requested, url.origin);
+    if (destination.origin !== url.origin) return fallback;
+    return `${destination.pathname}${destination.search}${destination.hash}`;
+  } catch {
+    return fallback;
+  }
+};
+
 export const loadPublicPageContent = async (Astro: AstroLike, entry: string) => {
   const locale = getLocaleFromUrl(Astro.request.url);
   const env = await getRuntimeEnv(Astro);
@@ -63,10 +76,11 @@ export const loadPublicPageContent = async (Astro: AstroLike, entry: string) => 
   const content = { ...pageContent, ...chromeContent };
   const builderEdit = (field: string) => {
     const target = getBuilderFieldTarget(field, entry);
-    if (!target || !isBuilderEditableField(field)) return {};
+    if (!target || !isBuilderEditableField(field, entry)) return {};
     return builders.get(targetKey(target))?.edit(field) ?? {};
   };
-  const chromeEdit = (field: string) => isBuilderEditableField(field) ? chromeBuilder.edit(field) : {};
+  const chromeEdit = (field: string) =>
+    isBuilderEditableField(field, "chrome") ? chromeBuilder.edit(field) : {};
   const reviewTargets = [...pageTargets, chromeTarget].map((target) => ({
     collection: target.collection,
     entry: target.entry,

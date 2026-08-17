@@ -179,7 +179,7 @@ async function deployWorker({ environment, templateSource }) {
         ["/", [200, 301, 302]],
         ["/api/astropages/generated-site/health", [200]],
         ["/api/astropages/generated-site/edit-readiness", [200]],
-        ["/_assets/aliases/logo/logo.svg", [200, 301, 302]],
+        ["/_assets/aliases/vera-portrait/vera-portrait.webp", [200, 301, 302]],
         ["/_emdash/admin", [200, 302]],
         ["/_emdash/api/setup/status", [200]],
       ]
@@ -196,6 +196,7 @@ async function deployWorker({ environment, templateSource }) {
           ["/_emdash/api/setup/status", [200]],
         ];
   await smokeRoutes(siteUrl, routes);
+  await verifyVeraReadiness(siteUrl);
 }
 
 async function smokeRoutes(siteUrl, routes) {
@@ -220,6 +221,41 @@ async function smokeRoutes(siteUrl, routes) {
       throw new Error(`${path} returned ${lastStatus}, expected ${expectedStatuses.join(",")}.`);
     }
   }
+}
+
+async function verifyVeraReadiness(siteUrl) {
+  deploymentStage = "vera_runtime_readiness";
+  const path = "/api/astropages/generated-site/vera/operations";
+  const deadline = Date.now() + 180_000;
+  let lastStatus = 0;
+  while (Date.now() <= deadline) {
+    try {
+      const response = await fetch(new URL(path, siteUrl), {
+        headers: {
+          Authorization: `Bearer ${requiredEnv("ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN")}`,
+        },
+        redirect: "manual",
+        signal: AbortSignal.timeout(30_000),
+      });
+      lastStatus = response.status;
+      const body = await response.json().catch(() => null);
+      if (
+        response.status === 200 &&
+        body?.status === "ready" &&
+        body?.state === "ready" &&
+        body?.data?.ready === true
+      ) {
+        console.log(`${path} -> 200 (Vera providers and runtime ready)`);
+        return;
+      }
+    } catch {
+      lastStatus = 0;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+  }
+  throw new Error(
+    `${path} returned ${lastStatus}; refusing to report deployment ready while Vera provider/runtime configuration is incomplete.`,
+  );
 }
 
 function callbackContext() {

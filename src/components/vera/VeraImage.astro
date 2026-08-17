@@ -1,0 +1,47 @@
+---
+type Edit = (field: string) => Record<string, unknown>;
+
+const {
+  src,
+  alt,
+  altField,
+  edit,
+  shape = "rect",
+  eager = false,
+  class: className = "",
+} = Astro.props as {
+  src?: string | null;
+  alt: string;
+  altField?: string;
+  edit?: Edit;
+  shape?: "rect" | "circle";
+  eager?: boolean;
+  class?: string;
+};
+
+const editAttrs = altField && edit ? edit(altField) : {};
+---
+
+{
+  src ? (
+    <figure class:list={["vera-image", `vera-image--${shape}`, className]}>
+      <img
+        src={src}
+        alt={alt}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchpriority={eager ? "high" : "auto"}
+      />
+      <figcaption class="vera-visually-hidden" {...editAttrs}>{alt}</figcaption>
+    </figure>
+  ) : (
+    <figure
+      class:list={["vera-image", "vera-image--placeholder", `vera-image--${shape}`, className]}
+      role="img"
+      aria-label={alt}
+    >
+      <span aria-hidden="true">✷</span>
+      <figcaption {...editAttrs}>{alt}</figcaption>
+    </figure>
+  )
+}

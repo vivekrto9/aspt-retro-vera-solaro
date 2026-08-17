@@ -1,11 +1,30 @@
 import { activeLocales, localizePath } from "../../data/localization-contract.ts";
+import {
+  aboutDefaults,
+  articleDefaults,
+  contactDefaults,
+  homeDefaults,
+  lettersDefaults,
+  questionsDefaults,
+  readingsDefaults,
+  writingDefaults,
+} from "../../data/vera/content.ts";
 
 const PUBLIC_ROUTES = [
   "/",
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
+  "/readings",
+  "/readings/natal-hour",
+  "/readings/year-ahead",
+  "/readings/two-charts",
+  "/booking",
+  "/writing",
+  "/writing/saturn-is-not-punishing-you",
+  "/about",
+  "/questions",
+  "/contact",
+  "/legal",
+  "/letters",
+  "/closed",
 ] as const;
 
 const ROBOTS_DISALLOW = [
@@ -80,9 +99,38 @@ const LLMS_SECTIONS: ReadonlyArray<{
     links: [
       {
         path: "/",
-        label: "Home",
-        note: "Public overview of this site and its visible visitor-facing content.",
+        label: homeDefaults.hero_title,
+        note: homeDefaults.seo_description,
       },
+    ],
+  },
+  {
+    title: readingsDefaults.page_eyebrow,
+    links: [
+      { path: "/readings", label: readingsDefaults.page_title, note: readingsDefaults.page_intro },
+      { path: "/readings/natal-hour", label: readingsDefaults.service_1_title, note: readingsDefaults.service_1_blurb },
+      { path: "/readings/year-ahead", label: readingsDefaults.service_2_title, note: readingsDefaults.service_2_blurb },
+      { path: "/readings/two-charts", label: readingsDefaults.service_3_title, note: readingsDefaults.service_3_blurb },
+    ],
+  },
+  {
+    title: writingDefaults.writing_eyebrow,
+    links: [
+      { path: "/writing", label: writingDefaults.writing_title, note: writingDefaults.writing_intro },
+      {
+        path: "/writing/saturn-is-not-punishing-you",
+        label: articleDefaults.article_title,
+        note: articleDefaults.article_dek,
+      },
+    ],
+  },
+  {
+    title: aboutDefaults.about_eyebrow,
+    links: [
+      { path: "/about", label: aboutDefaults.about_title, note: aboutDefaults.about_intro },
+      { path: "/questions", label: questionsDefaults.faq_title, note: questionsDefaults.faq_intro },
+      { path: "/contact", label: contactDefaults.contact_title, note: contactDefaults.contact_intro },
+      { path: "/letters", label: lettersDefaults.letter_title, note: lettersDefaults.letter_intro },
     ],
   },
 ];
@@ -92,7 +140,7 @@ export const buildPublicLlmsTxt = (
   settings: { brandName?: string; seoDescription?: string } = {},
 ) => {
   const baseUrl = normalizedOrigin(origin);
-  const brandName = settings.brandName || "Base Template";
+  const brandName = settings.brandName || "Vera Solaro";
   const seoDescription = settings.seoDescription || "";
   const lines: string[] = [`# ${brandName}`, ""];
 

@@ -17,6 +17,7 @@ type EmailMessage = {
 };
 
 const encoder = new TextEncoder();
+const sesProviderTimeoutMs = 8_000;
 
 const toHex = (buffer: ArrayBuffer) =>
   [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -139,26 +140,28 @@ export const sendSesTransactionalEmail = async ({
     await getSignatureKey(secretAccessKey, dateStamp, region, "ses"),
     stringToSign,
   );
-  const response = await fetchImpl(endpoint, {
-    method: "POST",
-    headers: {
-      authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
-      "content-type": "application/json",
-      host,
-      "x-amz-content-sha256": payloadHash,
-      "x-amz-date": amzDate,
-    },
-    body,
-  });
+  let response: Response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
+        "content-type": "application/json",
+        host,
+        "x-amz-content-sha256": payloadHash,
+        "x-amz-date": amzDate,
+      },
+      body,
+      signal: AbortSignal.timeout(sesProviderTimeoutMs),
+    });
+  } catch {
+    return { ok: false as const, message: "AWS SES is temporarily unavailable." };
+  }
   const responseBody = await response.json().catch(() => ({})) as Record<string, unknown>;
   if (!response.ok) {
     return {
       ok: false as const,
-      message: String(
-        responseBody.message ||
-        responseBody.Message ||
-        `AWS SES send failed with status ${response.status}.`,
-      ),
+      message: `AWS SES send failed with status ${response.status}.`,
     };
   }
   return {

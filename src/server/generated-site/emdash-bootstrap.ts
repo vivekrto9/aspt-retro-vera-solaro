@@ -29,7 +29,7 @@ type BatchStatement = readonly [sql: string, values?: readonly unknown[]];
 const activeLocaleCodes = activeLocales.map(
   (locale) => locale.code,
 ) as SupportedLocale[];
-const bootstrapTemplateKey = "astropages-base-template";
+const bootstrapTemplateKey = "apt-retro-vera-solaro";
 const bootstrapStateTable = "ap_emdash_bootstrap_state";
 
 const statement = (env: RuntimeEnv, sql: string) => {

@@ -49,6 +49,13 @@ The canonical focused test also contains Divyastra-specific cart, wishlist, chec
 
 Exact hashes are expected when a target has the same builder API. If a target genuinely has template-specific builder integration differences, preserve only those required inputs while keeping the DOM contract, styles, labels, state logic, and interactions equivalent. Document every necessary divergence.
 
+Vera Solaro has one approved identity-only divergence: the canonical generic SEO preview fallback is replaced with the customer-visible `Vera Solaro` name. No DOM, behavior, endpoint, style, or state logic changes with it. The resulting target hashes are:
+
+```text
+ddbfc1ba81297ac634835f65de925abdf5b97742c2353e595ce968f6227566f7  src/builder/BuilderClient.astro
+c30cb775cb7c3e905f1fdfa1bbd31fe452b7637c9ef536c4d27f06d51c35e29c  src/builder/BuilderToolbar.astro
+```
+
 ### Theme discovery and current scope
 
 Replication applies to every repository containing `src/builder/BuilderStyles.astro`, not only folders whose name begins with `aspt-divyastra`.
@@ -311,6 +318,7 @@ These are approved integration-preserving differences from the byte-identical ca
 - Jyotish Live variants: keep known draft-target optimization, target-specific review inputs, and their established `_preview` endpoint handling.
 - Western Chani Astro variants: keep draft-diff caching/request coalescing, cache invalidation, template-token replacement, and dynamic editable-value handling.
 - Western Single Astrologer: keep known draft-target optimization, its SEO/review inputs, and established `_preview` endpoint handling.
+- Vera Solaro: keep the approved customer-name fallback in search and social previews; this identity-only substitution is documented with target hashes above.
 - Toolbar fallback titles, endpoint defaults, SEO field lists, permission props, and review-target data may differ only where the template's existing server integration requires them.
 
 ## CS-UI-001 - Cross-theme studio accent color
