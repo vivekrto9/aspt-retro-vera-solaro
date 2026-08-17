@@ -116,7 +116,7 @@ pnpm run d1:verify:local
 Inspect the latest records:
 
 ```sh
-pnpm wrangler d1 execute apt-retro-vera-solaro-site --local --command \
+pnpm wrangler d1 execute aspt-retro-vera-solaro-site --local --command \
 "SELECT id, kind, source, full_name, email, phone, details_json, created_at
  FROM ap_leads
  ORDER BY created_at DESC

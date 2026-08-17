@@ -3,7 +3,7 @@ import { getCustomerSession } from "../../../../../server/aggregator/customer-au
 import { getRuntimeEnv } from "../../../../../server/generated-site/request.ts";
 import { jsonResponse } from "../../../../../server/generated-site/responses.ts";
 
-const feature = "apt-retro-vera-solaro.customer-auth.me";
+const feature = "aspt-retro-vera-solaro.customer-auth.me";
 
 export const GET: APIRoute = async (context) => {
   const env = await getRuntimeEnv(context);

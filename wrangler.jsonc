@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "apt-retro-vera-solaro",
+  "name": "aspt-retro-vera-solaro",
   "main": "./src/worker.ts",
   "compatibility_date": "2026-05-28",
   "compatibility_flags": ["nodejs_compat"],
@@ -12,19 +12,19 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "apt-retro-vera-solaro-site",
+      "database_name": "aspt-retro-vera-solaro-site",
     },
   ],
   "r2_buckets": [
     {
       "binding": "MEDIA",
-      "bucket_name": "apt-retro-vera-solaro-media",
+      "bucket_name": "aspt-retro-vera-solaro-media",
     },
   ],
   "kv_namespaces": [
     {
       "binding": "SESSION",
-      "id": "LOCAL_APT_RETRO_VERA_SOLARO_SESSION_KV",
+      "id": "LOCAL_ASPT_RETRO_VERA_SOLARO_SESSION_KV",
     },
   ],
   "images": {
@@ -34,17 +34,17 @@
     "producers": [
       {
         "binding": "EMAIL_QUEUE",
-        "queue": "apt-retro-vera-solaro-email",
+        "queue": "aspt-retro-vera-solaro-email",
       },
     ],
     "consumers": [
       {
-        "queue": "apt-retro-vera-solaro-email",
+        "queue": "aspt-retro-vera-solaro-email",
         "max_batch_size": 10,
         "max_batch_timeout": 5,
         "max_retries": 5,
         "retry_delay": 60,
-        "dead_letter_queue": "apt-retro-vera-solaro-email-dlq",
+        "dead_letter_queue": "aspt-retro-vera-solaro-email-dlq",
       },
     ],
   },
@@ -70,7 +70,7 @@
   ],
   "env": {
     "preview": {
-      "name": "apt-retro-vera-solaro-preview",
+      "name": "aspt-retro-vera-solaro-preview",
       "assets": {
         "directory": "./dist/client",
         "binding": "ASSETS",
@@ -79,14 +79,14 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "apt-retro-vera-solaro-preview-site",
+          "database_name": "aspt-retro-vera-solaro-preview-site",
           "database_id": "PREVIEW_D1_DATABASE_ID_FROM_WRANGLER_CREATE",
         },
       ],
       "r2_buckets": [
         {
           "binding": "MEDIA",
-          "bucket_name": "apt-retro-vera-solaro-preview-media",
+          "bucket_name": "aspt-retro-vera-solaro-preview-media",
         },
       ],
       "kv_namespaces": [
@@ -102,17 +102,17 @@
         "producers": [
           {
             "binding": "EMAIL_QUEUE",
-            "queue": "apt-retro-vera-solaro-preview-email",
+            "queue": "aspt-retro-vera-solaro-preview-email",
           },
         ],
         "consumers": [
           {
-            "queue": "apt-retro-vera-solaro-preview-email",
+            "queue": "aspt-retro-vera-solaro-preview-email",
             "max_batch_size": 10,
             "max_batch_timeout": 5,
             "max_retries": 5,
             "retry_delay": 60,
-            "dead_letter_queue": "apt-retro-vera-solaro-preview-email-dlq",
+            "dead_letter_queue": "aspt-retro-vera-solaro-preview-email-dlq",
           },
         ],
       },
@@ -145,7 +145,7 @@
       ],
     },
     "production": {
-      "name": "apt-retro-vera-solaro-production",
+      "name": "aspt-retro-vera-solaro-production",
       "assets": {
         "directory": "./dist/client",
         "binding": "ASSETS",
@@ -154,14 +154,14 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "apt-retro-vera-solaro-production-site",
+          "database_name": "aspt-retro-vera-solaro-production-site",
           "database_id": "PRODUCTION_D1_DATABASE_ID_FROM_WRANGLER_CREATE",
         },
       ],
       "r2_buckets": [
         {
           "binding": "MEDIA",
-          "bucket_name": "apt-retro-vera-solaro-production-media",
+          "bucket_name": "aspt-retro-vera-solaro-production-media",
         },
       ],
       "kv_namespaces": [
@@ -177,17 +177,17 @@
         "producers": [
           {
             "binding": "EMAIL_QUEUE",
-            "queue": "apt-retro-vera-solaro-production-email",
+            "queue": "aspt-retro-vera-solaro-production-email",
           },
         ],
         "consumers": [
           {
-            "queue": "apt-retro-vera-solaro-production-email",
+            "queue": "aspt-retro-vera-solaro-production-email",
             "max_batch_size": 10,
             "max_batch_timeout": 5,
             "max_retries": 5,
             "retry_delay": 60,
-            "dead_letter_queue": "apt-retro-vera-solaro-production-email-dlq",
+            "dead_letter_queue": "aspt-retro-vera-solaro-production-email-dlq",
           },
         ],
       },

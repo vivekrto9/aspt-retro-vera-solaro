@@ -15,7 +15,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 
 export const prerender = false;
 
-const feature = "apt-retro-vera-solaro.generated-site-operations.runtime-config-sync";
+const feature = "aspt-retro-vera-solaro.generated-site-operations.runtime-config-sync";
 
 const bearerToken = (request: Request) => {
   const header = request.headers.get("authorization") ?? "";

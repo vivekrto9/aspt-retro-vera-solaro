@@ -114,7 +114,7 @@ const assertTemplateWorkflowOrder = (root) => {
       `pnpm exec wrangler d1 migrations apply ${databaseName} --env ${envName} --remote --config ${configPath}`,
     );
     const deploy = workflow.indexOf(
-      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/apt-retro-vera-solaro-worker-secrets.json"`,
+      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/aspt-retro-vera-solaro-worker-secrets.json"`,
     );
     const prepareEmdash = workflow.indexOf(`node scripts/prepare-deployed-emdash.mjs ${envName}`);
 
@@ -184,7 +184,7 @@ const assertGeneratedWorkflowOrder = (root, pathsByEnv) => {
       `pnpm exec wrangler d1 migrations apply ${databaseName} --env ${envName} --remote --config ${configPath}`,
     );
     const deploy = workflow.indexOf(
-      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/apt-retro-vera-solaro-worker-secrets.json"`,
+      `pnpm exec wrangler deploy --env ${envName} --config ${configPath} --secrets-file "$RUNNER_TEMP/aspt-retro-vera-solaro-worker-secrets.json"`,
     );
 
     for (const [label, index] of Object.entries({ renderConfig, writeSecrets, applyMigrations, deploy })) {

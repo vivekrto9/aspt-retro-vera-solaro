@@ -12,7 +12,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 
 export const prerender = false;
 
-const feature = "apt-retro-vera-solaro.builder-diff";
+const feature = "aspt-retro-vera-solaro.builder-diff";
 
 export const GET: APIRoute = async (context) => {
   const env = await getRuntimeEnv(context);

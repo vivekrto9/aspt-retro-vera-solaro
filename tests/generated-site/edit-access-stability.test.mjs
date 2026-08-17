@@ -52,7 +52,7 @@ const createReadinessDb = async ({
   }
   const bootstrapRows = bootstrapState
     ? [{
-        template_key: "apt-retro-vera-solaro",
+        template_key: "aspt-retro-vera-solaro",
         template_version: "test",
         builder_registry_hash: contract.registryHash,
         expected_collections: contract.expectedCollections,

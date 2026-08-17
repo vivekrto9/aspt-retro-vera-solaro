@@ -4,7 +4,7 @@ import { readJsonBody, requirePost } from "../../../../../server/generated-site/
 import { errorResponse, jsonResponse } from "../../../../../server/generated-site/responses.ts";
 import { enforceVeraRateLimit, getVeraEnv } from "../../../../../server/vera/http.ts";
 
-const feature = "apt-retro-vera-solaro.customer-auth.reset-password";
+const feature = "aspt-retro-vera-solaro.customer-auth.reset-password";
 
 export const POST: APIRoute = async (context) => {
   const methodError = requirePost(context.request);

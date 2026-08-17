@@ -8,7 +8,7 @@ const readJson = (path) => JSON.parse(read(path));
 
 test("Vera Solaro declares its stacked production capabilities", () => {
   const manifest = readJson("template.manifest.json");
-  assert.equal(manifest.templateKey, "apt-retro-vera-solaro");
+  assert.equal(manifest.templateKey, "aspt-retro-vera-solaro");
   assert.equal(manifest.displayName, "Vera Solaro");
   assert.deepEqual(manifest.supportedCapabilities, [
     "capability-consultation-marketplace@0.3.0",

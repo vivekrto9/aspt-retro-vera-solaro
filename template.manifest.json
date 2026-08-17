@@ -1,8 +1,8 @@
 {
-  "templateKey": "apt-retro-vera-solaro",
+  "templateKey": "aspt-retro-vera-solaro",
   "displayName": "Vera Solaro",
   "repo": {
-    "url": "https://github.com/vivekrto9/apt-retro-vera-solaro.git",
+    "url": "https://github.com/vivekrto9/aspt-retro-vera-solaro.git",
     "commitSha": "RESOLVED_AT_TEMPLATE_REGISTRATION"
   },
   "stage": "starter-template",
@@ -32,24 +32,24 @@
     "environments": [
       {
         "name": "preview",
-        "workerName": "apt-retro-vera-solaro-preview",
-        "d1DatabaseName": "apt-retro-vera-solaro-preview-site",
-        "r2BucketName": "apt-retro-vera-solaro-preview-media",
-        "kvNamespaceName": "apt-retro-vera-solaro-preview-session",
-        "emailQueueName": "apt-retro-vera-solaro-preview-email",
-        "emailDeadLetterQueueName": "apt-retro-vera-solaro-preview-email-dlq",
+        "workerName": "aspt-retro-vera-solaro-preview",
+        "d1DatabaseName": "aspt-retro-vera-solaro-preview-site",
+        "r2BucketName": "aspt-retro-vera-solaro-preview-media",
+        "kvNamespaceName": "aspt-retro-vera-solaro-preview-session",
+        "emailQueueName": "aspt-retro-vera-solaro-preview-email",
+        "emailDeadLetterQueueName": "aspt-retro-vera-solaro-preview-email-dlq",
         "siteUrlVariable": "PREVIEW_SITE_URL",
         "d1DatabaseIdVariable": "PREVIEW_SITE_D1_DATABASE_ID",
         "sessionKvNamespaceIdVariable": "PREVIEW_SITE_SESSION_KV_NAMESPACE_ID"
       },
       {
         "name": "production",
-        "workerName": "apt-retro-vera-solaro-production",
-        "d1DatabaseName": "apt-retro-vera-solaro-production-site",
-        "r2BucketName": "apt-retro-vera-solaro-production-media",
-        "kvNamespaceName": "apt-retro-vera-solaro-production-session",
-        "emailQueueName": "apt-retro-vera-solaro-production-email",
-        "emailDeadLetterQueueName": "apt-retro-vera-solaro-production-email-dlq",
+        "workerName": "aspt-retro-vera-solaro-production",
+        "d1DatabaseName": "aspt-retro-vera-solaro-production-site",
+        "r2BucketName": "aspt-retro-vera-solaro-production-media",
+        "kvNamespaceName": "aspt-retro-vera-solaro-production-session",
+        "emailQueueName": "aspt-retro-vera-solaro-production-email",
+        "emailDeadLetterQueueName": "aspt-retro-vera-solaro-production-email-dlq",
         "siteUrlVariable": "PRODUCTION_SITE_URL",
         "d1DatabaseIdVariable": "PRODUCTION_SITE_D1_DATABASE_ID",
         "sessionKvNamespaceIdVariable": "PRODUCTION_SITE_SESSION_KV_NAMESPACE_ID"
@@ -123,7 +123,7 @@
       "PRODUCTION_SITE_URL"
     ],
     "deploymentMapping": {
-      "workerSecretsFile": "apt-retro-vera-solaro-worker-secrets.json",
+      "workerSecretsFile": "aspt-retro-vera-solaro-worker-secrets.json",
       "workerSecrets": [
         "EMDASH_ENCRYPTION_KEY",
         "BUILDER_MCP_TOKEN",

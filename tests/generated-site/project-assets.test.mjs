@@ -138,13 +138,13 @@ test("asset snapshot includes every active asset and is deterministic independen
   ];
 
   const first = await buildAssetSnapshotFromRows({
-    templateKey: "apt-retro-vera-solaro",
+    templateKey: "aspt-retro-vera-solaro",
     environment: "preview",
     assetRevision: 7,
     rows,
   });
   const second = await buildAssetSnapshotFromRows({
-    templateKey: "apt-retro-vera-solaro",
+    templateKey: "aspt-retro-vera-solaro",
     environment: "preview",
     assetRevision: 7,
     rows: [...rows].reverse(),
@@ -478,7 +478,7 @@ test("asset export snapshots all active records and stores release hashes withou
 
   const snapshot = await buildAssetSnapshot({
     env,
-    templateKey: "apt-retro-vera-solaro",
+    templateKey: "aspt-retro-vera-solaro",
   });
   const status = await readAssetStatus(env);
 
@@ -516,7 +516,7 @@ test("production import recreates the approved current projection and is idempot
   });
   const snapshot = await buildAssetSnapshot({
     env: previewEnv,
-    templateKey: "apt-retro-vera-solaro",
+    templateKey: "aspt-retro-vera-solaro",
   });
   const productionDb = createD1();
   const productionEnv = {

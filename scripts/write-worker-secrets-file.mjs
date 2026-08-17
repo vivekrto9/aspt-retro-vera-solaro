@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { runtimeContract } from "./cloudflare-runtime-contract.mjs";
 
 const runnerTemp = process.env.RUNNER_TEMP ?? ".wrangler/generated";
-const outputPath = join(runnerTemp, "apt-retro-vera-solaro-worker-secrets.json");
+const outputPath = join(runnerTemp, "aspt-retro-vera-solaro-worker-secrets.json");
 const secrets = {};
 const generatedSiteMode =
   Boolean(process.env.ASTROPAGES_PROJECT_ID) ||

@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const outputName = "apt-retro-vera-solaro-worker-secrets.json";
+const outputName = "aspt-retro-vera-solaro-worker-secrets.json";
 
 const runWriter = (env) => {
   const runnerTemp = mkdtempSync(join(tmpdir(), "vera-worker-secrets-"));

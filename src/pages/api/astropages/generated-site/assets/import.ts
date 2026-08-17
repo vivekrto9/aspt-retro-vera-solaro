@@ -8,7 +8,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 import { requireContentReleaseServiceAuth } from "../content-release/auth.ts";
 
 export const prerender = false;
-const feature = "apt-retro-vera-solaro.project-assets.import";
+const feature = "aspt-retro-vera-solaro.project-assets.import";
 
 export const POST: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);

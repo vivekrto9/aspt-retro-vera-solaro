@@ -1,6 +1,6 @@
 # Vera Solaro
 
-`apt-retro-vera-solaro` is the Vera Solaro astrology template, built on the reusable AstroPages Cloudflare and EmDash runtime. The public experience is English-first, uses USD, and operates in the `Europe/Rome` timezone. AstroPages Admin owns the semantic version, release notes, and changelog for every released template commit.
+`aspt-retro-vera-solaro` is the Vera Solaro astrology template, built on the reusable AstroPages Cloudflare and EmDash runtime. The public experience is English-first, uses USD, and operates in the `Europe/Rome` timezone. AstroPages Admin owns the semantic version, release notes, and changelog for every released template commit.
 
 ## Release Metadata
 

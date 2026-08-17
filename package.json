@@ -1,5 +1,5 @@
 {
-  "name": "@astropages/apt-retro-vera-solaro",
+  "name": "@astropages/aspt-retro-vera-solaro",
   "private": true,
   "type": "module",
   "emdash": {
@@ -14,8 +14,8 @@
     "typecheck": "astro check",
     "wrangler:dev": "wrangler dev --local --port 4331",
     "dev:admin-proxy": "node scripts/dev/local-admin-proxy.mjs",
-    "d1:migrate:local": "wrangler d1 migrations apply apt-retro-vera-solaro-site --local",
-    "d1:verify:local": "wrangler d1 execute apt-retro-vera-solaro-site --local --file database/d1/verify_runtime_tables.sql",
+    "d1:migrate:local": "wrangler d1 migrations apply aspt-retro-vera-solaro-site --local",
+    "d1:verify:local": "wrangler d1 execute aspt-retro-vera-solaro-site --local --file database/d1/verify_runtime_tables.sql",
     "d1:schema:check": "node scripts/validate-d1-schema.mjs",
     "cloudflare:contract": "node scripts/validate-cloudflare-runtime.mjs",
     "cloudflare:contract:check": "node scripts/validate-cloudflare-runtime.mjs",

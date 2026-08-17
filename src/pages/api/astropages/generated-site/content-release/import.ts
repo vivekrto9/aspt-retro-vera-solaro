@@ -14,14 +14,14 @@ import { requireContentReleaseServiceAuth } from "./auth.ts";
 
 export const prerender = false;
 
-const feature = "apt-retro-vera-solaro.content-release.import";
+const feature = "aspt-retro-vera-solaro.content-release.import";
 
 const isSnapshot = (value: unknown): value is ContentReleaseSnapshot =>
   Boolean(value) &&
   typeof value === "object" &&
   !Array.isArray(value) &&
   (value as { schemaVersion?: unknown }).schemaVersion === 1 &&
-  (value as { templateKey?: unknown }).templateKey === "apt-retro-vera-solaro" &&
+  (value as { templateKey?: unknown }).templateKey === "aspt-retro-vera-solaro" &&
   Array.isArray((value as { entries?: unknown }).entries) &&
   typeof (value as { snapshotHash?: unknown }).snapshotHash === "string";
 

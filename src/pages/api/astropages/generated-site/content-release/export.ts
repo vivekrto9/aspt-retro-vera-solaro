@@ -6,7 +6,7 @@ import { requireContentReleaseServiceAuth } from "./auth.ts";
 
 export const prerender = false;
 
-const feature = "apt-retro-vera-solaro.content-release.export";
+const feature = "aspt-retro-vera-solaro.content-release.export";
 
 export const POST: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);

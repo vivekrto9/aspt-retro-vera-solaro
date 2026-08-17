@@ -8,7 +8,7 @@ import { requireContentReleaseServiceAuth } from "../content-release/auth.ts";
 
 export const prerender = false;
 
-const feature = "apt-retro-vera-solaro.generated-site-emdash.bootstrap";
+const feature = "aspt-retro-vera-solaro.generated-site-emdash.bootstrap";
 
 const bearerToken = (request: Request) => {
   const header = request.headers.get("authorization") ?? "";

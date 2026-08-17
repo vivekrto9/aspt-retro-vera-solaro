@@ -19,7 +19,7 @@ test("repository docs describe Vera Solaro without stale single-page or legacy c
   const d1Schema = read("database/d1/001_initial_site_schema.sql");
 
   assert.match(docs.readme, /# Vera Solaro/);
-  assert.match(docs.readme, /`apt-retro-vera-solaro` is the Vera Solaro astrology template/);
+  assert.match(docs.readme, /`aspt-retro-vera-solaro` is the Vera Solaro astrology template/);
   assert.match(docs.readme, /English-first[\s\S]*USD[\s\S]*Europe\/Rome/);
   assert.doesNotMatch(publicDocs, /single-page AstroPages template/i);
   assert.doesNotMatch(publicDocs, /only the home page/i);
@@ -42,7 +42,7 @@ test("lead documentation is an agent-ready integration reference", () => {
   assert.match(docs.leads, /sourceReferenceType: "vera_booking"/);
   assert.match(docs.leads, /pagePath: "\/booking"/);
   assert.doesNotMatch(docs.leads, /`(?:product_order|puja_order|report_order|support)`/);
-  assert.match(docs.leads, /wrangler d1 execute apt-retro-vera-solaro-site --local/);
+  assert.match(docs.leads, /wrangler d1 execute aspt-retro-vera-solaro-site --local/);
   assert.doesNotMatch(Object.values(docs).join("\n"), /product-interest|Northstar|lead-generation-demo/i);
 });
 

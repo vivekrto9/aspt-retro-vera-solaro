@@ -11,17 +11,17 @@ const runtimeConfigSource = readFileSync(new URL("../src/server/aggregator/runti
 const routePaths = (items) => new Set(items.map((item) => item.path));
 
 test("template manifest keeps the Vera Solaro source identity and market defaults", () => {
-  assert.equal(packageJson.name, "@astropages/apt-retro-vera-solaro");
+  assert.equal(packageJson.name, "@astropages/aspt-retro-vera-solaro");
   assert.equal(packageJson.emdash.label, "Vera Solaro");
-  assert.equal(manifest.templateKey, "apt-retro-vera-solaro");
+  assert.equal(manifest.templateKey, "aspt-retro-vera-solaro");
   assert.equal(manifest.displayName, "Vera Solaro");
   assert.deepEqual(manifest.repo, {
-    url: "https://github.com/vivekrto9/apt-retro-vera-solaro.git",
+    url: "https://github.com/vivekrto9/aspt-retro-vera-solaro.git",
     commitSha: "RESOLVED_AT_TEMPLATE_REGISTRATION",
   });
   assert.equal(
     manifest.secrets.deploymentMapping.workerSecretsFile,
-    "apt-retro-vera-solaro-worker-secrets.json",
+    "aspt-retro-vera-solaro-worker-secrets.json",
   );
   assert.equal(manifest.localization.requiredDefaultLocale, "en");
   assert.deepEqual(manifest.localization.activeLocales, ["en"]);
