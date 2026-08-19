@@ -175,6 +175,21 @@ export const normalizeBlogDetail = (entry: BlogEntry, locale: string): BlogPostD
   };
 };
 
+// Interim article artwork. The project owner has not supplied per-article media yet, so the
+// three home photographs stand in, keyed by listing position so a post keeps the same picture
+// wherever it appears. Replace with real `featured_image` values as they arrive.
+export const blogFallbackImages: BlogImage[] = [
+  { src: "/_assets/aliases/ephemeris-pages/ephemeris-pages.webp", alt: "Ephemeris pages, close up" },
+  { src: "/_assets/aliases/brass-protractor/brass-protractor.webp", alt: "A brass protractor resting on a chart" },
+  { src: "/_assets/aliases/night-sky/night-sky.webp", alt: "The night sky above Trieste" },
+];
+
+export const blogImageAt = (post: BlogPostSummary, index: number): BlogImage => {
+  if (post.image?.src) return { src: post.image.src, alt: post.image.alt || post.title };
+  const fallback = blogFallbackImages[index % blogFallbackImages.length];
+  return { src: fallback.src, alt: fallback.alt || post.title };
+};
+
 export const listBlogCategories = (posts: BlogPostSummary[]) => {
   const seen = new Map<string, string>();
   for (const post of posts) {

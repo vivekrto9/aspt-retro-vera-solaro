@@ -158,8 +158,13 @@ test("account access forms validate fields locally and name every failure in Stu
   assert.match(read("src/styles/vera.css"), /\.vera-input\[aria-invalid="true"\]/);
 });
 
-test("source media is used only in its four supplied home slots", () => {
+test("source media stays in the home slots and the shared article stand-in", () => {
+  // The three photographs also stand in for article artwork until the owner supplies
+  // per-article media; `src/data/blog-posts.ts` is their single owner for that use, so
+  // routes and components still may not reach for them directly.
   const home = read("src/pages/index.astro");
+  const blogData = read("src/data/blog-posts.ts");
+  const authorized = `${home}\n${blogData}`;
   const otherVeraSources = [
     ...fs.readdirSync(path.join(root, "src/pages"), { recursive: true }),
     ...fs.readdirSync(path.join(root, "src/components/vera"), { recursive: true }),
@@ -176,9 +181,10 @@ test("source media is used only in its four supplied home slots", () => {
     .join("\n");
 
   for (const alias of ["vera-portrait", "ephemeris-pages", "brass-protractor", "night-sky"]) {
-    assert.match(home, new RegExp(`aliases/${alias}/`));
+    assert.match(authorized, new RegExp(`aliases/${alias}/`));
     assert.doesNotMatch(otherVeraSources, new RegExp(`aliases/${alias}/`));
   }
+  assert.match(home, /aliases\/vera-portrait\//);
 });
 
 test("Vera uses the existing manifests without JSON sidecars", () => {

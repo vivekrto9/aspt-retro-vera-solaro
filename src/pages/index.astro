@@ -1,6 +1,6 @@
 ---
 import { isOfferedReading } from "../data/vera/offered-readings.ts";
-import { getBlogLocale, listBlogPosts } from "../data/blog-posts.ts";
+import { blogImageAt, getBlogLocale, listBlogPosts } from "../data/blog-posts.ts";
 import { loadPublicPageContent } from "../builder/public-page.ts";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 import VeraImage from "../components/vera/VeraImage.astro";
@@ -15,16 +15,10 @@ const readings = [1, 2, 3].filter(isOfferedReading);
 const testimonials = [1, 2, 3];
 const locale = getBlogLocale(Astro.request.url);
 const { posts } = await listBlogPosts(locale);
-const journalFallbackImages = [
-  "/_assets/aliases/ephemeris-pages/ephemeris-pages.webp",
-  "/_assets/aliases/brass-protractor/brass-protractor.webp",
-  "/_assets/aliases/night-sky/night-sky.webp",
-];
-const journal = posts.slice(0, 3).map((post, index) => ({
-  ...post,
-  src: post.image?.src || journalFallbackImages[index % journalFallbackImages.length],
-  imageAlt: post.image?.alt || post.title,
-}));
+const journal = posts.slice(0, 3).map((post, index) => {
+  const image = blogImageAt(post, index);
+  return { ...post, src: image.src, imageAlt: image.alt };
+});
 ---
 
 <VeraFrame {...page} currentPath="/">

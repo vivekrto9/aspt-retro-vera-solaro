@@ -2,7 +2,7 @@
 import { loadPublicPageContent } from "../builder/public-page.ts";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 import VeraImage from "../components/vera/VeraImage.astro";
-import { getBlogLocale, listBlogCategories, listBlogPosts } from "../data/blog-posts.ts";
+import { blogImageAt, getBlogLocale, listBlogCategories, listBlogPosts } from "../data/blog-posts.ts";
 
 export const prerender = false;
 
@@ -12,6 +12,7 @@ const locale = getBlogLocale(Astro.request.url);
 const { posts } = await listBlogPosts(locale);
 const categories = listBlogCategories(posts);
 const [featured, ...rest] = posts;
+const featuredImage = featured ? blogImageAt(featured, 0) : undefined;
 const fill = (template: string, count: number) => (template ?? "").replace("{{ count }}", String(count));
 ---
 
@@ -62,8 +63,8 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
       >
         <a class="vera-page-hero--split" href={featured.href} style="color: inherit; text-decoration: none">
           <VeraImage
-            src={featured.image?.src}
-            alt={featured.image?.alt || featured.title}
+            src={featuredImage?.src}
+            alt={featuredImage?.alt || featured.title}
             class="vera-writing-featured-image"
           />
           <div>

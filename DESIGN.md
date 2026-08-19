@@ -59,7 +59,9 @@ Do not add parallel JSON contracts, asset metadata sidecars, or a second content
 
 The source package supplies exactly four image byte assets: Vera portrait, ephemeris pages, brass protractor, and night sky. They are registered in the existing Project Assets manifest and served through stable alias URLs. They remain confined to their four authorized home slots.
 
-Other canonical image slots must still exist in their source positions with truthful editable alt text and a designed `VeraImage` placeholder until the project owner supplies media. Do not reuse one of the four home images to fill a missing room, article, letter, map, holiday, avatar, chart, or account artifact.
+Article artwork is the one approved exception: the project owner asked for the ephemeris, protractor and night-sky photographs to stand in for missing `featured_image` values on the journal cards and the `/writing` featured card. `blogFallbackImages` in `src/data/blog-posts.ts` is that stand-in's single owner, keyed by listing position, and it retires as real per-article media arrives.
+
+Every other canonical image slot must still exist in its source position with truthful editable alt text and a designed `VeraImage` placeholder until the project owner supplies media. Do not reuse one of the four home images to fill a missing room, letter, map, holiday, avatar, chart, or account artifact.
 
 ## Interaction and state truth
 
