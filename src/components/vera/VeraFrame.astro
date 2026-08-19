@@ -23,6 +23,7 @@ const {
   chromeEdit,
   jsonLd = [],
   currentPath = Astro.url.pathname,
+  showHeader = true,
   showFooter = true,
 } = Astro.props as {
   content: Record<string, string>;
@@ -33,6 +34,7 @@ const {
   chromeEdit: Edit;
   jsonLd?: Array<Record<string, unknown>>;
   currentPath?: string;
+  showHeader?: boolean;
   showFooter?: boolean;
 };
 
@@ -84,11 +86,13 @@ const analyticsConsent = {
     {content.skip_to_content}
   </a>
   <div class="vera-site" data-vera-public-site>
-    <VeraHeader
-      content={content}
-      chromeEdit={chromeEdit}
-      currentPath={currentPath}
-    />
+    {showHeader ? (
+      <VeraHeader
+        content={content}
+        chromeEdit={chromeEdit}
+        currentPath={currentPath}
+      />
+    ) : null}
     <main id="vera-main" tabindex="-1">
       <slot />
     </main>

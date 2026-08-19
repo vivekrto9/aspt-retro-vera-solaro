@@ -128,7 +128,7 @@ test("AGENTS.md is a generated-customer-site runbook aligned with the Vera runti
     "vera_booking/main",
     "vera_booking_payment/main",
     "vera_writing/main",
-    "vera_article/saturn",
+    "vera_article/main",
     "vera_about/main",
     "vera_questions/main",
     "vera_contact/main",
@@ -159,9 +159,10 @@ test("AGENTS.md is a generated-customer-site runbook aligned with the Vera runti
   assert.match(agents, /stable asset identity/i);
   assert.match(agents, /never[^\n]+raw R2[^\n]+signed URLs/i);
 
-  assert.match(agents, /Saturn essay[^\n]+authorized fixed article/i);
-  assert.match(agents, /new article requires[^\n]+authorized registry entry/i);
-  assert.match(agents, /never invent[^\n]+`posts` table/i);
+  assert.match(agents, /Articles are dynamic EmDash content/i);
+  assert.match(agents, /`posts` collection defined in `seed\/seed\.json`/i);
+  assert.match(agents, /scripts\/markdown-to-portable-text\.mjs/);
+  assert.match(agents, /never invent a second article store/i);
   assert.match(agents, /`ap_leads`/);
   assert.match(agents, /`ap_vera_\*` tables/);
   assert.match(agents, /`ap_customer_accounts`/);

@@ -110,7 +110,10 @@
 
 .vera-header {
   position: relative;
-  z-index: 30;
+  /* Above the sticky account portal bar (z-index 34) and below the halftone overlay (40):
+     the mobile nav panel is a child of the header, so a lower value lets the portal bar
+     paint over its first links. */
+  z-index: 36;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -133,6 +136,25 @@
   width: auto;
   height: 42px;
   flex: 0 0 auto;
+}
+
+[data-vera-brand-logo][hidden],
+[data-vera-brand-fallback][hidden] {
+  display: none;
+}
+
+.vera-brand-fallback {
+  color: var(--vera-cream);
+  font-family: var(--vera-font-display);
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.vera-brand-mark .vera-brand-fallback {
+  color: inherit;
+  font-size: clamp(28px, 4vw, 42px);
 }
 
 .vera-nav {
@@ -221,6 +243,22 @@
 
 .vera-account-identity[hidden] {
   display: none;
+}
+
+.vera-account-identity .vera-account-actions {
+  margin-top: 0;
+}
+
+.vera-account-identity .vera-button {
+  border-color: var(--vera-mustard);
+  background: transparent;
+  color: var(--vera-mustard);
+  box-shadow: none;
+}
+
+.vera-account-identity .vera-button:hover {
+  background: var(--vera-mustard);
+  color: var(--vera-ink);
 }
 
 .vera-account-identity .vera-image {
@@ -1154,11 +1192,177 @@ button.vera-pill[aria-pressed="true"] {
   gap: 12px;
 }
 
+.vera-booking-step--compact {
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.vera-booking-step__header {
+  max-width: 720px;
+  margin: 28px 0 24px;
+}
+
+.vera-booking-step__header .vera-display {
+  margin: 0;
+  font-size: clamp(42px, 7vw, 76px);
+}
+
+.vera-booking-step__header .vera-lede {
+  margin-top: 10px;
+  font-size: clamp(17px, 2vw, 22px);
+}
+
+.vera-form-card--compact {
+  margin-top: 18px;
+  padding: 22px 24px;
+  box-shadow: 6px 6px 0 var(--vera-aubergine);
+}
+
+.vera-form-card--compact > legend {
+  padding-inline: 8px;
+}
+
+.vera-form-card--compact .vera-field--wide {
+  margin-top: 12px;
+}
+
+.vera-form-card--compact .vera-input,
+.vera-form-card--compact .vera-select,
+.vera-form-card--compact .vera-textarea {
+  padding: 10px 13px;
+}
+
+.vera-form-card--compact .vera-textarea {
+  min-height: 86px;
+}
+
+.vera-field-row--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vera-consent-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.vera-booking-review {
+  border: 3px solid var(--vera-ink);
+  border-radius: 22px;
+  padding: clamp(22px, 4vw, 38px);
+  background: var(--vera-paper-pale);
+  box-shadow: 8px 8px 0 var(--vera-burnt);
+}
+
+.vera-booking-review__reading {
+  padding-bottom: 20px;
+}
+
+.vera-booking-review__reading h3 {
+  margin: 6px 0 2px;
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+}
+
+.vera-booking-review__reading > p:last-child {
+  margin: 0;
+  color: var(--vera-muted);
+}
+
+.vera-booking-review__ledger {
+  margin: 0;
+  border-block: 2px dashed var(--vera-line);
+}
+
+.vera-booking-review__ledger > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) 1fr;
+  gap: 18px;
+  align-items: baseline;
+  padding: 16px 0;
+}
+
+.vera-booking-review__ledger > div + div {
+  border-top: 1px solid var(--vera-line);
+}
+
+.vera-booking-review__ledger dt {
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.vera-booking-review__ledger dd {
+  margin: 0;
+  color: var(--vera-ink);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.vera-booking-review__total dd {
+  color: var(--vera-burnt);
+  font-family: var(--vera-font-display);
+  font-size: 34px;
+}
+
+.vera-booking-review__secure {
+  margin-top: 16px;
+}
+
+.vera-booking-review__error,
+.vera-booking-slot-error {
+  color: var(--vera-burnt);
+  font-weight: 700;
+}
+
+.vera-booking-review__actions {
+  justify-content: flex-start;
+  margin-top: 18px;
+}
+
 .vera-form-note {
   margin: 0;
   color: var(--vera-muted);
   font-size: 13px;
   line-height: 1.65;
+}
+
+.vera-form-note[data-auth-status="error"],
+.vera-form-note[data-auth-status="invalid"],
+.vera-form-note[data-auth-status="mismatch"],
+.vera-form-note[data-auth-status="verification-invalid"] {
+  color: var(--vera-burnt);
+  font-weight: 600;
+}
+
+.vera-form-note[data-auth-status="rate-limited"],
+.vera-form-note[data-auth-invalid] {
+  color: var(--vera-burnt);
+  font-weight: 600;
+}
+
+@supports (color: color-mix(in srgb, red 50%, black)) {
+  .vera-form-note[data-auth-status="error"],
+  .vera-form-note[data-auth-status="invalid"],
+  .vera-form-note[data-auth-status="mismatch"],
+  .vera-form-note[data-auth-status="rate-limited"],
+  .vera-form-note[data-auth-status="verification-invalid"],
+  .vera-form-note[data-auth-invalid] {
+    color: color-mix(in srgb, var(--vera-burnt) 82%, var(--vera-ink));
+  }
+}
+
+/* A field the reader still has to fix keeps the burnt outline the status notes use,
+   so the sentence under the box and the box itself read as one correction. */
+.vera-input[aria-invalid="true"] {
+  border-color: var(--vera-burnt);
 }
 
 .vera-letter-band .vera-heading {
@@ -2330,6 +2534,16 @@ button.vera-pill[aria-pressed="true"] {
   background: var(--vera-cream);
 }
 
+/* The booking hero runs straight into the wizard, so the usual page rhythm
+   leaves a dead gap between the lede and the first step. */
+.vera-page-hero--booking {
+  padding-bottom: 18px;
+}
+
+.vera-section--booking {
+  padding-top: 26px;
+}
+
 .vera-page-hero--split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
@@ -2842,6 +3056,60 @@ a.vera-list-item:hover {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.vera-support-table-wrap {
+  overflow: hidden;
+  border: 3px solid var(--vera-ink);
+  border-radius: 20px;
+  background: var(--vera-paper);
+  box-shadow: 8px 8px 0 var(--vera-mustard);
+}
+
+.vera-support-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vera-support-table tr + tr {
+  border-top: 2px dashed var(--vera-sand-deep);
+}
+
+.vera-support-table th,
+.vera-support-table td {
+  padding: 22px 24px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.vera-support-table th {
+  width: 150px;
+  color: var(--vera-burnt);
+  font-family: var(--vera-font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.vera-support-table strong,
+.vera-support-table span {
+  display: block;
+}
+
+.vera-support-table strong {
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.vera-support-table span {
+  margin-top: 7px;
+  color: var(--vera-ink-soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .vera-contact-layout figure {
   margin-top: 22px !important;
 }
@@ -2976,6 +3244,94 @@ a.vera-list-item:hover {
   font-weight: 400;
 }
 
+.vera-payment-method {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.vera-payment-method > legend {
+  margin-bottom: 10px;
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.vera-payment-method__choice {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 2px solid var(--vera-ink);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: var(--vera-paper-pale);
+  box-shadow: 4px 4px 0 var(--vera-sand-deep);
+}
+
+.vera-payment-method__radio {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  place-items: center;
+  border: 2px solid var(--vera-burnt);
+  border-radius: 50%;
+}
+
+.vera-payment-method__radio::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--vera-burnt);
+  content: "";
+}
+
+.vera-payment-method__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.vera-payment-method__copy strong {
+  color: var(--vera-aubergine);
+  font-size: 16px;
+}
+
+.vera-payment-method__copy small {
+  color: var(--vera-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.vera-payment-method__brands {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.vera-payment-method__brands b {
+  border: 1px solid var(--vera-line);
+  border-radius: 4px;
+  padding: 4px 6px 3px;
+  background: var(--vera-paper);
+  color: var(--vera-ink);
+  font-family: var(--vera-font-label);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.vera-payment-method__trust {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 11px;
+  color: var(--vera-muted);
+  font-size: 12px;
+}
+
 [data-booking-intake-error] {
   color: var(--vera-burnt);
   font-family: var(--vera-font-label);
@@ -3059,9 +3415,278 @@ a.vera-list-item:hover {
   font-size: 13px;
 }
 
+.vera-booking-payment-actions {
+  margin-top: 28px;
+}
+
+.vera-booking-payment-actions .vera-actions {
+  justify-content: flex-start;
+}
+
+.vera-booking-payment-actions > .vera-form-note {
+  margin-top: 11px;
+}
+
 .vera-booking-confirmed {
   position: relative;
   padding: clamp(24px, 5vw, 62px) 0 clamp(30px, 6vw, 80px);
+}
+
+.vera-booking-confirmation-state {
+  min-height: min(650px, 70vh);
+  padding-block: clamp(46px, 7vw, 86px);
+}
+
+.vera-booking-confirmation-state__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(350px, 0.75fr);
+  gap: clamp(42px, 7vw, 100px);
+  align-items: center;
+}
+
+.vera-booking-confirmation-state__copy .vera-display {
+  max-width: 900px;
+  margin-top: 20px;
+}
+
+.vera-booking-confirmation-state .vera-lede {
+  max-width: 720px;
+}
+
+.vera-booking-confirmation-state__actions {
+  justify-content: flex-start;
+  margin-top: 26px;
+}
+
+.vera-booking-confirmation-state__feedback {
+  margin: 14px 0 0;
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.vera-booking-status-ledger {
+  border: 3px solid var(--vera-ink);
+  border-radius: 24px;
+  padding: clamp(24px, 3vw, 36px);
+  background: var(--vera-paper-pale);
+  box-shadow: 9px 9px 0 var(--vera-mustard);
+}
+
+.vera-booking-status-ledger > .vera-card-meta {
+  color: var(--vera-burnt);
+}
+
+.vera-booking-status-ledger > h3 {
+  margin: 8px 0 20px;
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 400;
+}
+
+.vera-booking-status-ledger dl {
+  margin: 0;
+  border-top: 2px solid var(--vera-ink);
+}
+
+.vera-booking-status-ledger dl > div {
+  display: grid;
+  grid-template-columns: minmax(115px, 0.65fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  border-bottom: 1px dashed var(--vera-line);
+  padding: 15px 0;
+}
+
+.vera-booking-status-ledger dt {
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.vera-booking-status-ledger dd {
+  margin: 0;
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: 17px;
+  text-align: right;
+}
+
+.vera-booking-status-ledger dd small {
+  display: block;
+  margin-top: 4px;
+  color: var(--vera-muted);
+  font-family: var(--vera-font-body);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vera-button[aria-busy="true"] {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+body.vera-dialog-open {
+  overflow: hidden;
+}
+
+.vera-payment-dialog[hidden] {
+  display: none;
+}
+
+.vera-payment-dialog {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 44px);
+}
+
+.vera-payment-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(40 16 41 / 82%);
+  cursor: default;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.vera-payment-dialog__panel {
+  position: relative;
+  overflow: auto;
+  width: min(100%, 690px);
+  max-height: calc(100dvh - 32px);
+  border: 3px solid var(--vera-ink);
+  border-radius: 26px;
+  padding: clamp(26px, 5vw, 46px);
+  background: var(--vera-paper-pale);
+  box-shadow: 12px 12px 0 var(--vera-burnt);
+  opacity: 0;
+  transform: translateY(18px) rotate(-0.25deg);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.vera-payment-dialog.is-open .vera-payment-dialog__backdrop,
+.vera-payment-dialog.is-open .vera-payment-dialog__panel {
+  opacity: 1;
+}
+
+.vera-payment-dialog.is-open .vera-payment-dialog__panel {
+  transform: translateY(0) rotate(0);
+}
+
+.vera-payment-dialog__panel:focus {
+  outline: none;
+}
+
+.vera-payment-dialog__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid var(--vera-ink);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--vera-ink);
+  font-family: var(--vera-font-label);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vera-payment-dialog__panel .vera-heading {
+  margin-top: 8px;
+  padding-right: 42px;
+  color: var(--vera-aubergine);
+  font-size: clamp(38px, 7vw, 62px);
+}
+
+.vera-payment-dialog__intro {
+  max-width: 560px;
+  margin: 12px 0 0;
+  color: var(--vera-ink-soft);
+  line-height: 1.65;
+}
+
+.vera-payment-dialog__ledger {
+  display: grid;
+  gap: 0;
+  margin: 28px 0 0;
+  border-block: 2px solid var(--vera-ink);
+}
+
+.vera-payment-dialog__ledger > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.34fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  border-bottom: 1px dashed var(--vera-sand-deep);
+  padding: 16px 0;
+}
+
+.vera-payment-dialog__ledger > div:last-child {
+  border-bottom: 0;
+}
+
+.vera-payment-dialog__ledger dt {
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.vera-payment-dialog__ledger dd {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  text-align: right;
+}
+
+.vera-payment-dialog__ledger dd strong {
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: 19px;
+}
+
+.vera-payment-dialog__ledger dd span {
+  color: var(--vera-muted);
+  font-size: 13px;
+}
+
+.vera-payment-dialog__total dd {
+  color: var(--vera-burnt);
+  font-family: var(--vera-font-display);
+  font-size: 32px;
+}
+
+.vera-payment-dialog__secure {
+  margin: 18px 0 0;
+  color: var(--vera-muted);
+  font-size: 13px;
+}
+
+.vera-payment-dialog__secure span {
+  color: var(--vera-burnt);
+}
+
+.vera-payment-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .vera-booking-confirmed__header {
@@ -3270,12 +3895,19 @@ a.vera-list-item:hover {
 .vera-booking-state[hidden],
 .vera-booking-alert[hidden],
 .vera-booking-processing[hidden],
+.vera-button[data-booking-check-again][hidden],
+.vera-button[data-booking-retry-payment][hidden],
 .vera-button[data-booking-open-waitlist][hidden],
 .vera-booking-waitlist [hidden],
 .vera-contact-form[hidden],
 .vera-contact-success[hidden],
 .vera-account-panel[hidden],
 .vera-account-cancelled[hidden],
+.vera-account-nav button[hidden],
+.vera-section-header[hidden],
+.vera-list[hidden],
+.vera-list-item[hidden],
+.vera-account-empty[hidden],
 .vera-account-nav[hidden],
 [data-account-files-ledger][hidden],
 [data-account-five-year][hidden],
@@ -3475,6 +4107,10 @@ a.vera-list-item:hover {
   margin-top: 8px;
 }
 
+.vera-calendar-grid-shell {
+  position: relative;
+}
+
 .vera-calendar-month-control {
   display: flex;
   align-items: center;
@@ -3514,15 +4150,73 @@ a.vera-list-item:hover {
   cursor: default;
 }
 
-.vera-calendar-timezones {
+.vera-calendar-loading {
+  position: absolute;
+  z-index: 2;
+  inset: 12px 0 0;
   display: flex;
+  min-height: 100%;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
+  margin: 0;
+  border: 2px dashed var(--vera-line);
+  border-radius: 16px;
+  background: rgba(244, 228, 197, 0.9);
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  pointer-events: none;
+  text-align: center;
+  text-transform: uppercase;
 }
 
-.vera-calendar-timezones .vera-filter-pills {
+.vera-calendar-loading[hidden] {
+  display: none;
+}
+
+.vera-calendar-loading__mark {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--vera-line);
+  border-radius: 50%;
+  border-top-color: var(--vera-burnt);
+  animation: vera-calendar-spin 0.8s linear infinite;
+}
+
+.vera-booking-primary-actions {
   justify-content: flex-end;
+}
+
+@keyframes vera-calendar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vera-calendar-day--loading {
+  border-style: dashed;
+  border-color: var(--vera-line);
+  background: #efe0c0;
+  color: #cbb692;
+  cursor: default;
+  animation: vera-calendar-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vera-calendar-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vera-calendar-loading__mark,
+  .vera-calendar-day--loading {
+    animation: none;
+  }
 }
 
 .vera-calendar-weekdays,
@@ -3815,6 +4509,14 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   background: var(--vera-paper-pale);
 }
 
+.vera-stripe-mount[hidden] {
+  display: none;
+}
+
+.vera-payment-method .vera-stripe-mount {
+  margin-top: 14px;
+}
+
 .vera-stripe-mount:has(.StripeElement) {
   border-style: solid;
   border-color: var(--vera-ink);
@@ -3875,6 +4577,106 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   gap: 28px;
 }
 
+.vera-account-dashboard {
+  min-height: clamp(620px, 72vh, 900px);
+  padding-top: clamp(42px, 6vw, 76px);
+  padding-bottom: clamp(72px, 9vw, 124px);
+}
+
+.vera-account-dashboard__heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  border-bottom: 2px solid var(--vera-ink);
+  padding-bottom: 26px;
+}
+
+.vera-account-dashboard__heading .vera-eyebrow {
+  margin: 0 0 9px;
+}
+
+.vera-account-dashboard__heading .vera-heading {
+  margin: 0;
+  font-size: clamp(40px, 5vw, 68px);
+}
+
+.vera-account-dashboard__content {
+  display: grid;
+  gap: 58px;
+  max-width: 1040px;
+  margin-top: 42px;
+}
+
+.vera-account-section-title {
+  margin: 0 0 20px;
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.vera-account-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.vera-account-section-heading .vera-account-section-title,
+.vera-account-section-heading p {
+  margin: 0;
+}
+
+.vera-account-payment-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 24px;
+  border-top: 2px dashed #7a4a5e;
+  padding-top: 18px;
+}
+
+.vera-account-dashboard [data-account-action-required] {
+  margin-top: 16px;
+}
+
+.vera-account-dashboard [data-account-balance-payment] {
+  max-width: 720px;
+  margin-top: 22px;
+}
+
+.vera-account-dashboard [data-account-balance-submit] {
+  margin-top: 18px;
+}
+
+.vera-account-cancelled {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.6fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px dashed var(--vera-line);
+  border-bottom: 1px dashed var(--vera-line);
+  padding: 24px 0;
+}
+
+.vera-account-cancelled h3,
+.vera-account-cancelled p {
+  margin: 0;
+}
+
+.vera-account-cancelled p {
+  margin-top: 5px;
+  color: var(--vera-muted);
+}
+
+.vera-account-history {
+  margin-top: 0;
+}
+
 .vera-upcoming {
   border: var(--vera-border);
   border-radius: 24px;
@@ -3884,7 +4686,8 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   color: var(--vera-paper);
 }
 
-.vera-upcoming h2 {
+.vera-upcoming h2,
+.vera-upcoming h3 {
   margin: 8px 0 0;
   color: var(--vera-mustard);
   font-family: var(--vera-font-display);
@@ -3980,6 +4783,247 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   color: var(--vera-muted);
   font-size: 13px;
   line-height: 1.7;
+}
+
+.vera-card-grid:has(> .vera-reading-card:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.vera-reading-card:only-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 46px;
+}
+
+.vera-reading-card:only-child > .vera-reading-card__symbol,
+.vera-reading-card:only-child > h3,
+.vera-reading-card:only-child > p {
+  grid-column: 1;
+}
+
+.vera-reading-card:only-child > ul,
+.vera-reading-card:only-child > .vera-reading-card__footer {
+  grid-column: 2;
+}
+
+@media (max-width: 900px) {
+  .vera-reading-card:only-child {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+  }
+
+  .vera-reading-card:only-child > ul,
+  .vera-reading-card:only-child > .vera-reading-card__footer {
+    grid-column: 1;
+  }
+}
+
+.vera-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px 0 22px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.vera-check input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--vera-burnt);
+}
+
+.vera-portal-details {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 0;
+}
+
+.vera-portal-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px dashed var(--vera-line);
+  padding-bottom: 12px;
+}
+
+.vera-portal-details dt {
+  color: var(--vera-muted);
+  font-family: var(--vera-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.vera-portal-details dd {
+  margin: 0;
+  text-align: right;
+}
+
+.vera-portal-nav {
+  position: sticky;
+  z-index: 34;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 2px solid #4a2c1c;
+  padding: 10px var(--vera-gutter);
+  background: var(--vera-ink);
+}
+
+.vera-portal-nav__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.vera-portal-nav__links a {
+  border: 1px solid #6a4433;
+  border-radius: 999px;
+  padding: 7px 14px;
+  color: #c9a98a;
+  font-family: var(--vera-font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vera-portal-nav__links a:hover,
+.vera-portal-nav__links a[aria-current="page"] {
+  border-color: var(--vera-mustard);
+  background: var(--vera-mustard);
+  color: var(--vera-ink);
+}
+
+.vera-portal-nav .vera-account-actions {
+  margin-top: 0;
+}
+
+.vera-portal-nav .vera-button {
+  border-color: var(--vera-mustard);
+  background: transparent;
+  color: var(--vera-mustard);
+  box-shadow: none;
+}
+
+.vera-portal-nav .vera-button:hover {
+  background: var(--vera-mustard);
+  color: var(--vera-ink);
+}
+
+.vera-billing-hero .vera-lede {
+  max-width: 680px;
+}
+
+.vera-billing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: clamp(28px, 5vw, 70px);
+  align-items: start;
+}
+
+.vera-billing-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  border: 3px solid var(--vera-ink);
+  border-radius: 22px;
+  padding: 24px 28px;
+  background: var(--vera-aubergine);
+  color: var(--vera-cream);
+  box-shadow: 7px 7px 0 var(--vera-burnt);
+}
+
+.vera-billing-balance h2 {
+  margin: 6px 0;
+  color: var(--vera-mustard);
+  font-family: var(--vera-font-display);
+  font-size: 34px;
+  font-weight: 400;
+}
+
+.vera-billing-balance p {
+  margin: 0;
+  color: #ead8b3;
+  line-height: 1.6;
+}
+
+.vera-billing-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 42px;
+}
+
+.vera-billing-ledger {
+  margin-top: 18px;
+  border-top: 2px solid var(--vera-ink);
+}
+
+.vera-billing-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 1px dashed var(--vera-line);
+  padding: 20px 4px;
+}
+
+.vera-billing-row__mark {
+  color: var(--vera-burnt);
+  font-size: 23px;
+}
+
+.vera-billing-row__main {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(110px, 0.8fr) minmax(130px, 0.8fr);
+  gap: 20px;
+}
+
+.vera-billing-row h3,
+.vera-billing-row p {
+  margin: 4px 0 0;
+}
+
+.vera-billing-row h3,
+.vera-billing-row > strong {
+  color: var(--vera-aubergine);
+  font-family: var(--vera-font-display);
+  font-size: 18px;
+}
+
+.vera-billing-empty {
+  margin-top: 18px;
+}
+
+.vera-billing-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.vera-billing-pagination a[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.vera-billing-layout > .vera-sidebar-card .vera-card-meta {
+  display: block;
+  margin-top: 12px;
+  color: var(--vera-burnt);
+  text-decoration: none;
 }
 
 .vera-account-nav {
@@ -4144,6 +5188,50 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   max-width: 700px;
 }
 
+.vera-brand-mark {
+  margin: 0;
+}
+
+.vera-brand-mark img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 64px;
+}
+
+.vera-account-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  border: var(--vera-border);
+  border-radius: var(--vera-radius);
+  padding: 34px 30px;
+  background: var(--vera-paper);
+  box-shadow: 7px 7px 0 var(--vera-sand-deep);
+}
+
+.vera-account-empty__symbol {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 2px solid var(--vera-ink);
+  border-radius: 50%;
+  background: var(--vera-mustard);
+  color: var(--vera-aubergine);
+  font-size: 26px;
+}
+
+.vera-account-empty h2 {
+  margin: 6px 0 0;
+}
+
+.vera-account-empty p {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--vera-ink-soft);
+}
+
 .vera-placeholder-page__symbol {
   display: grid;
   width: 130px;
@@ -4297,6 +5385,35 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
 }
 
 @media (max-width: 900px) {
+  .vera-account-dashboard__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .vera-account-cancelled {
+    grid-template-columns: 1fr auto;
+  }
+
+  .vera-account-cancelled > .vera-card-meta {
+    grid-column: 1 / -1;
+  }
+
+  .vera-booking-confirmation-state__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vera-booking-status-ledger {
+    width: min(100%, 620px);
+  }
+
+  .vera-billing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vera-billing-layout > .vera-sidebar-card {
+    max-width: 560px;
+  }
+
   .vera-about-home,
   .vera-testimonials-home,
   .vera-letter-band {
@@ -4419,14 +5536,6 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     flex-direction: column;
   }
 
-  .vera-calendar-timezones {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .vera-calendar-timezones .vera-filter-pills {
-    justify-content: flex-start;
-  }
 
   .vera-writing-hero,
   .vera-account-room-hero__copy {
@@ -4441,6 +5550,29 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .vera-portal-nav {
+    align-items: center;
+    gap: 10px;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .vera-portal-nav__links {
+    min-width: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .vera-portal-nav .vera-account-actions {
+    flex: 0 0 auto;
+  }
+
+  .vera-portal-nav .vera-button {
+    padding: 7px 14px;
+    font-size: 11px;
   }
 
   .vera-account-nav > div {
@@ -4480,8 +5612,114 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
 }
 
 @media (max-width: 640px) {
+  .vera-account-dashboard {
+    min-height: 0;
+  }
+
+  .vera-account-dashboard__heading .vera-button {
+    width: 100%;
+  }
+
+  .vera-account-section-heading,
+  .vera-account-payment-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .vera-account-cancelled {
+    grid-template-columns: 1fr;
+  }
+
+  .vera-account-cancelled > .vera-card-meta {
+    grid-column: auto;
+  }
+
+  .vera-account-cancelled .vera-button {
+    width: 100%;
+  }
+
   :root {
     --vera-gutter: 22px;
+  }
+
+  .vera-input,
+  .vera-select,
+  .vera-textarea {
+    font-size: 16px;
+  }
+
+  .vera-payment-dialog {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .vera-booking-confirmation-state {
+    padding-block: 38px 48px;
+  }
+
+  .vera-booking-confirmation-state__grid {
+    gap: 34px;
+  }
+
+  .vera-booking-status-ledger {
+    border-radius: 20px;
+    padding: 22px 18px;
+    box-shadow: 6px 6px 0 var(--vera-mustard);
+  }
+
+  .vera-booking-status-ledger dl > div {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .vera-payment-dialog__panel {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 20px;
+    padding: 30px 20px 22px;
+    box-shadow: 6px 6px 0 var(--vera-burnt);
+  }
+
+  .vera-payment-dialog__panel .vera-heading {
+    font-size: 38px;
+  }
+
+  .vera-payment-dialog__ledger > div {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .vera-payment-dialog__actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .vera-payment-dialog__actions .vera-button {
+    width: 100%;
+  }
+
+  .vera-billing-balance {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 22px 20px;
+  }
+
+  .vera-billing-balance .vera-button {
+    width: 100%;
+  }
+
+  .vera-billing-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .vera-billing-row__main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .vera-billing-row > strong {
+    grid-column: 2;
   }
 
   .vera-site::before {
@@ -4495,6 +5733,10 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
 
   .vera-brand__logo {
     height: 38px;
+  }
+
+  .vera-brand-mark img {
+    height: 52px;
   }
 
   .vera-hero {
@@ -4589,12 +5831,23 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
   }
 
   .vera-field-row,
+  .vera-field-row--three,
   .vera-choice-grid,
   .vera-contact-grid,
   .vera-method-grid,
   .vera-calendar-slots,
   .vera-fact-grid {
     grid-template-columns: 1fr;
+  }
+
+  .vera-payment-method__choice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .vera-payment-method__brands {
+    width: 100%;
+    margin-left: 31px;
   }
 
   .vera-footer__grid {
@@ -4783,6 +6036,21 @@ body:not([data-builder-edit-mode]) [data-calendly-preview][data-live-runtime] {
 
   .vera-contact-layout .vera-contact-grid {
     grid-template-columns: 1fr;
+  }
+
+  .vera-support-table th,
+  .vera-support-table td {
+    display: block;
+    width: auto;
+    padding: 18px 20px;
+  }
+
+  .vera-support-table th {
+    padding-bottom: 0;
+  }
+
+  .vera-support-table td {
+    padding-top: 8px;
   }
 
   .vera-closed-works article {

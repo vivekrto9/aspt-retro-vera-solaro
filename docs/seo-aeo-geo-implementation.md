@@ -194,6 +194,9 @@ The disallow rules do not replace authentication or route guards.
 ### `/sitemap.xml`
 
 - lists the repository's declared public routes;
+- appends the published `posts` slugs the middleware resolves at request time, so no
+  article URL is ever declared in `PUBLIC_ROUTES`, and de-duplicates the result;
+- still renders the static routes when the content store is unreachable;
 - emits one URL per active locale;
 - XML-escapes URLs;
 - emits an ISO `lastmod` value;
@@ -211,7 +214,9 @@ The disallow rules do not replace authentication or route guards.
 1. Implement the route using the closest existing page/layout pattern.
 2. Supply route-specific title, description, canonical path, robots, and social
    metadata through the existing `seo` prop or Content Studio fields.
-3. Add the route to `PUBLIC_ROUTES` only when it is canonical and indexable.
+3. Add the route to `PUBLIC_ROUTES` only when it is canonical and indexable. Articles are
+   never added there: `/writing/[slug]` URLs reach the sitemap and `llms.txt` through the
+   published `posts` collection.
 4. Add it to `llms.txt` only when it is useful, stable, and public.
 5. Add FAQ, Article, or Breadcrumb JSON-LD only when matching content is visible.
 6. Do not add private, authenticated, operational, preview-only, or `noindex`

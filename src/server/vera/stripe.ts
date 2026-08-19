@@ -50,6 +50,67 @@ const providerError = (status: number, payload: Record<string, unknown>) => {
   return { message: "Stripe could not prepare this payment.", code: code.slice(0, 120) };
 };
 
+// Hosted Stripe Checkout, the way the base template takes payment: the session
+// is created with the secret key alone and the reader is sent to Stripe's own
+// page, so no publishable key ever has to reach the browser.
+export const createVeraCheckoutSession = async ({
+  env,
+  bookingId,
+  amountCents,
+  currency,
+  productName,
+  successUrl,
+  cancelUrl,
+  customerEmail,
+  idempotencyKey,
+  attemptId,
+}: {
+  env: VeraEnv;
+  bookingId: string;
+  amountCents: number;
+  currency: string;
+  productName: string;
+  successUrl: string;
+  cancelUrl: string;
+  customerEmail?: string;
+  idempotencyKey: string;
+  attemptId: string;
+}) => {
+  const body = new URLSearchParams({
+    mode: "payment",
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": currency.toLowerCase(),
+    "line_items[0][price_data][unit_amount]": String(amountCents),
+    "line_items[0][price_data][product_data][name]": productName,
+    "metadata[booking_id]": bookingId,
+    "metadata[attempt_id]": attemptId,
+    "payment_intent_data[metadata][booking_id]": bookingId,
+    "payment_intent_data[metadata][attempt_id]": attemptId,
+  });
+  if (customerEmail) body.set("customer_email", customerEmail);
+  const result = await stripeRequest({
+    env,
+    path: "/v1/checkout/sessions",
+    idempotencyKey,
+    body,
+  });
+  if (!result.ok) return result;
+  const session = result.payload;
+  const url = safeString(session.url);
+  const id = safeString(session.id);
+  if (!url || !id) {
+    return { ok: false as const, status: 502, message: "Stripe returned an invalid checkout session.", missingSecretNames: [] };
+  }
+  return {
+    ok: true as const,
+    status: 200,
+    message: "Stripe checkout session is ready.",
+    checkout: { sessionId: id, url, amountCents, currency },
+  };
+};
+
 const stripeRequest = async ({
   env,
   path,
@@ -111,6 +172,96 @@ const retrievePaymentIntent = async (env: VeraEnv, paymentIntentId: string) =>
     path: `/v1/payment_intents/${encodeURIComponent(paymentIntentId)}`,
     method: "GET",
   });
+
+// Hosted checkout for a booking: same access guard and amount quote as the
+// inline intent path, but the reader is handed a Stripe-hosted page instead of
+// card fields, so no publishable key is needed.
+export const createStripeCheckoutForBooking = async ({
+  env,
+  request,
+  bookingId,
+  manageToken,
+  kind,
+  origin,
+}: {
+  env: VeraEnv;
+  request: Request;
+  bookingId: string;
+  manageToken: string;
+  kind: VeraPaymentKind;
+  origin: string;
+}) => {
+  const [secret, webhookSecret] = await Promise.all([
+    stripeSecret(env),
+    resolveSecretBinding(env, "STRIPE_WEBHOOK_SECRET"),
+  ]);
+  const missingSecretNames = [
+    ...(secret ? [] : ["STRIPE_SECRET_KEY"]),
+    ...(webhookSecret ? [] : ["STRIPE_WEBHOOK_SECRET"]),
+  ];
+  if (missingSecretNames.length > 0) {
+    return {
+      ok: false as const,
+      status: 503,
+      message: "Stripe checkout and its signed webhook must be configured before payment can open.",
+      missingSecretNames,
+    };
+  }
+  await expireStaleVeraBookings(env);
+  const access = await getVeraBookingAccess({ env, request, bookingId, manageToken, requireCsrf: true });
+  if (!access.ok) return access;
+  const booking = access.booking;
+  if (!(["deposit", "full", "balance"] as string[]).includes(kind)) {
+    return { ok: false as const, status: 400, message: "Payment kind is invalid." };
+  }
+  const amountCents = quoteBookingPayment({
+    paymentState: safeString(booking.payment_state),
+    balanceCents: Number(booking.balance_cents),
+    kind,
+  });
+  if (amountCents < 50) {
+    return { ok: false as const, status: 409, message: "No eligible Stripe balance remains for this payment kind." };
+  }
+  // The attempt row is what the webhook matches on, exactly as the base template
+  // does: without it a completed checkout has nothing local to mark paid.
+  const idempotencyKey = `vera-checkout:${bookingId}:${kind}:${amountCents}`;
+  const existingAttempt = await first(env, `SELECT * FROM ${tables.paymentAttempts}
+    WHERE idempotency_key = ?`, [idempotencyKey]);
+  const attemptId = safeString(existingAttempt?.id) || secureId("vpay");
+  const attemptNow = nowIso();
+  if (!existingAttempt) {
+    await run(env, `INSERT INTO ${tables.paymentAttempts}
+      (id, booking_id, kind, provider, provider_payment_intent_id, idempotency_key,
+       amount_cents, currency, status, last_error_code, created_at, updated_at)
+      VALUES (?, ?, ?, 'stripe', NULL, ?, ?, ?, 'creating', NULL, ?, ?)`, [
+      attemptId, bookingId, kind, idempotencyKey, amountCents,
+      safeString(booking.currency).toUpperCase(), attemptNow, attemptNow,
+    ]);
+  }
+
+  const session = await createVeraCheckoutSession({
+    env,
+    bookingId,
+    amountCents,
+    currency: safeString(booking.currency) || "USD",
+    productName: safeString(booking.service_name) || "Vera Solaro sitting",
+    successUrl: `${origin}/booking/${encodeURIComponent(bookingId)}/confirmation?token=${encodeURIComponent(manageToken)}&payment=processing`,
+    cancelUrl: `${origin}/booking/${encodeURIComponent(bookingId)}/confirmation?token=${encodeURIComponent(manageToken)}&payment=cancelled`,
+    customerEmail: safeString(booking.email) || undefined,
+    idempotencyKey,
+    attemptId,
+  });
+  if (!session.ok) {
+    await run(env, `UPDATE ${tables.paymentAttempts}
+      SET status = 'failed', last_error_code = 'checkout_session_failed', updated_at = ?
+      WHERE id = ?`, [nowIso(), attemptId]).catch(() => undefined);
+    return session;
+  }
+  await run(env, `UPDATE ${tables.paymentAttempts}
+    SET status = 'processing', last_error_code = NULL, updated_at = ?
+    WHERE id = ? AND status = 'creating'`, [nowIso(), attemptId]);
+  return session;
+};
 
 export const createStripePaymentIntent = async ({
   env,
@@ -454,13 +605,13 @@ const processPaymentSucceeded = async ({
           ON service.slug = booking.service_slug WHERE booking.id = ?`, [bookingId]);
       if (current) {
         const origin = safeString(env.ASTROPAGES_SITE_URL) || safeString(env.SITE_ORIGIN) || safeString(env.SITE_URL);
-        let accountUrl = "";
+        let confirmationUrl = "";
         try {
-          accountUrl = new URL("/account", origin).toString();
+          confirmationUrl = new URL(`/booking/${encodeURIComponent(bookingId)}/confirmation`, origin).toString();
         } catch {
-          accountUrl = "";
+          confirmationUrl = "";
         }
-        if (accountUrl) {
+        if (confirmationUrl) {
           await enqueueVeraEmail({
             env,
             eventType: "vera.booking.confirmed",
@@ -472,9 +623,7 @@ const processPaymentSucceeded = async ({
               bookingNumber: safeString(current.booking_number),
               serviceName: safeString(current.service_name),
               scheduledDateTime: safeString(current.selected_start_at),
-              balanceAmount: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
-                .format(Number(current.balance_cents) / 100),
-              accountUrl,
+              confirmationUrl,
             },
             idempotencyKey: `booking-confirmed:${bookingId}`,
           }).catch(() => undefined);
@@ -631,6 +780,60 @@ export const processStripeWebhook = async ({
   const payloadHash = await sha256Hex(body);
   if (["refund.created", "refund.updated", "refund.failed"].includes(eventType)) {
     return { ...(await processRefundEvent({ env, eventId, eventType, refund: object, payloadHash })), missingSecretNames: [] };
+  }
+  // Match the Single Western checkout contract: the signed Checkout Session is
+  // authoritative, so payment does not depend on PaymentIntent webhook ordering.
+  if (eventType.startsWith("checkout.session.")) {
+    const sessionAttemptId = safeString(parseObject(object.metadata).attempt_id);
+    const sessionIntentId = safeString(object.payment_intent);
+    if (sessionAttemptId && paymentIntentPattern.test(sessionIntentId)) {
+      await run(env, `UPDATE ${tables.paymentAttempts}
+        SET provider_payment_intent_id = ?, updated_at = ?
+        WHERE id = ? AND (provider_payment_intent_id IS NULL OR provider_payment_intent_id = ?)`, [
+        sessionIntentId, nowIso(), sessionAttemptId, sessionIntentId,
+      ]);
+    }
+    const attempt = sessionAttemptId
+      ? await first(env, `SELECT * FROM ${tables.paymentAttempts} WHERE id = ?`, [sessionAttemptId])
+      : null;
+    const paidSession = ["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(eventType) &&
+      safeString(object.payment_status) === "paid";
+    const sessionMatchesAttempt = Boolean(
+      attempt &&
+      safeString(attempt.booking_id) === safeString(parseObject(object.metadata).booking_id) &&
+      Number(attempt.amount_cents) === Number(object.amount_total) &&
+      safeString(attempt.currency).toUpperCase() === safeString(object.currency).toUpperCase(),
+    );
+    if (paidSession && attempt && sessionMatchesAttempt && paymentIntentPattern.test(sessionIntentId)) {
+      const intent = {
+        id: sessionIntentId,
+        status: "succeeded",
+        amount_received: Number(object.amount_total),
+        currency: safeString(object.currency),
+      };
+        return {
+          ...(await processPaymentSucceeded({ env, eventId, eventType, intent, attempt, payloadHash })),
+          missingSecretNames: [],
+        };
+    }
+    if (
+      ["checkout.session.expired", "checkout.session.async_payment_failed"].includes(eventType) &&
+      attempt
+    ) {
+      await recordNonSuccessPaymentEvent({
+        env,
+        eventId,
+        eventType,
+        paymentIntentId: sessionIntentId,
+        attempt,
+        payloadHash,
+        attemptStatus: "failed",
+        errorCode: eventType === "checkout.session.expired"
+          ? "checkout_session_expired"
+          : "checkout_session_async_payment_failed",
+      });
+    }
+    return { ok: true as const, status: 200, message: "Stripe checkout session recorded.", missingSecretNames: [] };
   }
   if (!["payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.processing", "payment_intent.canceled"].includes(eventType)) {
     return { ok: true as const, status: 200, message: "Stripe event ignored.", missingSecretNames: [] };

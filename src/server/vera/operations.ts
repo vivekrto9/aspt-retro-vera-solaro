@@ -9,6 +9,8 @@ import {
   calendlyRuntimeKey,
   normalizeVeraServiceSlug,
   VERA_MODES,
+  SHARED_CALENDLY_RUNTIME_KEY,
+  resolveCalendlyUri,
   VERA_SERVICE_SLUGS,
   type VeraMode,
   type VeraServiceSlug,
@@ -55,7 +57,7 @@ const stripeWebhookEvents = [
 const calendlyWebhookEvents = ["invitee.created", "invitee.canceled"] as const;
 
 const expectedServices = new Map<string, { name: string; durationMinutes: number; priceCents: number }>([
-  ["natal-hour", { name: "The Natal Hour", durationMinutes: 90, priceCents: 24_000 }],
+  ["natal-hour", { name: "The Natal Hour", durationMinutes: 30, priceCents: 24_000 }],
   ["year-ahead", { name: "The Year Ahead", durationMinutes: 120, priceCents: 38_500 }],
   ["two-charts", { name: "Two Charts", durationMinutes: 120, priceCents: 42_000 }],
 ]);
@@ -368,13 +370,13 @@ const validateLiveCalendlyMappings = async ({
   durationByService,
 }: {
   env: VeraEnv;
-  mappings: Array<{ serviceSlug: string; eventTypeUri: string }>;
+  mappings: Array<{ serviceSlug: string; eventTypeUri: string; sharedEventType?: boolean }>;
   durationByService: Map<string, number>;
 }) => {
   const fingerprint = await sha256Hex(JSON.stringify(mappings.map((mapping) => [
     mapping.serviceSlug,
     mapping.eventTypeUri,
-    durationByService.get(mapping.serviceSlug) || 0,
+    mapping.sharedEventType ? 0 : durationByService.get(mapping.serviceSlug) || 0,
   ])));
   const cacheKey = `vera:readiness:calendly:${fingerprint}`;
   const cache = env.SESSION as {
@@ -398,10 +400,13 @@ const validateLiveCalendlyMappings = async ({
     validateCalendlyMapping({
       env,
       eventTypeUri: mapping.eventTypeUri,
-      durationMinutes: durationByService.get(mapping.serviceSlug) || 0,
+      durationMinutes: mapping.sharedEventType
+        ? 0
+        : durationByService.get(mapping.serviceSlug) || 0,
     })
   ));
-  const ready = validations.length === 6 && validations.every((result) => result.ok);
+  const ready = validations.length === VERA_SERVICE_SLUGS.length &&
+    validations.every((result) => result.ok);
   try {
     await cache?.put?.(cacheKey, ready ? "ready" : "blocked", {
       expirationTtl: ready ? 300 : 60,
@@ -434,24 +439,33 @@ export const listVeraOperationsReadiness = async (env: VeraEnv) => {
   }
   const runtimeMap = new Map(runtime.map((row) => [safeString(row.key), safeString(row.value)]));
   const runtimeValue = (key: string) => runtimeMap.get(key) || (!generated ? safeString(env[key]) : "");
-  const resolved = mappings.map((row) => ({
-    serviceSlug: safeString(row.service_slug),
-    mode: safeString(row.mode),
-    eventTypeUri: runtimeMap.get(calendlyRuntimeKey(
+  const sharedCalendlyUri = runtimeValue(SHARED_CALENDLY_RUNTIME_KEY);
+  const resolved = mappings.filter((row) => safeString(row.mode) === "call").map((row) => {
+    const perService = runtimeMap.get(calendlyRuntimeKey(
       safeString(row.service_slug) as VeraServiceSlug,
       safeString(row.mode) as VeraMode,
-    )) || safeString(row.event_type_uri),
-    active: Number(row.active) === 1,
-    updatedAt: safeString(row.updated_at),
-  }));
+    ));
+    return {
+      serviceSlug: safeString(row.service_slug),
+      mode: safeString(row.mode),
+      eventTypeUri: resolveCalendlyUri({
+        perService,
+        shared: sharedCalendlyUri,
+        rowValue: safeString(row.event_type_uri),
+      }),
+      // Only a sitting with its own event type is held to that sitting's length.
+      sharedEventType: !safeString(perService) && Boolean(sharedCalendlyUri),
+      active: Number(row.active) === 1,
+      updatedAt: safeString(row.updated_at),
+    };
+  });
+  // Sittings are booked one way now, so only the call mapping has to be live.
   const expectedMappingKeys = new Set(
-    VERA_SERVICE_SLUGS.flatMap((serviceSlug) =>
-      VERA_MODES.map((mode) => `${serviceSlug}:${mode}`)
-    ),
+    VERA_SERVICE_SLUGS.map((serviceSlug) => `${serviceSlug}:call`),
   );
   const actualMappingKeys = new Set(resolved.map((row) => `${row.serviceSlug}:${row.mode}`));
-  const calendlyRuntimeKeys = VERA_SERVICE_SLUGS.flatMap((serviceSlug) =>
-    VERA_MODES.map((mode) => calendlyRuntimeKey(serviceSlug, mode))
+  const calendlyRuntimeKeys = VERA_SERVICE_SLUGS.map((serviceSlug) =>
+    calendlyRuntimeKey(serviceSlug, "call")
   );
   const calendlyReady = schemaReady && resolved.length === expectedMappingKeys.size &&
     [...expectedMappingKeys].every((key) => actualMappingKeys.has(key)) &&

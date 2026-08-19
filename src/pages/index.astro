@@ -1,4 +1,6 @@
 ---
+import { isOfferedReading } from "../data/vera/offered-readings.ts";
+import { getBlogLocale, listBlogPosts } from "../data/blog-posts.ts";
 import { loadPublicPageContent } from "../builder/public-page.ts";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 import VeraImage from "../components/vera/VeraImage.astro";
@@ -9,25 +11,20 @@ export const prerender = false;
 const page = await loadPublicPageContent(Astro, "home");
 const { content, builderEdit, chromeEdit } = page;
 
-const readings = [1, 2, 3];
+const readings = [1, 2, 3].filter(isOfferedReading);
 const testimonials = [1, 2, 3];
-const journal = [
-  {
-    index: 1,
-    href: "/writing/saturn-is-not-punishing-you",
-    src: "/_assets/aliases/ephemeris-pages/ephemeris-pages.webp",
-  },
-  {
-    index: 2,
-    href: "/writing",
-    src: "/_assets/aliases/brass-protractor/brass-protractor.webp",
-  },
-  {
-    index: 3,
-    href: "/writing",
-    src: "/_assets/aliases/night-sky/night-sky.webp",
-  },
+const locale = getBlogLocale(Astro.request.url);
+const { posts } = await listBlogPosts(locale);
+const journalFallbackImages = [
+  "/_assets/aliases/ephemeris-pages/ephemeris-pages.webp",
+  "/_assets/aliases/brass-protractor/brass-protractor.webp",
+  "/_assets/aliases/night-sky/night-sky.webp",
 ];
+const journal = posts.slice(0, 3).map((post, index) => ({
+  ...post,
+  src: post.image?.src || journalFallbackImages[index % journalFallbackImages.length],
+  imageAlt: post.image?.alt || post.title,
+}));
 ---
 
 <VeraFrame {...page} currentPath="/">
@@ -188,41 +185,35 @@ const journal = [
     </div>
   </section>
 
-  <section class="vera-section vera-section--paper" id="journal">
-    <header class="vera-section-header">
-      <div>
-        <p class="vera-eyebrow" {...builderEdit("journal_eyebrow")}>{content.journal_eyebrow}</p>
-        <h2 class="vera-heading" {...builderEdit("journal_title")}>{content.journal_title}</h2>
-      </div>
-      <a class="vera-button vera-button--paper vera-button--small" href="/writing" {...builderEdit("journal_cta")}>
-        {content.journal_cta}
-      </a>
-    </header>
-    <div class="vera-card-grid">
-      {journal.map((item) => (
-        <a class="vera-journal-card" href={item.href}>
-          <VeraImage
-            src={item.src}
-            alt={content[`journal_${item.index}_alt`]}
-            altField={`journal_${item.index}_alt`}
-            edit={builderEdit}
-          />
-          <div class="vera-journal-card__copy">
-            <div class="vera-card-meta" {...builderEdit(`journal_${item.index}_meta`)}>
-              {content[`journal_${item.index}_meta`]}
-            </div>
-            <h3 {...builderEdit(`journal_${item.index}_title`)}>
-              {content[`journal_${item.index}_title`]}
-            </h3>
-            <p {...builderEdit(`journal_${item.index}_body`)}>
-              {content[`journal_${item.index}_body`]}
-            </p>
-          </div>
+  {journal.length > 0 ? (
+    <section class="vera-section vera-section--paper" id="journal">
+      <header class="vera-section-header">
+        <div>
+          <p class="vera-eyebrow" {...builderEdit("journal_eyebrow")}>{content.journal_eyebrow}</p>
+          <h2 class="vera-heading" {...builderEdit("journal_title")}>{content.journal_title}</h2>
+        </div>
+        <a class="vera-button vera-button--paper vera-button--small" href="/writing" {...builderEdit("journal_cta")}>
+          {content.journal_cta}
         </a>
-      ))}
-    </div>
-  </section>
+      </header>
+      <div class="vera-card-grid">
+        {journal.map((item) => (
+          <a class="vera-journal-card" href={item.href}>
+            <VeraImage src={item.src} alt={item.imageAlt} />
+            <div class="vera-journal-card__copy">
+              <div class="vera-card-meta">{item.meta}</div>
+              <h3>{item.title}</h3>
+              <p>{item.excerpt}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  ) : null}
 
+  {/* The monthly letter is not being offered; this signup band is kept out of
+      the page until the newsletter is actually run again. */}
+  {/*
   <section class="vera-section vera-section--burnt vera-letter-band" id="letters">
     <div class="vera-letter-band__grid">
       <div>
@@ -278,4 +269,5 @@ const journal = [
       </form>
     </div>
   </section>
+  */}
 </VeraFrame>

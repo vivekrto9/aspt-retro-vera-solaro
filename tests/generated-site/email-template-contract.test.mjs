@@ -160,7 +160,10 @@ test("email manifest enumerates every editable template seeded by migrations", (
   const manifest = JSON.parse(read("astropages/email-templates.manifest.json"));
   const sqlite = new DatabaseSync(":memory:");
   for (const migration of readdirSync(new URL("migrations/", root)).filter((name) => name.endsWith(".sql")).sort()) {
+    // D1 applies each migration file inside a single transaction.
+    sqlite.exec("BEGIN");
     sqlite.exec(read(`migrations/${migration}`));
+    sqlite.exec("COMMIT");
   }
   const rows = sqlite.prepare(
     "SELECT key, display_name, event_type, audience, locale, required_variables_json FROM ap_email_templates ORDER BY key",
@@ -189,15 +192,24 @@ test("email manifest enumerates every editable template seeded by migrations", (
 test("Vera template seeds use the exact warm-source email and account wording", () => {
   const sqlite = new DatabaseSync(":memory:");
   for (const migration of readdirSync(new URL("migrations/", root)).filter((name) => name.endsWith(".sql")).sort()) {
+    // D1 applies each migration file inside a single transaction.
+    sqlite.exec("BEGIN");
     sqlite.exec(read(`migrations/${migration}`));
+    sqlite.exec("COMMIT");
   }
 
   const expected = {
+    vera_booking_action_required_en: {
+      subject: "Payment confirmed — scheduling assistance required",
+      preheader: "Your payment is safe and your selected time remains protected.",
+      html_body: `<p>Dear {{customerName}},</p><p>Your payment for <strong>{{serviceName}}</strong> is confirmed.</p><p>Calendly could not create the appointment automatically for <strong>{{selectedSlot}}</strong>, but that selected time remains protected in Vera's booking system.</p><p>Do not pay or book again.</p><p>Reference<br>{{bookingNumber}}</p><p><a href="{{confirmationUrl}}">View your booking status</a></p><p>Vera will help finalize the appointment once the scheduling connection is corrected.</p>`,
+      text_body: "Dear {{customerName}}, Your payment for {{serviceName}} is confirmed. Calendly could not create the appointment automatically for {{selectedSlot}}, but that selected time remains protected in Vera's booking system. Do not pay or book again. Reference {{bookingNumber}} View your booking status {{confirmationUrl}} Vera will help finalize the appointment once the scheduling connection is corrected.",
+    },
     vera_booking_confirmed_en: {
-      subject: "Your sitting is held — {{scheduledDateTime}}",
-      preheader: "The hour is yours.",
-      html_body: `<p>Dear {{customerName}}, thank you — it's held.</p><p>Your {{serviceName}} is held for <strong>{{scheduledDateTime}}</strong>.</p><p>Reference<br>{{bookingNumber}}</p><p>Balance after<br>{{balanceAmount}}</p><p><a href="{{accountUrl}}">Manage this sitting →</a></p>`,
-      text_body: `Dear {{customerName}}, thank you — it's held. Your {{serviceName}} is held for {{scheduledDateTime}}. Reference {{bookingNumber}} Balance after {{balanceAmount}} Manage this sitting → {{accountUrl}}`,
+      subject: "Your {{serviceName}} sitting is confirmed",
+      preheader: "Your payment is verified and your Calendly appointment is confirmed.",
+      html_body: `<p>Dear {{customerName}},</p><p>Your payment is verified and your <strong>{{serviceName}}</strong> sitting is confirmed for <strong>{{scheduledDateTime}}</strong>.</p><p>Reference<br>{{bookingNumber}}</p><p><a href="{{confirmationUrl}}">Open appointment details</a></p><p>You can review, reschedule or cancel the appointment from its secure details page.</p>`,
+      text_body: `Dear {{customerName}}, Your payment is verified and your {{serviceName}} sitting is confirmed for {{scheduledDateTime}}. Reference {{bookingNumber}} Open appointment details {{confirmationUrl}} You can review, reschedule or cancel the appointment from its secure details page.`,
     },
     vera_booking_rescheduled_en: {
       subject: "Your sitting now stands at {{scheduledDateTime}}.",
@@ -290,4 +302,53 @@ test("Vera template seeds use the exact warm-source email and account wording", 
 
   const serialized = JSON.stringify(rows);
   assert.doesNotMatch(serialized, /Hello \{\{|Confirm your subscription|Your booking record has been updated|A private gift code is ready|private intake|is ready in your private account/i);
+});
+
+test("the customer password reset note carries the link, the expiry and a way out", () => {
+  const sqlite = new DatabaseSync(":memory:");
+  for (const migration of readdirSync(new URL("migrations/", root)).filter((name) => name.endsWith(".sql")).sort()) {
+    sqlite.exec("BEGIN");
+    sqlite.exec(read(`migrations/${migration}`));
+    sqlite.exec("COMMIT");
+  }
+
+  const row = sqlite.prepare(
+    "SELECT subject, preheader, html_body, text_body, required_variables_json FROM ap_email_templates WHERE key = 'customer_password_reset_en'",
+  ).get();
+
+  assert.equal(row.subject, "Find your way back.");
+  assert.equal(row.preheader, "One hour, one link, and your current password works until you use it.");
+  assert.deepEqual(JSON.parse(row.required_variables_json), ["customerName", "resetUrl"]);
+
+  // The renderer refuses any token that is not declared, so the body may only ever
+  // reach for the two the aggregator actually sends.
+  for (const body of [row.html_body, row.text_body]) {
+    assert.match(body, /\{\{customerName\}\}/);
+    assert.match(body, /\{\{resetUrl\}\}/);
+    assert.deepEqual(
+      [...new Set([...body.matchAll(/\{\{(\w+)\}\}/g)].map((match) => match[1]))].sort(),
+      ["customerName", "resetUrl"],
+    );
+    // Reset mail without an expiry and a "not you" escape hatch is the old bare note.
+    assert.match(body, /One hour from the moment this was sent/);
+    assert.match(body, /do nothing whatsoever/);
+    assert.match(body, /Vera/);
+  }
+
+  // The provider sends html_body verbatim, so it has to be a whole document rather
+  // than the bare paragraphs it used to be.
+  assert.match(row.html_body, /^<!doctype html>/i);
+  assert.match(row.html_body, /<meta name="viewport"/);
+  assert.match(row.html_body, /role="presentation"/);
+  assert.match(row.html_body, /<a href="\{\{resetUrl\}\}"[^>]*>/);
+  // A button alone strands anyone whose client blocks it, so the raw link stays too.
+  assert.ok(row.html_body.split("{{resetUrl}}").length - 1 >= 2);
+  // Retro palette, inline: cream ground, ink border, burnt call to action.
+  for (const colour of ["#f4e4c5", "#fffdf6", "#2c1810", "#c6491f", "#3b1e36"]) {
+    assert.ok(row.html_body.includes(colour), `html_body must carry ${colour}`);
+  }
+  // Nothing injects the stored preheader, so the document carries it itself.
+  assert.ok(row.html_body.includes(row.preheader));
+  // The plain-text alternative stays plain.
+  assert.doesNotMatch(row.text_body, /<[a-z]/i);
 });

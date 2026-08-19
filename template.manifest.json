@@ -195,7 +195,7 @@
       "vera_booking/main",
       "vera_booking_payment/main",
       "vera_writing/main",
-      "vera_article/saturn",
+      "vera_article/main",
       "vera_about/main",
       "vera_questions/main",
       "vera_contact/main",
@@ -280,13 +280,31 @@
       },
       {
         "method": "GET",
+        "path": "/booking/details",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/booking/[id]/payment",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/booking/[id]/confirmation",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
         "path": "/writing",
         "status": "implemented",
         "capabilityKey": "content-seo-localization"
       },
       {
         "method": "GET",
-        "path": "/writing/saturn-is-not-punishing-you",
+        "path": "/writing/[slug]",
         "status": "implemented",
         "capabilityKey": "content-seo-localization"
       },
@@ -317,6 +335,18 @@
       {
         "method": "GET",
         "path": "/account",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/account/profile",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/account/billing",
         "status": "implemented",
         "capabilityKey": "customer-auth"
       },

@@ -15,7 +15,7 @@
       "locale": "en",
       "variables": [
         "customerName",
-        "verificationUrl"
+        "accountUrl"
       ]
     },
     {
@@ -52,7 +52,15 @@
       "eventType": "vera.booking.confirmed",
       "audience": "customer",
       "locale": "en",
-      "variables": ["customerName", "bookingNumber", "serviceName", "scheduledDateTime", "balanceAmount", "accountUrl"]
+      "variables": ["customerName", "bookingNumber", "serviceName", "scheduledDateTime", "confirmationUrl"]
+    },
+    {
+      "key": "vera_booking_action_required_en",
+      "displayName": "Vera scheduling action required",
+      "eventType": "vera.booking.scheduling_action_required",
+      "audience": "customer",
+      "locale": "en",
+      "variables": ["customerName", "bookingNumber", "serviceName", "selectedSlot", "confirmationUrl"]
     },
     {
       "key": "vera_booking_rescheduled_en",

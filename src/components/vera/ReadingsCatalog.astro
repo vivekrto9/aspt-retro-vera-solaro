@@ -1,4 +1,5 @@
 ---
+import { isOfferedReading } from "../../data/vera/offered-readings.ts";
 import VeraImage from "./VeraImage.astro";
 
 type Edit = (field: string) => Record<string, unknown>;
@@ -17,7 +18,7 @@ const services = [
   { index: 1, slug: "natal-hour" },
   { index: 2, slug: "year-ahead" },
   { index: 3, slug: "two-charts" },
-];
+].filter((service) => isOfferedReading(service.index));
 const selectedService = services.find((service) => service.index === selected);
 const detailFaqs = [1, 2, 3, 4, 5].map((index) => {
   const [question = "", ...answerParts] = String(content[`detail_faq_${index}`] ?? "").split("\n");

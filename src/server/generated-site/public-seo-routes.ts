@@ -1,7 +1,6 @@
 import { activeLocales, localizePath } from "../../data/localization-contract.ts";
 import {
   aboutDefaults,
-  articleDefaults,
   contactDefaults,
   homeDefaults,
   lettersDefaults,
@@ -18,7 +17,6 @@ const PUBLIC_ROUTES = [
   "/readings/two-charts",
   "/booking",
   "/writing",
-  "/writing/saturn-is-not-punishing-you",
   "/about",
   "/questions",
   "/contact",
@@ -30,6 +28,9 @@ const PUBLIC_ROUTES = [
 const ROBOTS_DISALLOW = [
   "/api/",
   "/_emdash",
+  // /booking itself stays indexable; the wizard steps below it are per-booking and
+  // transactional, so they are kept out of search.
+  "/booking/",
 ] as const;
 
 const xmlEscape = (value: string) =>
@@ -53,15 +54,27 @@ export const resolveSeoOrigin = (fallbackOrigin: string, siteUrl?: string) => {
   }
 };
 
-export const buildPublicSitemapXml = (origin: string, now = new Date()) => {
+// Article paths are never listed here: every piece of writing lives in the EmDash `posts`
+// collection, so the caller resolves published slugs and passes them in.
+export const buildPublicSitemapXml = (
+  origin: string,
+  now = new Date(),
+  postPaths: readonly string[] = [],
+) => {
   const baseUrl = normalizedOrigin(origin);
   const lastmod = now.toISOString();
-  const localizedUrls = PUBLIC_ROUTES.flatMap((route) =>
+  const routes = [...PUBLIC_ROUTES, ...postPaths.filter((path) => path.startsWith("/"))];
+  const seen = new Set<string>();
+  const localizedUrls = routes.flatMap((route) =>
     activeLocales.map((locale) => ({
       loc: `${baseUrl}${localizePath(route, locale.code)}`,
       lastmod,
     })),
-  );
+  ).filter((url) => {
+    if (seen.has(url.loc)) return false;
+    seen.add(url.loc);
+    return true;
+  });
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -117,11 +130,6 @@ const LLMS_SECTIONS: ReadonlyArray<{
     title: writingDefaults.writing_eyebrow,
     links: [
       { path: "/writing", label: writingDefaults.writing_title, note: writingDefaults.writing_intro },
-      {
-        path: "/writing/saturn-is-not-punishing-you",
-        label: articleDefaults.article_title,
-        note: articleDefaults.article_dek,
-      },
     ],
   },
   {
@@ -135,9 +143,13 @@ const LLMS_SECTIONS: ReadonlyArray<{
   },
 ];
 
+export type LlmsPostLink = { path: string; label: string; note: string };
+
 export const buildPublicLlmsTxt = (
   origin: string,
   settings: { brandName?: string; seoDescription?: string } = {},
+  // Published articles, resolved by the caller from the EmDash `posts` collection.
+  posts: readonly LlmsPostLink[] = [],
 ) => {
   const baseUrl = normalizedOrigin(origin);
   const brandName = settings.brandName || "Vera Solaro";
@@ -150,7 +162,8 @@ export const buildPublicLlmsTxt = (
 
   for (const section of LLMS_SECTIONS) {
     lines.push(`## ${section.title}`);
-    for (const link of section.links) {
+    const links = section.title === writingDefaults.writing_eyebrow ? [...section.links, ...posts] : section.links;
+    for (const link of links) {
       lines.push(`- [${link.label}](${baseUrl}${link.path}): ${link.note}`);
     }
     lines.push("");

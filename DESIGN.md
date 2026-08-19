@@ -49,7 +49,7 @@ Do not add parallel JSON contracts, asset metadata sidecars, or a second content
 - `/` preserves the source order: header, sky-note hero and zodiac wheel, stats, sky ticker, portrait/about, three readings, testimonials, journal cards, monthly letter, and four-column footer.
 - `/readings` is the three-reading catalog. Each `/readings/[service]` route is a real service-detail screen with source facts, inclusions, preparation, FAQs, and provider-backed availability/booking action.
 - `/booking` retains the source four-step journey. Calendly supplies live slots behind the custom source UI; Stripe Elements supplies card collection. Browser state never fabricates a confirmed payment or sitting.
-- `/writing` exposes only source-provided article metadata. The Saturn article is the only complete article body supplied by the source.
+- `/writing` and `/writing/[slug]` read the EmDash `posts` collection through `src/data/blog-posts.ts`; no article, slug, or article link is hardcoded in a route, component, or discovery document. The source-provided English copy (nine listing pieces plus the complete Saturn body) ships as a CMS-loadable fixture in `docs/content-fixtures/`, not as theme code.
 - `/letters` exposes the distinct signup, pending, confirmed, and sample compositions rather than merging them into a generic page.
 - `/account` exposes only server-authorized customer data and the source overview, move, cancel, receipt, and reading-room states.
 - `/closed` changes the global books-open chrome as well as the page body.

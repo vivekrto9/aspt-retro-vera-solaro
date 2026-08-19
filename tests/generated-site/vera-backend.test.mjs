@@ -24,14 +24,17 @@ import {
 import {
   completeElapsedVeraBookings,
   processCalendlyWebhook,
+  schedulePaidVeraBooking,
   verifyCalendlySignature,
 } from "../../src/server/vera/calendly.ts";
 import {
+  createStripeCheckoutForBooking,
   createStripePaymentIntent,
   createStripeRefund,
   processStripeWebhook,
   verifyStripeSignature,
 } from "../../src/server/vera/stripe.ts";
+import { deriveVeraBookingConfirmationState } from "../../src/server/vera/booking-confirmation.ts";
 import {
   cancelVeraBooking,
   completeVeraReschedule,
@@ -88,7 +91,12 @@ const createDatabase = () => {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys=ON");
   for (const migration of readdirSync(new URL("migrations/", root)).filter((name) => name.endsWith(".sql")).sort()) {
+    // D1 applies each migration file inside a single transaction, where
+    // PRAGMA foreign_keys is a no-op. Mirror that here so a migration cannot pass
+    // the contract and then fail on the real database.
+    sqlite.exec("BEGIN");
     sqlite.exec(read(`migrations/${migration}`));
+    sqlite.exec("COMMIT");
   }
   const DB = {
     prepare(sql) {
@@ -190,7 +198,7 @@ test("Vera migration establishes the complete authoritative vertical", () => {
     sqlite.prepare("SELECT slug, duration_minutes, price_cents FROM ap_vera_services ORDER BY sort_order").all()
       .map((row) => ({ ...row })),
     [
-      { slug: "natal-hour", duration_minutes: 90, price_cents: 24_000 },
+      { slug: "natal-hour", duration_minutes: 30, price_cents: 24_000 },
       { slug: "year-ahead", duration_minutes: 120, price_cents: 38_500 },
       { slug: "two-charts", duration_minutes: 120, price_cents: 42_000 },
     ],
@@ -323,7 +331,7 @@ test("booking creation rechecks live Calendly and atomically holds every overlap
   assert.equal(result.booking.paymentOption, "deposit");
   assert.equal(result.booking.holdExpiresAt, result.holdExpiresAt);
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_vera_booking_slot_holds WHERE booking_id = ?")
-    .get(result.booking.id).count, 3);
+    .get(result.booking.id).count, 1);
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_vera_email_outbox WHERE recipient_email = ?")
     .get("booking@example.test").count, 0);
   const lead = sqlite.prepare("SELECT source, page_path, details_json FROM ap_leads WHERE source_reference_id = ?")
@@ -599,7 +607,7 @@ test("pending quote, custom reschedule, follow-ups, and eligible cancellation st
     .run(eventTypeUri, "VERA_CALENDLY_NATAL_HOUR_CALL_URI");
   const oldStartAt = "2030-09-03T10:00:00.000Z";
   const newStartAt = "2030-09-04T10:00:00.000Z";
-  const newEndAt = "2030-09-04T11:30:00.000Z";
+  const newEndAt = "2030-09-04T10:30:00.000Z";
   const place = await placeSelection({ DB });
   const env = {
     DB,
@@ -685,7 +693,7 @@ test("pending quote, custom reschedule, follow-ups, and eligible cancellation st
       return Response.json({ collection: [{ start_time: newStartAt, scheduling_url: "https://calendly.com/new" }] });
     }
     if (url.href === eventTypeUri) {
-      return Response.json({ resource: { active: true, duration: 90, locations: [{ kind: "physical" }] } });
+      return Response.json({ resource: { active: true, duration: 30, locations: [{ kind: "physical" }] } });
     }
     if (url.pathname === "/invitees" && init.method === "POST") {
       return Response.json({
@@ -720,10 +728,10 @@ test("pending quote, custom reschedule, follow-ups, and eligible cancellation st
   assert.equal(afterReschedule.selected_start_at, newStartAt);
   assert.equal(afterReschedule.free_reschedule_used, 1);
   assert.equal(afterReschedule.reschedule_count, 1);
-  assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_vera_booking_slot_holds WHERE booking_id = ?").get(bookingId).count, 3);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_vera_booking_slot_holds WHERE booking_id = ?").get(bookingId).count, 1);
   assert.equal(sqlite.prepare("SELECT status FROM ap_vera_reschedule_requests WHERE booking_id = ?").get(bookingId).status, "completed");
   const balanceFollowUp = sqlite.prepare("SELECT due_at FROM ap_vera_follow_ups WHERE booking_id = ? AND kind = 'balance_reminder'").get(bookingId);
-  assert.equal(balanceFollowUp.due_at, "2030-09-05T11:30:00.000Z");
+  assert.equal(balanceFollowUp.due_at, "2030-09-05T10:30:00.000Z");
   sqlite.prepare("UPDATE ap_vera_follow_ups SET due_at = '2020-01-01T00:00:00.000Z' WHERE booking_id = ? AND kind = 'intake_reminder'")
     .run(bookingId);
   const dispatched = await dispatchDueFollowUps({ env, now: new Date("2026-08-15T00:00:00.000Z") });
@@ -846,62 +854,60 @@ test("authenticated account read privately claims only matching unlinked Vera hi
     password: "contract-password",
     createSession: true,
   });
+  // Signup opens the room straight away: the account is usable and the session
+  // cookie is issued in the same request, with no email round trip in between.
   assert.equal(signedUp.ok, true);
-  assert.equal(signedUp.verificationPending, true);
-  assert.deepEqual(signedUp.cookies, []);
+  assert.equal(signedUp.created, true);
+  assert.ok(signedUp.cookies.length > 0);
+  assert.ok(signedUp.csrfToken);
   const accountRow = sqlite.prepare("SELECT * FROM ap_customer_accounts WHERE email = ?").get("claim@example.test");
-  assert.equal(accountRow.email_verified_at, null);
-  const blockedLogin = await loginCustomer({
-    env,
-    request: accountRequest,
-    email: "claim@example.test",
-    password: "contract-password",
-  });
-  assert.equal(blockedLogin.ok, false);
+  assert.ok(accountRow.email_verified_at);
+  assert.equal(accountRow.email_verification_token_hash, null);
   const unauthenticated = await getVeraAccountPortal(env, new Request("https://vera.test/account"));
   assert.equal(unauthenticated.status, 401);
-  const verificationMail = sqlite.prepare(`SELECT payload_json FROM ap_vera_email_outbox
+  const welcomeMail = sqlite.prepare(`SELECT payload_json FROM ap_vera_email_outbox
     WHERE event_type = 'customer.welcome' AND recipient_email = ?`).get("claim@example.test");
-  const verificationUrl = new URL(JSON.parse(verificationMail.payload_json).verificationUrl);
-  const verificationToken = verificationUrl.searchParams.get("verify");
-  assert.ok(verificationToken);
+  const welcomePayload = JSON.parse(welcomeMail.payload_json);
+  assert.equal(new URL(welcomePayload.accountUrl).pathname, "/account");
+  assert.equal(welcomePayload.verificationUrl, undefined);
 
-  const pendingDuplicate = await signupCustomer({
+  // A second signup on the same email is a way back in, never a second account,
+  // and only when the password given actually matches the one on file.
+  const wrongPasswordDuplicate = await signupCustomer({
     env,
     request: accountRequest,
     displayName: "Claimed Reader Latest",
     email: "claim@example.test",
-    password: "newest-contract-password",
+    password: "not-the-contract-password",
     createSession: true,
   });
-  assert.equal(pendingDuplicate.ok, true);
-  assert.equal(pendingDuplicate.verificationPending, true);
-  assert.deepEqual(pendingDuplicate.cookies, []);
+  assert.equal(wrongPasswordDuplicate.ok, false);
+  const returningDuplicate = await signupCustomer({
+    env,
+    request: accountRequest,
+    displayName: "Claimed Reader Latest",
+    email: "claim@example.test",
+    password: "contract-password",
+    createSession: true,
+  });
+  assert.equal(returningDuplicate.ok, true);
+  assert.equal(returningDuplicate.created, false);
+  assert.ok(returningDuplicate.cookies.length > 0);
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_customer_accounts WHERE email = ?")
     .get("claim@example.test").count, 1);
-  assert.equal((await verifyCustomerEmail({ env, token: verificationToken })).ok, false);
-
-  const latestVerificationMail = sqlite.prepare(`SELECT payload_json FROM ap_vera_email_outbox
-    WHERE event_type = 'customer.welcome' AND recipient_email = ? ORDER BY rowid DESC LIMIT 1`)
-    .get("claim@example.test");
-  const latestVerificationUrl = new URL(JSON.parse(latestVerificationMail.payload_json).verificationUrl);
-  const latestVerificationToken = latestVerificationUrl.searchParams.get("verify");
-  assert.ok(latestVerificationToken);
-  assert.equal((await verifyCustomerEmail({ env, token: latestVerificationToken })).ok, true);
-  assert.equal((await verifyCustomerEmail({ env, token: latestVerificationToken })).ok, false);
 
   const staleCredentialLogin = await loginCustomer({
     env,
     request: accountRequest,
     email: "claim@example.test",
-    password: "contract-password",
+    password: "newest-contract-password",
   });
   assert.equal(staleCredentialLogin.ok, false);
   const loggedIn = await loginCustomer({
     env,
     request: accountRequest,
     email: "claim@example.test",
-    password: "newest-contract-password",
+    password: "contract-password",
   });
   assert.equal(loggedIn.ok, true);
   const cookie = loggedIn.cookies.map((entry) => entry.split(";")[0]).join("; ");
@@ -978,6 +984,8 @@ test("authenticated account read privately claims only matching unlinked Vera hi
     "serviceName",
   ]);
 
+  // A signup on a taken email with the wrong password is turned away: it never
+  // rewrites the credentials on file and never makes a second account.
   const duplicate = await signupCustomer({
     env,
     request: accountRequest,
@@ -986,10 +994,15 @@ test("authenticated account read privately claims only matching unlinked Vera hi
     password: "different-password",
     createSession: true,
   });
-  assert.equal(duplicate.ok, true);
-  assert.deepEqual(duplicate.cookies, []);
+  assert.equal(duplicate.ok, false);
   assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM ap_customer_accounts WHERE email = ?")
     .get("claim@example.test").count, 1);
+  assert.equal((await loginCustomer({
+    env,
+    request: accountRequest,
+    email: "claim@example.test",
+    password: "contract-password",
+  })).ok, true);
 
   const resetRequested = await requestCustomerPasswordReset({
     env,
@@ -997,6 +1010,7 @@ test("authenticated account read privately claims only matching unlinked Vera hi
     email: "claim@example.test",
   });
   assert.equal(resetRequested.ok, true);
+  assert.equal(resetRequested.emailSent, true);
   assert.equal(resetRequested.resetUrl, "");
   const resetMail = sqlite.prepare(`SELECT payload_json FROM ap_vera_email_outbox
     WHERE event_type = 'customer.password_reset' ORDER BY created_at DESC LIMIT 1`).get();
@@ -1017,6 +1031,24 @@ test("authenticated account read privately claims only matching unlinked Vera hi
   });
   assert.equal(recoveredLogin.ok, true);
   const recoveredCookie = recoveredLogin.cookies.map((entry) => entry.split(";")[0]).join("; ");
+
+  // A deployed origin never hands the link back over the API; only a localhost caller
+  // gets the echo, which is the Pandit reference contract.
+  const localResetRequested = await requestCustomerPasswordReset({
+    env,
+    request: new Request("http://localhost:4321/forgot-password", { method: "POST" }),
+    email: "claim@example.test",
+  });
+  assert.equal(localResetRequested.emailSent, true);
+  assert.match(localResetRequested.resetUrl, /\/reset-password\?token=[0-9a-f]{64}$/);
+  const unknownResetRequested = await requestCustomerPasswordReset({
+    env,
+    request: new Request("http://localhost:4321/forgot-password", { method: "POST" }),
+    email: "nobody@example.test",
+  });
+  assert.equal(unknownResetRequested.ok, true);
+  assert.equal(unknownResetRequested.emailSent, false);
+  assert.equal(unknownResetRequested.resetUrl, "");
 
   const threadId = portal.threads[0].id;
   const messageRequest = new Request("https://vera.test/api/astropages/generated-site/vera/account/messages", {
@@ -1237,6 +1269,36 @@ test("Stripe PaymentIntent creation remains provider-gated and does not accept c
   assert.doesNotMatch(read("src/server/vera/stripe.ts"), /input\.(amount|amountCents)|body\.(amount|amountCents)/);
 });
 
+test("hosted checkout blocks without signed webhook readiness and uses confirmation return URLs", async () => {
+  const result = await createStripeCheckoutForBooking({
+    env: { STRIPE_SECRET_KEY: "sk_test_checkout_contract" },
+    request: new Request("https://vera.test/api", { method: "POST" }),
+    bookingId: "vbooking_missing",
+    manageToken: "missing",
+    kind: "full",
+    origin: "https://vera.test",
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingSecretNames, ["STRIPE_WEBHOOK_SECRET"]);
+  const source = read("src/server/vera/stripe.ts");
+  assert.match(source, /confirmation\?token=\$\{encodeURIComponent\(manageToken\)\}&payment=processing/);
+  assert.match(source, /confirmation\?token=\$\{encodeURIComponent\(manageToken\)\}&payment=cancelled/);
+  assert.match(source, /"checkout\.session\.completed", "checkout\.session\.async_payment_succeeded"/);
+  assert.match(source, /safeString\(object\.payment_status\) === "paid"/);
+  assert.match(source, /Number\(attempt\.amount_cents\) === Number\(object\.amount_total\)/);
+  assert.match(source, /safeString\(attempt\.currency\)\.toUpperCase\(\) === safeString\(object\.currency\)\.toUpperCase\(\)/);
+  assert.doesNotMatch(source, /cancelUrl: `\$\{origin\}\/booking\/\$\{encodeURIComponent\(bookingId\)\}\/payment/);
+});
+
+test("confirmation state machine separates payment verification from scheduling", () => {
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "pending_payment", paymentState: "unpaid" }), "awaiting_payment");
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "pending_payment", paymentState: "unpaid", paymentAttemptStatus: "processing" }), "processing");
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "pending_payment", paymentState: "unpaid", paymentAttemptStatus: "failed" }), "failed");
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "pending_payment", paymentState: "paid" }), "paid_scheduling");
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "payment_action_required", paymentState: "paid" }), "action_required");
+  assert.equal(deriveVeraBookingConfirmationState({ bookingStatus: "confirmed", paymentState: "paid" }), "confirmed");
+});
+
 test("public availability rate limiting bounds Calendly calls before provider work", async () => {
   const { sqlite, DB } = createDatabase();
   sqlite.prepare("UPDATE ap_runtime_config SET value = ? WHERE key = ?")
@@ -1385,7 +1447,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
       return Response.json({
         resource: {
           active: true,
-          duration: path.includes("NATAL") ? 90 : 120,
+          duration: path.includes("NATAL") ? 30 : 120,
         },
       });
     },
@@ -1423,7 +1485,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
   assert.equal(readyPayload.data.checks.stripe.webhookRegistration.ready, true);
   assert.equal(readyPayload.data.checks.calendly.webhookRegistration.ready, true);
   assert.equal(readyPayload.data.checks.stripe.setupProofReady, true);
-  assert.equal(calendlyValidationCalls, 6);
+  assert.equal(calendlyValidationCalls, 3);
   const serialized = JSON.stringify(readyPayload);
   for (const secret of [
     ...Object.values(integrationSecrets),
@@ -1439,7 +1501,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
   });
   assert.equal(cached.status, 200);
   assert.equal((await cached.json()).data.checks.calendly.liveValidation.source, "cache");
-  assert.equal(calendlyValidationCalls, 6);
+  assert.equal(calendlyValidationCalls, 3);
 });
 
 test("Vera API routes cover booking, providers, account, engagement, and authenticated operations", () => {
@@ -1517,6 +1579,38 @@ const insertProviderBooking = (sqlite, {
     now,
   );
 };
+
+test("paid bookings that need Calendly help queue one managed customer email", async () => {
+  const { sqlite, DB } = createDatabase();
+  const bookingId = "vbooking_action_email";
+  insertProviderBooking(sqlite, {
+    id: bookingId,
+    status: "pending_payment",
+    paymentState: "paid",
+    paidCents: 24_000,
+    balanceCents: 0,
+  });
+  const env = { DB, ASTROPAGES_SITE_URL: "https://vera.test" };
+
+  const firstAttempt = await schedulePaidVeraBooking(env, bookingId);
+  assert.equal(firstAttempt.ok, false);
+  assert.equal(sqlite.prepare("SELECT status FROM ap_vera_bookings WHERE id = ?").get(bookingId).status, "payment_action_required");
+
+  await schedulePaidVeraBooking(env, bookingId);
+  const emails = sqlite.prepare(`SELECT event_type, template_key, payload_json, idempotency_key
+    FROM ap_vera_email_outbox WHERE recipient_email = 'provider@example.test'`).all();
+  assert.equal(emails.length, 1);
+  assert.equal(emails[0].event_type, "vera.booking.scheduling_action_required");
+  assert.equal(emails[0].template_key, "vera_booking_action_required_en");
+  assert.equal(emails[0].idempotency_key, `booking-scheduling-action-required:${bookingId}`);
+  assert.deepEqual(JSON.parse(emails[0].payload_json), {
+    customerName: "Provider Reader",
+    bookingNumber: "VS-OKINGACTIONEMAIL",
+    serviceName: "The Natal Hour",
+    selectedSlot: "2030-09-03T10:00:00.000Z",
+    confirmationUrl: `https://vera.test/booking/${bookingId}/confirmation`,
+  });
+});
 
 test("service-authenticated operations list and idempotently retry concrete Calendly reconciliation states", async () => {
   const { sqlite, DB } = createDatabase();

@@ -29,8 +29,9 @@ Explicitly selected skills are mandatory. In automatic mode, invoke only genuine
 | Customer account, session, or password reset | Server-owned D1 auth flow | Preserve hashing, expiry, authorization, cookies, and safe errors |
 | Runtime configuration or a secret | Existing runtime binding or Secret Store contract | Never place values in code, content, logs, or D1 public copy |
 | Transactional email | Generated-site email tools for preview; control plane for production | Follow the email workflow below |
-| Existing Saturn article copy or SEO | EmDash entry `vera_article/saturn` | Use the content workflow below; keep the authorized route `/writing/saturn-is-not-punishing-you` |
-| Additional article or blog creation | Project code, content registry, route, and focused tests | Extend the authorized content model explicitly; do not invent a raw-SQL or component-local article store |
+| Article copy, body, slug, or article SEO | An entry in the EmDash `posts` collection | Use the content workflow below; `/writing/[slug]` renders it, so never add a per-article route |
+| Reusable article chrome (back label, byline, author card, CTA, read-next heading) | EmDash entry `vera_article/main` | Use the content workflow below; this entry holds no article body and no slug |
+| Additional article or blog creation | A new `posts` entry | Publish it through the content workflow; do not invent a raw-SQL, seed-file, or component-local article store |
 
 Never fall back to locale defaults, raw SQL, migrations, or Astro components when an existing EmDash field owns the value. Source defaults are bootstrap/fallback code, not a shortcut for editing saved customer content.
 
@@ -55,7 +56,7 @@ This site has a single active query-parameter locale, `en`, and exactly 22 edita
 - `vera_booking/main`
 - `vera_booking_payment/main`
 - `vera_writing/main`
-- `vera_article/saturn`
+- `vera_article/main`
 - `vera_about/main`
 - `vera_questions/main`
 - `vera_contact/main`
@@ -72,7 +73,22 @@ This site has a single active query-parameter locale, `en`, and exactly 22 edita
 
 `src/data/vera/content.ts` supplies the source-authorized bootstrap and fallback copy for those targets; `src/builder/registry.ts` is the field and release registry; `src/builder/public-page.ts` is the public loader. Do not place new visitor-facing text directly in Astro routes, components, client scripts, or server handlers when it belongs to one of these entries. Public rendering, including `GET /` and `GET /?preview=1`, is read-only and must not create schema, entries, drafts, revisions, or release rows.
 
-The Saturn essay is an authorized fixed article at `/writing/saturn-is-not-punishing-you`, owned by `vera_article/saturn`. There is no general-purpose article collection or arbitrary slug publisher. A new article requires an explicitly authorized registry entry, route, bootstrap default, release target, manifest declaration, and tests; never invent a `posts` table, raw-SQL content store, or component-local article array.
+Articles are dynamic EmDash content. The `posts` collection defined in `seed/seed.json` owns every piece of writing; `/writing` lists published posts and `/writing/[slug]` renders one, both through `src/data/blog-posts.ts`. `vera_article/main` owns only the reusable article chrome (back label, byline, author card, CTA, read-next heading). Never hardcode an article, its list, or its slug in a route or component, and never invent a second article store: no raw-SQL content table, component-local article array, or parallel `ap_*` articles schema.
+
+### New article
+
+1. Inspect the `posts` collection with `schema_get_collection`; confirm its fields and check the requested slug for collision. Never create test, disposable, or probe content to discover whether a mutation tool works.
+2. Compose the article body as Markdown, then pipe it through `scripts/markdown-to-portable-text.mjs`. Parse its JSON output and pass that parsed Portable Text array directly as `data.content`. Do not hand-author Portable Text or embed Markdown markers in normal spans.
+3. Give `content_create` only supported collection fields: the required title plus supported values such as `excerpt`, `category`, the parsed Portable Text `content`, and optional `featured_image`. Pass the requested slug through the tool's dedicated slug argument.
+4. Use exactly: `content_create` → `content_get` → minimal `content_update` with `_rev` for SEO → `content_publish` → `content_get`.
+5. Verify the requested slug, published status, SEO values, and Portable Text structure on the final read. On a revision conflict, reread the same item, preserve concurrent changes, and retry with its current `_rev`.
+6. Open both `/writing` and `/writing/<slug>` on the trusted preview URL and verify the listing card, category pill, detail route, headings, and metadata. `content_get` proves saved state, not rendered behavior.
+
+### Existing article
+
+Use `content_get` → minimal `content_update` with `_rev` → `content_publish` → `content_get`, then verify both `/writing` and the detail route. Preserve its slug unless the user requests a URL change. Never create another article to probe an update.
+
+The listing intentionally reads published posts. `posts` sit outside the Builder page-content release snapshot, so preview article publication must not be described as production promotion.
 
 Content-only work must leave Git unchanged and must not trigger a code build, commit, or preview deployment.
 
@@ -91,7 +107,8 @@ Never use raw R2 operations, bucket names, storage keys, or signed URLs, and nev
 
 ## Code, Data, And Safety Boundaries
 
-- Public routes are under `src/pages/`; the 17 manifest-owned visitor routes are `/`, `/about`, `/readings`, `/readings/[service]`, `/booking`, `/writing`, `/writing/saturn-is-not-punishing-you`, `/questions`, `/contact`, `/letters`, `/legal`, `/account`, `/closed`, `/login`, `/signup`, `/forgot-password`, and `/reset-password`.
+- Public routes are under `src/pages/`; the 17 manifest-owned visitor routes are `/`, `/about`, `/readings`, `/readings/[service]`, `/booking`, `/writing`, `/writing/[slug]`, `/questions`, `/contact`, `/letters`, `/legal`, `/account`, `/closed`, `/login`, `/signup`, `/forgot-password`, and `/reset-password`.
+- Writing routes `/writing` and `/writing/[slug]` read dynamic EmDash `posts` through `src/data/blog-posts.ts`; `seed/seed.json` defines the collection schema but does not store ordinary articles.
 - Builder ownership is defined by `src/builder/registry.ts`; public content is loaded through `src/builder/public-page.ts`.
 - Generated-site APIs and lifecycle code live in `src/server/generated-site/` and `src/pages/api/astropages/generated-site/`.
 - Vera booking, scheduling, payment, engagement, email, account, file, report, and operations services live in `src/server/vera/`; reusable platform services live in `src/server/aggregator/`. Durable D1 changes use the next numbered forward-only file in `migrations/`.

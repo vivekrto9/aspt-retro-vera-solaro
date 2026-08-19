@@ -53,7 +53,7 @@ export const publicEditableContentEntries = [
   "vera_booking/main",
   "vera_booking_payment/main",
   "vera_writing/main",
-  "vera_article/saturn",
+  "vera_article/main",
   "vera_about/main",
   "vera_questions/main",
   "vera_contact/main",

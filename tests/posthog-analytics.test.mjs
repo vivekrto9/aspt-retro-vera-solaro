@@ -25,9 +25,13 @@ test("shared layout installs consent-gated private PostHog analytics", () => {
   assert.match(client, /"scheduling_retry_requested"/);
   assert.match(client, /allowedPayloadKeys = new Set\(\["service", "mode", "step", "status", "source"\]\)/);
   assert.match(client, /safePayload/);
-  const booking = read("src/pages/booking.astro");
-  assert.match(booking, /astroPagesTrack\?\.\("payment_failed",\s*\{\s*status: "declined",\s*service:/);
-  assert.match(booking, /astroPagesTrack\?\.\("scheduling_retry_requested",\s*\{\s*status: "slot_taken",\s*service:/);
+  // Payment failures belong to the same-page wizard; scheduling retries belong to
+  // the authoritative confirmation screen.
+  const bookingPayment = read("src/pages/booking.astro");
+  const bookingConfirmation = read("src/pages/booking/[id]/confirmation.astro");
+  const booking = `${bookingPayment}\n${bookingConfirmation}`;
+  assert.match(bookingPayment, /track\("payment_failed",\s*\{/);
+  assert.match(bookingConfirmation, /track\("scheduling_retry_requested",\s*\{/);
   assert.doesNotMatch(booking, /(?:payment_failed|scheduling_retry_requested)[\s\S]{0,180}\breason\s*:/);
   assert.doesNotMatch(client, /void initializePosthog\(\);\s*\/\*\s*To restore consent/);
   assert.doesNotMatch(client, /phc_[a-z0-9]+/i);

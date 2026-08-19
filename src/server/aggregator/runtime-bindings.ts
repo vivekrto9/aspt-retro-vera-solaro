@@ -5,6 +5,12 @@ type SecretStoreBinding = {
 export const notConfiguredSecretSentinel = "__ASTROPAGES_NOT_CONFIGURED__";
 export const integrationSecretBundleBinding = "ASTROPAGES_INTEGRATION_SECRETS_JSON";
 export const platformGooglePlacesSecretBinding = "ASTROPAGES_PLATFORM_GOOGLE_PLACES_API_KEY";
+// The platform also hands this key out under its provider-scoped name, so both
+// spellings are accepted rather than making the deployment rename its binding.
+export const platformGooglePlacesSecretBindingAliases = [
+  platformGooglePlacesSecretBinding,
+  "ASTROPAGES_PLATFORM_GOOGLE_PLACES_GOOGLE_PLACES_API_KEY",
+] as const;
 const secretStoreBindingTimeoutMs = 1500;
 
 const isSecretStoreBinding = (value: unknown): value is SecretStoreBinding =>
@@ -69,8 +75,10 @@ export const resolveSecretBinding = async (
   bindingName: string,
 ) => {
   if (bindingName === "GOOGLE_PLACES_API_KEY") {
-    const platformValue = await resolveRuntimeBinding(env[platformGooglePlacesSecretBinding]);
-    if (platformValue) return platformValue;
+    for (const alias of platformGooglePlacesSecretBindingAliases) {
+      const platformValue = await resolveRuntimeBinding(env[alias]);
+      if (platformValue) return platformValue;
+    }
   }
   const bundled = await resolveBundledSecretBinding(env, bindingName);
   if (bundled) return bundled;

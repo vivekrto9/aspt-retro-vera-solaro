@@ -2,6 +2,7 @@
 import { loadPublicPageContent } from "../builder/public-page.ts";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 import VeraImage from "../components/vera/VeraImage.astro";
+import VeraPortalNav from "../components/vera/VeraPortalNav.astro";
 
 export const prerender = false;
 
@@ -13,11 +14,13 @@ if (Astro.url.searchParams.has("booking") || Astro.url.searchParams.has("manage"
 }
 
 const page = await loadPublicPageContent(Astro, "account");
-const { content, builderEdit } = page;
+const { content, builderEdit, chromeEdit } = page;
 const recordingMeta = String(content.recording_meta ?? "").split("\n");
 ---
 
 <VeraFrame {...page} currentPath="/account">
+  <VeraPortalNav content={content} chromeEdit={chromeEdit} active="dashboard" />
+
   <section class="vera-placeholder-page" data-account-loading aria-live="polite" aria-busy="true">
     <div class="vera-placeholder-page__inner">
       <span class="vera-booking-spinner" aria-hidden="true"></span>
@@ -28,161 +31,79 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
   </section>
 
   <div class="vera-account-panel" data-account-panel="overview" data-account-overview hidden>
-    <section class="vera-page-hero">
-      <p class="vera-eyebrow" {...builderEdit("account_eyebrow")}>{content.account_eyebrow}</p>
-      <h1 class="vera-display" data-account-title {...builderEdit("account_title")}>{content.account_title}</h1>
-      <div class="vera-card-meta" style="margin-top: 18px">
-        <span data-account-profile-name {...builderEdit("profile_name")}>{content.profile_name}</span><br />
-        <span data-account-profile-ref {...builderEdit("profile_ref")}>{content.profile_ref}</span>
-      </div>
-    </section>
+    <section class="vera-section vera-section--paper vera-account-dashboard">
+      <header class="vera-account-dashboard__heading">
+        <div>
+          <h1 class="vera-heading" data-account-title {...builderEdit("account_title")}>{content.account_title}</h1>
+          <span class="vera-visually-hidden" data-account-profile-name {...builderEdit("profile_name")}>{content.profile_name}</span>
+          <span class="vera-visually-hidden" data-account-profile-ref {...builderEdit("profile_ref")}>{content.profile_ref}</span>
+        </div>
+        <a class="vera-button vera-button--burnt vera-button--small" href="/booking" {...builderEdit("empty_cta")}>{content.empty_cta}</a>
+      </header>
 
-    <section class="vera-section vera-section--paper vera-account-hero">
-      <article class="vera-upcoming" data-account-upcoming>
-        <div class="vera-card-meta" style="color: var(--vera-clay)" {...builderEdit("upcoming_kicker")}>
-          <span data-account-upcoming-kicker>{content.upcoming_kicker}</span>
-        </div>
-        <h2 data-account-upcoming-title {...builderEdit("upcoming_title")}>{content.upcoming_title}</h2>
-        <p>
-          <span data-account-upcoming-when {...builderEdit("upcoming_when")}>{content.upcoming_when}</span><br />
-          <span data-account-upcoming-where {...builderEdit("upcoming_where")}>{content.upcoming_where}</span>
-        </p>
-        <div class="vera-account-actions">
-          <button class="vera-button vera-button--mustard vera-button--small" type="button" data-open-account-panel="reschedule" {...builderEdit("move_cta")}>
-            {content.move_cta}
-          </button>
-          <button class="vera-button vera-button--paper vera-button--small" type="button" data-open-account-panel="receipt" {...builderEdit("receipt_cta")}>
-            {content.receipt_cta}
-          </button>
-          <button class="vera-button vera-button--paper vera-button--small" type="button" data-account-add-calendar {...builderEdit("calendar_cta")}>
-            {content.calendar_cta}
-          </button>
-          <button class="vera-button vera-button--small" type="button" data-open-account-panel="cancel" {...builderEdit("cancel_cta")}>
-            {content.cancel_cta}
-          </button>
-        </div>
-        <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 24px; padding-top: 18px; border-top: 2px dashed #7a4a5e">
-          <span data-account-payment-paid {...builderEdit("upcoming_paid")}>{content.upcoming_paid}</span>
-          <span data-account-payment-balance {...builderEdit("upcoming_balance")}>{content.upcoming_balance}</span>
-        </div>
-        <p
-          class="vera-form-note"
-          style="margin-top: 16px"
-          data-account-action-required
-          aria-live="polite"
-          hidden
-          {...builderEdit("reschedule_error")}
-        >
-          {content.reschedule_error}
-        </p>
-      </article>
+      <div class="vera-account-dashboard__content">
+        <section aria-labelledby="account-upcoming-heading">
+          <h2 class="vera-account-section-title" id="account-upcoming-heading" {...builderEdit("account_eyebrow")}>{content.account_eyebrow}</h2>
 
-      <article class="vera-info-card" data-account-balance-payment hidden aria-live="polite">
-        <h2 {...builderEdit("balance_payment_title")}>{content.balance_payment_title}</h2>
-        <p class="vera-card-meta" {...builderEdit("balance_payment_card_label")}>{content.balance_payment_card_label}</p>
-        <div class="vera-stripe-mount" data-account-balance-card></div>
-        <p data-account-balance-status="processing" hidden {...builderEdit("balance_payment_processing")}>{content.balance_payment_processing}</p>
-        <p data-account-balance-status="error" hidden {...builderEdit("balance_payment_error")}>{content.balance_payment_error}</p>
-        <p data-account-balance-status="success" hidden {...builderEdit("balance_payment_success")}>{content.balance_payment_success}</p>
-        <button
-          class="vera-button vera-button--burnt vera-button--small"
-          style="margin-top: 18px"
-          type="button"
-          data-account-balance-submit
-          {...builderEdit("balance_payment_submit_template")}
-        >
-          {content.balance_payment_submit_template}
-        </button>
-      </article>
+          <article class="vera-upcoming" data-account-upcoming>
+            <div class="vera-card-meta" data-account-upcoming-kicker {...builderEdit("upcoming_kicker")}>{content.upcoming_kicker}</div>
+            <h3 data-account-upcoming-title>{content.upcoming_title}</h3>
+            <p>
+              <span data-account-upcoming-when {...builderEdit("upcoming_when")}>{content.upcoming_when}</span><br />
+              <span data-account-upcoming-where {...builderEdit("upcoming_where")}>{content.upcoming_where}</span>
+            </p>
+            <div class="vera-account-payment-line">
+              <span data-account-payment-paid {...builderEdit("upcoming_paid")}>{content.upcoming_paid}</span>
+              <span data-account-payment-balance {...builderEdit("upcoming_balance")}>{content.upcoming_balance}</span>
+            </div>
+            <p class="vera-form-note" data-account-action-required aria-live="polite" hidden {...builderEdit("reschedule_error")}>{content.reschedule_error}</p>
+          </article>
 
-      <article class="vera-info-card vera-account-cancelled" data-account-cancelled hidden aria-live="polite">
-        <div class="vera-card-meta" style="color: var(--vera-burnt)" data-account-cancelled-kicker {...builderEdit("cancelled_kicker")}>
-          {content.cancelled_kicker}
-        </div>
-        <h2 data-account-cancelled-title {...builderEdit("cancelled_title")}>{content.cancelled_title}</h2>
-        <p data-account-cancelled-body {...builderEdit("cancelled_body")}>{content.cancelled_body}</p>
-        <a class="vera-button vera-button--burnt vera-button--small" style="margin-top: 18px" href="/booking" {...builderEdit("cancelled_book_cta")}>
-          {content.cancelled_book_cta}
-        </a>
-      </article>
+          <article class="vera-info-card" data-account-balance-payment hidden aria-live="polite">
+            <h2 {...builderEdit("balance_payment_title")}>{content.balance_payment_title}</h2>
+            <p class="vera-card-meta" {...builderEdit("balance_payment_card_label")}>{content.balance_payment_card_label}</p>
+            <div class="vera-stripe-mount" data-account-balance-card></div>
+            <p data-account-balance-status="processing" hidden {...builderEdit("balance_payment_processing")}>{content.balance_payment_processing}</p>
+            <p data-account-balance-status="error" hidden {...builderEdit("balance_payment_error")}>{content.balance_payment_error}</p>
+            <p data-account-balance-status="success" hidden {...builderEdit("balance_payment_success")}>{content.balance_payment_success}</p>
+            <button class="vera-button vera-button--burnt vera-button--small" type="button" data-account-balance-submit {...builderEdit("balance_payment_submit_template")}>{content.balance_payment_submit_template}</button>
+          </article>
 
-      <aside class="vera-sidebar-card" data-account-chart-card>
-        <div class="vera-card-meta" {...builderEdit("chart_title")}>{content.chart_title}</div>
-        <VeraImage alt={content.chart_alt} altField="chart_alt" edit={builderEdit} class="vera-account-chart-thumb" />
-        <p {...builderEdit("chart_note")}>{content.chart_note}</p>
-        <button class="vera-button vera-button--paper vera-button--small" style="width: 100%; margin-top: 14px" type="button" data-open-account-panel="room" {...builderEdit("room_cta")}>
-          {content.room_cta}
-        </button>
-      </aside>
-    </section>
+          <article class="vera-account-empty" data-account-empty hidden>
+            <span class="vera-account-empty__symbol" aria-hidden="true" {...builderEdit("empty_symbol")}>{content.empty_symbol}</span>
+            <h2 {...builderEdit("empty_title")}>{content.empty_title}</h2>
+            <p {...builderEdit("empty_body")}>{content.empty_body}</p>
+            <a class="vera-button vera-button--burnt vera-button--small" href="/booking" {...builderEdit("empty_cta")}>{content.empty_cta}</a>
+          </article>
 
-    <section class="vera-section vera-section--sand vera-page-grid">
-      <div>
-        <div data-account-prep>
-        <h2 class="vera-heading" {...builderEdit("prep_title")}>{content.prep_title}</h2>
-        <div class="vera-detail-stack" style="margin-top: 24px">
-          {[1, 2, 3].map((index) => (
-            <article class="vera-info-card" style="display: grid; grid-template-columns: 1fr auto; gap: 18px" data-account-prep-row>
-              <div>
-                <h3 {...builderEdit(`prep_${index}_title`)}>{content[`prep_${index}_title`]}</h3>
-                <p {...builderEdit(`prep_${index}_body`)}>{content[`prep_${index}_body`]}</p>
-              </div>
-              <span class="vera-card-meta" {...builderEdit(`prep_${index}_status`)}>
-                {content[`prep_${index}_status`]}
-              </span>
-            </article>
-          ))}
-        </div>
-        </div>
+        </section>
 
-        <div class="vera-section-header" style="margin-top: 52px" data-account-past-header>
-          <h2 class="vera-heading" {...builderEdit("past_title")}>{content.past_title}</h2>
-          <p class="vera-card-meta" data-account-past-note {...builderEdit("past_note")}>{content.past_note}</p>
-        </div>
-        <div class="vera-list" data-account-past-list>
-          {[1, 2].map((index) => (
-            <article class="vera-list-item" data-account-past-row>
-              <div>
-                <div class="vera-list-item__number" data-account-past-date {...builderEdit(`past_${index}_date`)}>{content[`past_${index}_date`]}</div>
-                <div class="vera-card-meta" data-account-past-ref {...builderEdit(`past_${index}_ref`)}>{content[`past_${index}_ref`]}</div>
-              </div>
-              <div>
-                <h3 data-account-past-title {...builderEdit(`past_${index}_title`)}>{content[`past_${index}_title`]}</h3>
-                <p data-account-past-body {...builderEdit(`past_${index}_body`)}>{content[`past_${index}_body`]}</p>
-              </div>
-              <button class="vera-button vera-button--paper vera-button--small" type="button" data-open-account-panel="room" data-account-past-open {...builderEdit(`past_${index}_cta`)}>
-                {content[`past_${index}_cta`]}
-              </button>
-            </article>
-          ))}
-        </div>
-      </div>
-
-      <aside class="vera-sidebar">
-        <div class="vera-sidebar-card" data-account-birth-card>
-          <h2 {...builderEdit("birth_title")}>{content.birth_title}</h2>
-          <dl style="display: grid; gap: 10px; margin: 16px 0 0">
-            {["date", "time", "place"].map((part) => (
-              <div style="display: flex; justify-content: space-between; gap: 16px">
-                <dt style="color: var(--vera-muted)" {...builderEdit(`birth_${part}_label`)}>{content[`birth_${part}_label`]}</dt>
-                <dd style="margin: 0" data-account-birth-value={part} {...builderEdit(`birth_${part}_value`)}>{content[`birth_${part}_value`]}</dd>
-              </div>
+        <section aria-labelledby="account-past-heading">
+          <div class="vera-account-section-heading" data-account-past-header>
+            <h2 class="vera-account-section-title" id="account-past-heading" {...builderEdit("past_title")}>{content.past_title}</h2>
+            <p class="vera-card-meta" data-account-past-note {...builderEdit("past_note")}>{content.past_note}</p>
+          </div>
+          <div class="vera-list vera-account-history" data-account-past-list>
+            {[1, 2].map((index) => (
+              <article class="vera-list-item" data-account-past-row>
+                <div>
+                  <div class="vera-list-item__number" data-account-past-date {...builderEdit(`past_${index}_date`)}>{content[`past_${index}_date`]}</div>
+                  <div class="vera-card-meta" data-account-past-ref {...builderEdit(`past_${index}_ref`)}>{content[`past_${index}_ref`]}</div>
+                </div>
+                <div>
+                  <h3 data-account-past-title {...builderEdit(`past_${index}_title`)}>{content[`past_${index}_title`]}</h3>
+                  <p data-account-past-body {...builderEdit(`past_${index}_body`)}>{content[`past_${index}_body`]}</p>
+                </div>
+                <button class="vera-button vera-button--paper vera-button--small" type="button" data-open-account-panel="room" data-account-past-open {...builderEdit(`past_${index}_cta`)}>{content[`past_${index}_cta`]}</button>
+              </article>
             ))}
-          </dl>
-          <p {...builderEdit("birth_note")}>{content.birth_note}</p>
-        </div>
-        <div class="vera-sidebar-card">
-          <h2 {...builderEdit("help_title")}>{content.help_title}</h2>
-          <p {...builderEdit("help_body")}>{content.help_body}</p>
-          <a class="vera-card-meta" style="display: block; margin-top: 12px; color: var(--vera-burnt); text-decoration: none" href="/contact" {...builderEdit("help_cta")}>
-            {content.help_cta}
-          </a>
-        </div>
-      </aside>
+          </div>
+        </section>
+      </div>
     </section>
   </div>
 
-  <div class="vera-account-panel" data-account-panel="reschedule" hidden>
+  {false && <div class="vera-account-panel" data-account-panel="reschedule" hidden>
     <section class="vera-page-hero">
       <button class="vera-button vera-button--paper vera-button--small" type="button" data-open-account-panel="overview" {...builderEdit("back_sittings_cta")}>
         {content.back_sittings_cta}
@@ -285,9 +206,9 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
         </button>
       </div>
     </section>
-  </div>
+  </div>}
 
-  <div class="vera-account-panel" data-account-panel="cancel" hidden>
+  {false && <div class="vera-account-panel" data-account-panel="cancel" hidden>
     <section class="vera-page-hero">
       <button class="vera-button vera-button--paper vera-button--small" type="button" data-open-account-panel="overview" {...builderEdit("back_sittings_cta")}>
         {content.back_sittings_cta}
@@ -355,7 +276,7 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
         </button>
       </aside>
     </section>
-  </div>
+  </div>}
 
   <div class="vera-account-panel" data-account-panel="receipt" hidden>
     <section class="vera-page-hero" style="display: flex; justify-content: space-between; align-items: center; gap: 24px">
@@ -528,22 +449,6 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
     </section>
   </div>
 
-  <nav class="vera-account-nav" data-account-nav hidden aria-label={content.account_nav_label}>
-    <span {...builderEdit("account_nav_label")}>{content.account_nav_label}</span>
-    <div>
-      {[
-        ["overview", "account_nav_overview"],
-        ["reschedule", "account_nav_reschedule"],
-        ["cancel", "account_nav_cancel"],
-        ["receipt", "account_nav_receipt"],
-        ["room", "account_nav_room"],
-      ].map(([panel, field]) => (
-        <button type="button" data-open-account-panel={panel} data-account-nav-button={panel} {...builderEdit(field)}>
-          {content[field]}
-        </button>
-      ))}
-    </div>
-  </nav>
 </VeraFrame>
 
 <script>
@@ -656,25 +561,18 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
     upcomingWhere: sourceText("[data-account-upcoming-where]"),
     paid: sourceText("[data-account-payment-paid]"),
     balance: sourceText("[data-account-payment-balance]"),
-    cancelledKicker: sourceText("[data-account-cancelled-kicker]"),
-    rescheduleMode: sourceText("[data-account-reschedule-mode]"),
+    cancelledKicker: "",
+    rescheduleMode: "",
     balanceSubmit: sourceText("[data-account-balance-submit]"),
   };
 
   const accountLoading = document.querySelector<HTMLElement>("[data-account-loading]");
   const accountPanels = Array.from(document.querySelectorAll<HTMLElement>("[data-account-panel]"));
-  const accountNav = document.querySelector<HTMLElement>("[data-account-nav]");
-  const accountPanelNames = new Set(["overview", "reschedule", "cancel", "receipt", "room"]);
+  const accountPanelNames = new Set(["overview", "receipt", "room"]);
   const showAccountPanel = (requestedName: string, updateLocation = true) => {
     const name = accountPanelNames.has(requestedName) ? requestedName : "overview";
     accountPanels.forEach((panel) => {
       panel.hidden = panel.dataset.accountPanel !== name;
-    });
-    document.querySelectorAll<HTMLElement>("[data-account-nav-button]").forEach((button) => {
-      const active = button.dataset.accountNavButton === name;
-      button.toggleAttribute("data-active", active);
-      if (active) button.setAttribute("aria-current", "page");
-      else button.removeAttribute("aria-current");
     });
     if (updateLocation) {
       const destination = name === "overview"
@@ -834,6 +732,9 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
     const cancelledCard = query<HTMLElement>("[data-account-cancelled]");
     if (upcomingCard) upcomingCard.hidden = !upcoming;
     if (cancelledCard) cancelledCard.hidden = true;
+    const emptyCard = query<HTMLElement>("[data-account-empty]");
+    const hasBookings = Boolean(upcoming) || bookings.length > 0;
+    if (emptyCard) emptyCard.hidden = hasBookings;
     if (upcoming) {
       setText("[data-account-upcoming-kicker]", formatDateTime(bookingStart(upcoming)));
       setText("[data-account-upcoming-title]", serviceName(upcoming));
@@ -1620,7 +1521,6 @@ const recordingMeta = String(content.recording_meta ?? "").split("\n");
       });
       renderOverview();
       if (accountLoading) accountLoading.hidden = true;
-      if (accountNav) accountNav.hidden = false;
       const requestedPanel = window.location.hash.replace(/^#/, "");
       const initialPanel = accountPanelNames.has(requestedPanel) ? requestedPanel : "overview";
       if (requestedPanel && !accountPanelNames.has(requestedPanel)) {

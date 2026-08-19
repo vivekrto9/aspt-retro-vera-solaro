@@ -14,7 +14,10 @@ const migratedDatabase = () => {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys = ON");
   for (const migration of readdirSync(new URL("migrations/", root)).filter((name) => name.endsWith(".sql")).sort()) {
+    // D1 applies each migration file inside a single transaction.
+    sqlite.exec("BEGIN");
     sqlite.exec(readFileSync(new URL(`migrations/${migration}`, root), "utf8"));
+    sqlite.exec("COMMIT");
   }
   sqlite.exec(`
     INSERT INTO ap_vera_bookings (

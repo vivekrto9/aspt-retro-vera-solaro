@@ -14,6 +14,7 @@ import {
   sha256Hex,
   timingSafeHexEqual,
 } from "./db.ts";
+import { enqueueVeraEmail } from "./email.ts";
 import { getVeraBookingAccess } from "./security.ts";
 import type { VeraEnv, VeraRow } from "./types.ts";
 import { VERA_TABLES as tables } from "./types.ts";
@@ -72,11 +73,16 @@ export const validateCalendlyMapping = async ({
     return { ok: false as const, status: response.status, message: sanitizeProviderError(response.status, payload), missingSecretNames: [] };
   }
   const resource = parseObject(payload.resource || payload);
-  if (resource.active !== true || Number(resource.duration) !== durationMinutes) {
+  // A shared event type serves sittings of different lengths, so the exact
+  // duration is only demanded when the caller maps one event type per sitting.
+  const durationRequired = durationMinutes > 0;
+  if (resource.active !== true || (durationRequired && Number(resource.duration) !== durationMinutes)) {
     return {
       ok: false as const,
       status: 409,
-      message: `Calendly event type must be active and exactly ${durationMinutes} minutes.`,
+      message: durationRequired
+        ? `Calendly event type must be active and exactly ${durationMinutes} minutes.`
+        : "Calendly event type must be active.",
       missingSecretNames: [],
     };
   }
@@ -257,7 +263,7 @@ const markSchedulingActionRequired = async ({
   const eventUri = safeString(result?.eventUri);
   const inviteeUri = safeString(result?.inviteeUri);
   const auditId = await calendlyAuditId(bookingId, eventType, eventUri, inviteeUri);
-  await runStatements(env, [
+  const [updated] = await runStatements(env, [
     env.DB!.prepare(`UPDATE ${tables.bookings}
       SET status = 'payment_action_required', scheduling_error = ?,
         calendly_event_uri = COALESCE(calendly_event_uri, ?),
@@ -282,6 +288,35 @@ const markSchedulingActionRequired = async ({
       VALUES (?, ?, ?, 'system', ?, ?) ON CONFLICT(id) DO NOTHING`)
       .bind(auditId, bookingId, eventType, JSON.stringify(metadata), now),
   ]);
+  if (changeCount(updated) !== 1) return;
+
+  const booking = await first(env, `SELECT booking.*, service.name AS service_name
+    FROM ${tables.bookings} booking
+    JOIN ${tables.services} service ON service.slug = booking.service_slug
+    WHERE booking.id = ?`, [bookingId]);
+  const configuredOrigin = safeString(env.ASTROPAGES_SITE_URL) || safeString(env.SITE_ORIGIN) || safeString(env.SITE_URL);
+  let confirmationUrl = "";
+  try {
+    confirmationUrl = new URL(`/booking/${encodeURIComponent(bookingId)}/confirmation`, configuredOrigin).toString();
+  } catch {
+    confirmationUrl = "";
+  }
+  if (!booking || !confirmationUrl) return;
+  await enqueueVeraEmail({
+    env,
+    eventType: "vera.booking.scheduling_action_required",
+    templateKey: "vera_booking_action_required_en",
+    recipientEmail: safeString(booking.email),
+    recipientName: safeString(booking.customer_name),
+    payload: {
+      customerName: safeString(booking.customer_name),
+      bookingNumber: safeString(booking.booking_number),
+      serviceName: safeString(booking.service_name),
+      selectedSlot: safeString(booking.selected_start_at),
+      confirmationUrl,
+    },
+    idempotencyKey: `booking-scheduling-action-required:${bookingId}`,
+  }).catch(() => undefined);
 };
 
 const persistScheduledBooking = async ({

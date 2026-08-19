@@ -38,6 +38,13 @@ export const chromeDefaults: VeraContent = {
   nav_menu_label: "Open navigation",
   nav_close_label: "Close navigation",
   account_avatar_alt: "You",
+  account_signout_cta: "Sign out",
+  portal_nav_label: "Your reading room",
+  portal_nav_dashboard: "My sittings",
+  portal_nav_profile: "Your details",
+  portal_nav_billing: "Payments",
+  portal_nav_recordings: "Recordings",
+  portal_nav_messages: "Letters to Vera",
   nav_readings: "Readings",
   nav_about: "About Vera",
   nav_writing: "Writing",
@@ -122,7 +129,7 @@ export const homeSectionsDefaults: VeraContent = {
     "Every sitting includes the hand-drawn chart, a recording, and a written summary posted to you a week later. Prices in USD.",
   reading_1_symbol: "☉",
   reading_1_title: "The Natal Hour",
-  reading_1_meta: "90 minutes · in person or by call",
+  reading_1_meta: "30 minutes · in person or by call",
   reading_1_body:
     "The whole map, start to finish. Temperament, vocation, the houses that run hot, and the two or three patterns you were probably going to mention anyway.",
   reading_1_include_1: "Hand-drawn natal wheel",
@@ -165,22 +172,7 @@ export const homeSectionsDefaults: VeraContent = {
   testimonial_3_byline: "Ada & Jun · Two Charts",
   journal_eyebrow: "The journal",
   journal_title: "Notes from the desk.",
-  journal_cta: "All ten pieces",
-  journal_1_meta: "Transits · 6 min read",
-  journal_1_title: "Saturn is not punishing you",
-  journal_1_body:
-    "On the difference between a hard transit and a bad life, and why the second one is usually a story we add.",
-  journal_1_alt: "Ephemeris pages, close up",
-  journal_2_meta: "Craft · 9 min read",
-  journal_2_title: "Why I still draw by hand",
-  journal_2_body:
-    "Forty minutes with a compass teaches you things a rendered wheel will never bother to mention.",
-  journal_2_alt: "Brass protractor on paper",
-  journal_3_meta: "Basics · 4 min read",
-  journal_3_title: "Find your birth time",
-  journal_3_body:
-    "Hospital records, birth certificates, and what to do when your mother says \"sometime after lunch\".",
-  journal_3_alt: "Night sky over rooftops",
+  journal_cta: "All writing",
   letter_eyebrow: "The monthly letter",
   letter_title: "One letter a month. No horoscopes.",
   letter_body:
@@ -202,11 +194,11 @@ export const readingsDefaults: VeraContent = {
     "Every sitting includes the hand-drawn chart, a recording, and a written summary posted to you a week later. Prices in USD.",
   service_1_title: "The Natal Hour",
   service_1_price: "$240",
-  service_1_duration: "90 minutes",
+  service_1_duration: "30 minutes",
   service_1_blurb:
     "The whole map, start to finish. Temperament, vocation, the houses that run hot, and the two or three patterns you were probably going to mention anyway. Most people start here — it is the reading everything else is built on.",
   service_1_item_1: "A natal wheel drawn by hand in ink, posted to you",
-  service_1_item_2: "90 unhurried minutes, one to one",
+  service_1_item_2: "30 unhurried minutes, one to one",
   service_1_item_3: "Audio recording the same evening",
   service_1_item_4: "Written summary by post within the week",
   service_1_item_5: "Plain-language notes on every placement",
@@ -315,32 +307,33 @@ export const bookingDefaults: VeraContent = {
   calendar_month: "August 2026",
   calendar_label: "Available August 2026 sitting times",
   calendar_weekdays: "Mon\nTue\nWed\nThu\nFri\nSat\nSun",
-  calendar_legend: "Open\nChosen\nNo sittings\nslot\nslots\nhour open\nhours open\ntime",
+  calendar_legend: "Open\nChosen\nNo sittings\nslot\nslots\nhour open\nhours open\ntime\nReading Vera's calendar",
   calendar_prompt: "Pick a day above and Vera's open hours will appear here.",
   calendar_local_note:
     "Vera sits in Trieste (CEST). You're seeing local time — she'll confirm the timezone in her reply so nobody waits by the wrong clock.",
   calendar_loading: "Vera's open hours will appear here.",
   calendar_empty: "No hours are open in this window.",
   calendar_error: "The calendar could not be reached. Ring the room and Vera will find an hour by hand.",
-  timezone_label: "Times shown in",
-  timezone_1: "Trieste",
-  timezone_2: "London",
-  timezone_3: "New York",
-  timezone_4: "Los Angeles",
   continue_details_cta: "Continue to details",
   details_title: "Your chart begins here.",
   details_intro:
-    "Vera draws the wheel by hand before you arrive, so these three facts — date, time and place of birth — are the only homework. If a detail is missing, say so; there's a way round it.",
+    "Vera draws the wheel by hand before you arrive, so date, exact time and place of birth are the only homework.",
+  details_compact_intro:
+    "Vera draws the wheel by hand before you arrive, so date, exact time and place of birth are the only homework.",
   sitter_legend: "Who's sitting",
   name_label: "Full name",
   name_placeholder: "As you'd like it on the chart",
   email_label: "Email",
   email_placeholder: "you@somewhere.earth",
+  phone_label: "Telephone",
+  phone_placeholder: "Optional — for the day itself",
   birth_legend: "Birth details",
   birth_date_label: "Date of birth",
   birth_date_placeholder: "DD / MM / YYYY",
   birth_time_label: "Time of birth",
   birth_time_placeholder: "e.g. 14:20 (24h)",
+  gender_options:
+    "Gender\nSelect gender\nFemale|female\nMale|male\nNon-binary|non-binary\nPrefer not to say|prefer-not-to-say",
   birth_time_unknown: "I don't know my birth time",
   birth_time_unknown_copy:
     "Then we'll work around it.\nTwo thirds of Vera's sittings start this way. Read the houses lightly, the planets fully — and if you'd like, she'll rectify the time from life events during the hour (no extra charge).",
@@ -358,12 +351,14 @@ export const bookingDefaults: VeraContent = {
   consent_label:
     "I understand a reading is for reflection — not medical, legal or financial advice — and that my birth details are kept for Vera's eyes only.",
   validation_errors:
-    "Vera needs a name for the chart\nCheck this address — the recording goes here\nA date is needed to draw anything at all\nPlease tick this before we go on",
+    "Vera needs a name for the chart\nCheck this address — the recording goes here\nA date is needed to draw anything at all\nAn exact birth time is needed to draw the chart\nPlease choose a gender\nPlease tick this before we go on",
   continue_payment_cta: "Continue to payment",
   back_cta: "← Back",
   payment_title: "Hold the hour.",
   payment_intro:
-    "Pay a deposit now and the rest after the sitting, or settle the whole thing today. Either way the seat is yours the moment this goes through.",
+    "Review your sitting, then continue to Stripe’s secure checkout. Your hour is confirmed as soon as payment clears.",
+  payment_compact_intro:
+    "Review your sitting, then continue to Stripe’s secure checkout. Your hour is confirmed as soon as payment clears.\nPayment could not open. Check the setup or connection, then try again — this click will not create a second booking.",
   hold_label: "Seat held",
   summary_kicker: "Your sitting",
   summary_duration_suffix:
@@ -380,7 +375,7 @@ export const bookingDefaults: VeraContent = {
   full_title: "Pay in full",
   full_body: "Settled today, nothing to remember later. Vera throws in the posted chart print.",
   card_label: "Card",
-  card_fallback: "Secure payment fields will appear here after the hour is held.",
+  card_fallback: "Payment could not open. Check the setup or connection, then try again — this click will not create a second booking.",
   gift_label: "Gift certificate",
   gift_placeholder: "e.g. SOLARO26",
   gift_cta: "Apply",
@@ -388,9 +383,12 @@ export const bookingDefaults: VeraContent = {
   gift_applied_suffix:
     "gift certificate applied — from whoever loves you enough to guess your birth time.",
   submit_cta: "Pay {{ due_now }} · hold my seat",
+  submit_busy_cta: "Redirecting…",
   secure_note: "Secure · Vera never sees your card",
+  confirmation_state_copy:
+    "awaiting_payment|Payment is still due|Your hour is waiting.|Review the sitting, then continue to Stripe when you're ready. The booking is only paid after Vera receives Stripe's signed confirmation.|Check again|Review payment|Contact support|Not confirmed|Not scheduled|Booking reference|Payment|Scheduling|Status checked just now|Checking…\nprocessing|Stripe is checking the ledger|Payment is being verified.|Keep this page open. Vera will confirm the sitting as soon as the signed payment notice arrives.||||Verifying|Not scheduled\nfailed|Payment wasn't completed|Your card was not charged here.|Review the sitting and try Stripe again while the hour is still held, or contact Vera if the hold has expired.||||Not confirmed|Not scheduled\npaid_scheduling|Payment verified|Vera is placing the hour.|Your payment is safe. The Calendly appointment is being created now.||||Paid|Scheduling\naction_required|Payment confirmed · time protected|Calendly needs a human hand.|Your payment is safe and the selected time remains protected. Calendly could not create the appointment automatically; do not pay or book again. Check once more or contact Vera for help.||||Paid|Assistance required\ntimeout|Still checking|This is taking longer than usual.|Your payment status has not been guessed. Check again, retry only if payment is still due, or contact Vera.||||Checking|Not scheduled",
   payment_policy_1:
-    "Moving the date.\nFree once, up to 72 hours before. After that the deposit holds the hour Vera set aside.",
+    "Moving the date.\nFree once, up to 72 hours before. After that your payment holds the hour Vera set aside.",
   payment_policy_2:
     "If Vera cancels.\nFull refund, or a sitting at the front of the queue — your call.",
   declined_title: "Your bank turned that one down.",
@@ -444,10 +442,10 @@ export const bookingDefaults: VeraContent = {
     "Your birth details are still in the form. Pick the same hour again if it's free — most of the time it is.",
   expired_restart_cta: "Start the hold again",
   expired_back_cta: "Back to the reading",
-  processing_title: "Taking the deposit…",
+  processing_title: "One moment…",
   processing_body:
-    "Your bank is thinking. Don't refresh — the hour stays held while this goes through, and you'll land on your confirmation in a moment.",
-  processing_step: "Contacting your bank · step 2 of 3",
+    "Don't refresh — the hour stays held while this goes through, and you'll land on your confirmation shortly.",
+  processing_step: "This won't take long",
   confirmed_kicker: "Seat held",
   confirmed_reference_template: "· {{ reference }}",
   confirmed_title: "The hour is yours.",
@@ -489,63 +487,19 @@ export const bookingDefaults: VeraContent = {
 export const writingDefaults: VeraContent = {
   title: "Writing",
   writing_eyebrow: "The journal",
-  writing_title: "Ten things worth writing down.",
+  writing_title: "Things worth writing down.",
   writing_intro:
     "Fifty-two years at one desk, and these are the pieces people keep asking me to send again. No horoscopes, no predictions. Mostly corrections.",
-  writing_meta_count: "10 pieces · written 1998—2026",
+  writing_meta_count: "{{ count }} pieces, oldest first drafted in 1998",
   writing_meta_note: "New writing goes to the letter first",
   category_all: "All",
-  category_transits: "Transits",
-  category_craft: "Craft",
-  category_basics: "Basics",
-  category_houses: "Houses",
-  category_method: "Method",
-  category_practice: "Practice",
-  count_label: "Showing all 10",
-  count_filtered_template: "Showing {{ shown }} of 10",
+  count_label: "Showing all {{ count }}",
+  count_filtered_template: "Showing {{ shown }}",
   featured_badge: "Most read",
-  featured_meta: "Transits · 6 min · March 2024",
-  featured_title: "Saturn is not punishing you",
-  featured_dek:
-    "On the difference between a hard transit and a bad life, and why the second one is usually a story we add. The piece I send most often, usually to people in their late twenties.",
   featured_cta: "Read the piece →",
-  featured_alt: "Ephemeris pages, close up",
-  article_1_title: "Why I still draw by hand",
-  article_1_meta: "Craft · 9 min · Nov 2025",
-  article_1_dek:
-    "Forty minutes with a compass teaches you things a rendered wheel will never bother to mention.",
-  article_2_title: "Find your birth time",
-  article_2_meta: "Basics · 4 min · Sep 2025",
-  article_2_dek:
-    "Hospital records, birth certificates, and what to do when your mother says “sometime after lunch”.",
-  article_3_title: "The twelfth house is not a curse",
-  article_3_meta: "Houses · 7 min · Jun 2025",
-  article_3_dek:
-    "The most feared place in the chart is mostly just the part of your life nobody watched you build.",
-  article_4_title: "What a retrograde actually does",
-  article_4_meta: "Transits · 5 min · Feb 2025",
-  article_4_dek:
-    "It does not break your laptop. It does reliably surface the conversation you have been avoiding.",
-  article_5_title: "Whole signs, and why I left Placidus",
-  article_5_meta: "Method · 11 min · Oct 2024",
-  article_5_dek:
-    "A technical piece for practitioners. I changed house systems in 1991 and never went back.",
-  article_6_title: "Reading for people who don't believe it",
-  article_6_meta: "Practice · 6 min · May 2024",
-  article_6_dek:
-    "Sceptics make the best clients. They ask better questions and never confuse me with a priest.",
-  article_7_title: "Your Saturn return is not a deadline",
-  article_7_meta: "Transits · 8 min · Jan 2023",
-  article_7_dek:
-    "Twenty-nine is not a verdict on your twenties. What the return actually asks, and when it lets go.",
-  article_8_title: "The three questions I ask first",
-  article_8_meta: "Practice · 5 min · Aug 2021",
-  article_8_dek:
-    "Before a single placement. They tell me more in four minutes than the chart does in forty.",
-  article_9_title: "On almanacs, and my grandmother's ephemeris",
-  article_9_meta: "Craft · 10 min · Mar 1998",
-  article_9_dek:
-    "The oldest piece here, and the only one I would not change a word of. A kitchen, a pharmacist, a stolen book.",
+  writing_empty_title: "Nothing published yet",
+  writing_empty_body:
+    "The next piece is still on the desk. Join the letter and it will reach you before it lands here.",
   signup_eyebrow: "The monthly letter",
   signup_title: "New writing goes here first.",
   signup_body:
@@ -554,75 +508,28 @@ export const writingDefaults: VeraContent = {
   signup_cta: "Send",
   ...seo(
     "Writing · Vera Solaro",
-    "Ten pieces from fifty-two years at one desk: no horoscopes, no predictions, mostly corrections.",
+    "Pieces from fifty-two years at one desk: no horoscopes, no predictions, mostly corrections.",
     "/writing",
   ),
 };
 
 export const articleDefaults: VeraContent = {
-  title: "Saturn is not punishing you",
+  title: "Writing piece",
   back_label: "← All writing",
-  article_meta: "Transits · 6 min · March 2024",
-  article_title: "Saturn is not punishing you",
-  article_dek:
-    "On the difference between a hard transit and a bad life — and why the second one is usually a story we add.",
-  article_byline: "Written by Vera Solaro",
   article_author_alt: "Vera",
-  article_place_date: "Trieste · 12 March 2024",
-  paragraph_1:
-    "A woman came to me in February, thirty-one years old, convinced she had ruined her life. She had left a job, a flat and a long engagement inside eleven months. She wanted to know what she had done to deserve the year she'd had.",
-  paragraph_2: "Nothing. That is the whole answer, and it takes an hour to make it land.",
-  paragraph_3:
-    "Saturn had been sitting on her Sun since the previous spring — the first crossing since she was born. In the older books this is written up in language that would frighten anybody: loss, restriction, the heavy hand. The books are not wrong about the weather. They are catastrophically wrong about the tone.",
-  section_1_title: "What the old texts actually say",
-  section_1_paragraph_1:
-    "Read the tradition carefully and Saturn is not a judge. He is a surveyor. He arrives with a measuring tape and asks, with no interest whatsoever in your feelings, whether the thing you built will hold weight. Not whether it is beautiful. Not whether you love it. Whether it holds.",
-  section_1_paragraph_2:
-    "Anything that cannot bear the load comes down during that visit. The engagement she had been quietly negotiating with herself for four years could not bear the load. Neither could the job she had taken for the title. Saturn did not remove them. Saturn removed the possibility of continuing to pretend.",
-  pull_quote:
-    "A hard transit tells you what is load-bearing. The suffering comes almost entirely from the year you spend insisting the answer is different.",
-  section_2_title: "Where the punishment story comes from",
-  section_2_paragraph_1:
-    "Astrology inherited its vocabulary from centuries in which almost everyone read the sky morally. A bad year had to be a debt. If you were ill, something had been done. If you were poor, somebody was owed. That grammar survives in the texts long after nobody sensible believes it, and it survives in us — which is why my clients arrive asking what they did, not what they are being asked to notice.",
-  section_2_paragraph_2:
-    "I have drawn just over four thousand charts. I have never once seen a transit deliver a verdict. I have seen hundreds deliver a bill that was already outstanding.",
-  figure_alt: "Hand-drawn transit chart, ink on paper",
-  figure_caption:
-    "Fig. 1 — Saturn crossing a natal Sun in the seventh house. Drawn for a client in 2019, reproduced with her blessing.",
-  section_3_title: "A better set of questions",
-  section_3_intro:
-    "When Saturn crosses something of yours, three questions do more work than any forecast:",
-  question_1:
-    "What have I been maintaining with effort rather than conviction? That is the thing under survey.",
-  question_2:
-    "What would I keep even if nobody clapped? That is what will still be standing in three years.",
-  question_3: "Where am I negotiating with reality instead of arranging my affairs around it?",
-  section_3_outro:
-    "None of those questions require you to believe a planet is doing anything to you. They work just as well if you consider the chart a very old, very precise mirror. I don't mind which you think it is; I mind whether you answer honestly.",
-  section_4_title: "What happened to her",
-  section_4_paragraph_1:
-    "She wrote in November. She is teaching, badly paid and clearly delighted, and living alone for the first time at thirty-two. Her letter said the year had not been a punishment; it had been an eviction, and she had needed one. Saturn will cross her Sun again when she is sixty. My guess is she'll recognise the knock.",
-  section_4_paragraph_2:
-    "If you are in the middle of one of these years, I can tell you the timing, the sequence and roughly what is under survey. What I cannot do — and would not, if I could — is tell you it was deserved.",
+  article_byline: "Written by Vera Solaro",
   author_name: "Vera Solaro",
   author_alt: "Vera",
   author_bio:
     "Consulting astrologer in Trieste since 1974. Traditional and Hellenistic technique, whole-sign houses, every chart drawn by hand. Six sittings a week and not one more.",
-  rail_title: "In this piece",
-  rail_1: "What the old texts say",
-  rail_2: "Where the punishment story comes from",
-  rail_3: "A better set of questions",
-  rail_4: "What happened to her",
   read_next_title: "Read next",
-  read_next_1: "Your Saturn return is not a deadline",
-  read_next_2: "Find your birth time",
-  cta_title: "In a Saturn year?",
+  cta_title: "Sitting with a hard transit?",
   cta_body: "The Year Ahead sitting maps the timing month by month. Two hours, $385.",
   cta_label: "Choose a time",
   ...seo(
-    "Saturn is not punishing you · Vera Solaro",
-    "On the difference between a hard transit and a bad life, and why punishment is usually a story we add.",
-    "/writing/saturn-is-not-punishing-you",
+    "Writing · Vera Solaro",
+    "A piece from Vera Solaro's desk in Trieste.",
+    "/writing",
   ),
 };
 
@@ -1103,6 +1010,11 @@ export const accountDefaults: VeraContent = {
   prep_3_title: "Bring three dated events",
   prep_3_body: "A move, a loss, and something that changed your work. Years are enough.",
   prep_3_status: "For Thursday",
+  empty_symbol: "✷",
+  empty_title: "No sittings in the book yet.",
+  empty_body:
+    "When you book an hour it will sit here, with the chart, the recording and the receipt kept beside it.",
+  empty_cta: "Book a reading",
   past_title: "Past sittings",
   past_note: "2 sittings since 2021",
   past_1_date: "4 Mar 2021",
@@ -1132,6 +1044,32 @@ export const accountDefaults: VeraContent = {
   help_body:
     "Payments and dates are fixed fastest by telephone: +39 040 555 0112, Tuesdays and Thursdays 10—4.",
   help_cta: "All contact details →",
+  billing_eyebrow: "Payments",
+  billing_title: "The payment ledger.",
+  billing_intro:
+    "Every payment attached to your sittings, kept together with its receipt and current status.",
+  billing_balance_title: "A balance is still due",
+  billing_balance_body:
+    "Open My sittings to review the reading and settle the remaining balance securely.",
+  billing_balance_cta: "Review in My sittings",
+  billing_history_title: "Payment history",
+  billing_empty_title: "No payments in the ledger yet.",
+  billing_empty_body: "Receipts will appear here after Stripe confirms a payment.",
+  billing_invoice_label: "Receipt",
+  billing_booking_label: "Sitting",
+  billing_status_paid: "Paid",
+  billing_status_refunded: "Refunded",
+  billing_status_partial: "Partially refunded",
+  profile_eyebrow: "Your details",
+  profile_title: "What Vera has on file.",
+  profile_intro: "The name and address your sittings, receipts and recordings are kept under.",
+  profile_details_title: "Your details",
+  profile_field_name: "Name",
+  profile_field_email: "Email",
+  profile_field_phone: "Telephone",
+  profile_value_empty: "Not given",
+  profile_change_note:
+    "Something wrong? Write to Vera and she will correct the book by hand.",
   account_nav_label: "Manage booking & client area",
   account_nav_overview: "My sittings",
   account_nav_reschedule: "Reschedule",
@@ -1337,10 +1275,13 @@ export const closedDefaults: VeraContent = {
 
 export const authDefaults: VeraContent = {
   auth_symbol: "✷",
+  auth_logo_alt: "Vera Solaro",
   auth_eyebrow: "Your sittings",
   email_label: "Email",
   password_label: "Password",
   password_hint: "Eight characters or more",
+  auth_email_invalid_error: "That does not look like an email address.",
+  auth_password_short_error: "Eight characters or more, please.",
   login_link: "Log in",
   signup_link: "Create an account",
   auth_seo_robots: "noindex,follow",
@@ -1359,6 +1300,8 @@ export const authDefaults: VeraContent = {
   login_submitting_status: "Opening your sitting…",
   login_error_status:
     "That email and password do not open the book. Check them and try again.",
+  login_rate_limited_status:
+    "Too many attempts from here. Wait a few minutes, then try again.",
   login_switch_prompt: "First sitting?",
 
   signup_seo_title: "Create an account · Vera Solaro",
@@ -1369,10 +1312,9 @@ export const authDefaults: VeraContent = {
     "Keep every chart, recording, written summary and receipt in one quiet place.",
   signup_form_title: "Create your account",
   signup_name_label: "Full name",
-  signup_phone_label: "Phone (optional)",
   signup_submit_cta: "Create my account",
   signup_submitting_status: "Making room in the book…",
-  signup_success_status: "One step left. Go and confirm it's actually you.",
+  signup_success_status: "Your reading room is open. Taking you in.",
   verification_success_status: "You're in the book",
   verification_invalid_status: "Wrong address? Start over",
   signup_error_status: "That account could not be made. Check the details and try again.",
@@ -1390,7 +1332,8 @@ export const authDefaults: VeraContent = {
   forgot_success_status:
     "If that address is in the book, reset instructions are ready.",
   forgot_error_status: "The reset request could not be prepared. Try again in a moment.",
-  forgot_reset_url_prefix: "Local reset link:",
+  forgot_rate_limited_status:
+    "Too many requests from here. Wait a few minutes, then ask again.",
   forgot_switch_prompt: "Remembered it?",
 
   reset_seo_title: "Choose a new password · Vera Solaro",
@@ -1406,6 +1349,8 @@ export const authDefaults: VeraContent = {
   reset_submitting_status: "Updating your password…",
   reset_success_status: "Your password is changed. Taking you to log in…",
   reset_error_status: "The password could not be changed. Request a new link and try again.",
+  reset_rate_limited_status:
+    "Too many attempts from here. Wait a few minutes, then try again.",
   reset_invalid_token_status: "This reset link is missing or has expired. Request a new one.",
   reset_request_cta: "Request a new reset link",
 };
@@ -1440,6 +1385,7 @@ const omitDefaults = (defaults: VeraContent, fields: string[]): VeraContent => {
 const bookingPaymentFields = [
   "payment_title",
   "payment_intro",
+  "payment_compact_intro",
   "hold_label",
   "summary_kicker",
   "summary_duration_suffix",
@@ -1453,7 +1399,6 @@ const bookingPaymentFields = [
   "deposit_body",
   "full_title",
   "full_body",
-  "card_label",
   "card_fallback",
   "gift_label",
   "gift_placeholder",
@@ -1461,7 +1406,9 @@ const bookingPaymentFields = [
   "gift_error",
   "gift_applied_suffix",
   "submit_cta",
+  "submit_busy_cta",
   "secure_note",
+  "confirmation_state_copy",
   "payment_policy_1",
   "payment_policy_2",
   "declined_title",
@@ -1569,7 +1516,20 @@ const accountRoomFields = [
   "room_destroy_note",
 ];
 
+const accountProfileFields = [
+  "profile_eyebrow",
+  "profile_title",
+  "profile_intro",
+  "profile_details_title",
+  "profile_field_name",
+  "profile_field_email",
+  "profile_field_phone",
+  "profile_value_empty",
+  "profile_change_note",
+];
+
 const accountScheduleFields = [
+  ...accountProfileFields,
   "reschedule_title",
   "reschedule_intro",
   "reschedule_current_label",
@@ -1626,6 +1586,20 @@ const accountCancelFields = [
 ];
 
 const accountReceiptFields = [
+  "billing_eyebrow",
+  "billing_title",
+  "billing_intro",
+  "billing_balance_title",
+  "billing_balance_body",
+  "billing_balance_cta",
+  "billing_history_title",
+  "billing_empty_title",
+  "billing_empty_body",
+  "billing_invoice_label",
+  "billing_booking_label",
+  "billing_status_paid",
+  "billing_status_refunded",
+  "billing_status_partial",
   "receipt_download_cta",
   "receipt_email_cta",
   "receipt_brand",
@@ -1766,7 +1740,7 @@ export const veraEntries: VeraEntryDefinition[] = [
     defaults: pickDefaults(bookingDefaults, bookingPaymentFields),
   },
   { collection: "vera_writing", entry: "main", label: "Vera writing", defaults: writingDefaults },
-  { collection: "vera_article", entry: "saturn", label: "Vera article", defaults: articleDefaults },
+  { collection: "vera_article", entry: "main", label: "Vera article", defaults: articleDefaults },
   { collection: "vera_about", entry: "main", label: "Vera about", defaults: aboutDefaults },
   { collection: "vera_questions", entry: "main", label: "Vera questions", defaults: questionsDefaults },
   { collection: "vera_contact", entry: "main", label: "Vera contact", defaults: contactDefaults },
@@ -1813,6 +1787,7 @@ export const veraEntries: VeraEntryDefinition[] = [
     label: "Vera account receipt",
     defaults: pickDefaults(accountDefaults, accountReceiptFields),
   },
+
   { collection: "vera_closed", entry: "main", label: "Vera closed", defaults: closedDefaults },
   { collection: "vera_auth", entry: "main", label: "Vera account access", defaults: authDefaults },
 ];
@@ -1828,7 +1803,7 @@ export const veraPageTargets: Record<string, Array<{ collection: string; entry: 
     { collection: "vera_booking_payment", entry: "main" },
   ],
   writing: [{ collection: "vera_writing", entry: "main" }],
-  article_saturn: [{ collection: "vera_article", entry: "saturn" }],
+  article: [{ collection: "vera_article", entry: "main" }],
   about: [{ collection: "vera_about", entry: "main" }],
   questions: [{ collection: "vera_questions", entry: "main" }],
   contact: [{ collection: "vera_contact", entry: "main" }],

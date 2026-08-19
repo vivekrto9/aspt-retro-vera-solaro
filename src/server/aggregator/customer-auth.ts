@@ -10,7 +10,6 @@ const sessionCookieName = "ap_customer_session";
 const csrfCookieName = "ap_customer_csrf";
 const sessionTtlMs = 30 * 24 * 60 * 60 * 1000;
 const passwordResetTtlMs = 60 * 60 * 1000;
-const emailVerificationTtlMs = 24 * 60 * 60 * 1000;
 const passwordIterations = 100_000;
 
 const toHex = (buffer: ArrayBuffer) =>
@@ -63,6 +62,13 @@ const requestOrigin = (env: RuntimeEnv, request: Request) => {
     // The request origin remains the safe same-site fallback.
   }
   return new URL(request.url).origin;
+};
+
+// Mirrors the Pandit reference: the reset link is handed back over the API only when
+// the caller is on the developer's own machine, so a deployed origin never echoes it.
+const isLocalRequest = (request: Request) => {
+  const hostname = new URL(request.url).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 };
 
 const hashPassword = async (password: string, salt = randomHex(16)) => {
@@ -180,7 +186,7 @@ export const signupCustomer = async ({
   email,
   phone,
   password,
-  createSession = false,
+  createSession = true,
 }: {
   env: RuntimeEnv;
   request: Request;
@@ -200,61 +206,31 @@ export const signupCustomer = async ({
 
   const now = nowIso();
   const accountId = createId("acct");
-  const verificationToken = randomHex(32);
-  const verificationHash = await sha256Hex(verificationToken);
-  const verificationExpiresAt = new Date(Date.now() + emailVerificationTtlMs).toISOString();
-  const verificationUrl = new URL("/api/astropages/generated-site/customer-auth/signup", requestOrigin(env, request));
-  verificationUrl.searchParams.set("verify", verificationToken);
+  const accountUrl = new URL("/account", requestOrigin(env, request)).toString();
   const passwordResult = await hashPassword(rawPassword);
-  const pendingAccount = {
-    id: "",
-    email: normalizedEmail,
-    displayName: name,
-    phone: safeString(phone),
-    defaultLanguage: "English",
-    createdAt: "",
-    updatedAt: "",
-  };
+
+  // A reader who already owns the email and gives its password is simply let
+  // back in, so a second signup never strands them on their own account.
   const existing = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE email = ?`, [normalizedEmail]);
   if (existing) {
-    if (!safeString(existing.email_verified_at)) {
-      try {
-        await run(env, `UPDATE ${tables.customerAccounts}
-          SET display_name = ?, phone = ?, password_hash = ?, password_salt = ?,
-            email_verification_token_hash = ?, email_verification_expires_at = ?, updated_at = ?
-          WHERE id = ? AND email_verified_at IS NULL`, [
-          name, safeString(phone) || null, passwordResult.hash, passwordResult.salt,
-          verificationHash, verificationExpiresAt, now, String(existing.id),
-        ]);
-        const queued = await enqueueCustomerEmail({
-          env,
-          eventType: "customer.welcome",
-          templateKey: "customer_welcome_en",
-          recipientEmail: normalizedEmail,
-          recipientName: name,
-          payload: {
-            customerName: name,
-            verificationUrl: verificationUrl.toString(),
-          },
-          idempotencyKey: `customer-verification:${String(existing.id)}:${verificationHash.slice(0, 16)}`,
-        });
-        if (!queued.ok) throw new Error(queued.message);
-      } catch (error) {
-        await run(env, `UPDATE ${tables.customerAccounts}
-          SET email_verification_token_hash = NULL, email_verification_expires_at = NULL
-          WHERE id = ? AND email_verification_token_hash = ?`, [String(existing.id), verificationHash]).catch(() => undefined);
-        console.error("Customer verification email could not be re-queued.", error);
-      }
+    const existingCheck = await hashPassword(rawPassword, String(existing.password_salt ?? ""));
+    if (!timingSafeEqual(existingCheck.hash, String(existing.password_hash ?? ""))) {
+      return { ok: false as const, message: "That email is already in the book. Log in instead." };
     }
-    void createSession;
+    const account = accountFromRow(existing);
+    if (!createSession) {
+      return { ok: true as const, account, cookies: [] as string[], csrfToken: "", created: false as const };
+    }
+    const session = await createCustomerSession({ env, accountId: account.id, request });
     return {
       ok: true as const,
-      account: pendingAccount,
-      cookies: [] as string[],
-      csrfToken: "",
-      verificationPending: true as const,
+      account,
+      cookies: session.cookies,
+      csrfToken: session.csrfToken,
+      created: false as const,
     };
   }
+
   try {
     await run(
       env,
@@ -262,7 +238,7 @@ export const signupCustomer = async ({
         id, email, display_name, phone, password_hash, password_salt,
         default_language, email_verified_at, email_verification_token_hash,
         email_verification_expires_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)`,
       [
         accountId,
         normalizedEmail,
@@ -271,43 +247,45 @@ export const signupCustomer = async ({
         passwordResult.hash,
         passwordResult.salt,
         "English",
-        verificationHash,
-        verificationExpiresAt,
+        now,
         now,
         now,
       ],
     );
-    const queued = await enqueueCustomerEmail({
-      env,
-      eventType: "customer.welcome",
-      templateKey: "customer_welcome_en",
-      recipientEmail: normalizedEmail,
-      recipientName: name,
-      payload: {
-        customerName: name,
-        verificationUrl: verificationUrl.toString(),
-      },
-      idempotencyKey: `customer-verification:${accountId}:${verificationHash.slice(0, 16)}`,
-    });
-    if (!queued.ok) throw new Error(queued.message);
   } catch (error) {
-    await run(env, `DELETE FROM ${tables.customerAccounts}
-      WHERE id = ? AND email_verified_at IS NULL`, [accountId]).catch(() => undefined);
-    console.error("Customer verification email could not be queued.", error);
+    console.error("Customer account could not be created.", error);
     return { ok: false as const, message: "That account could not be made. Check the details and try again." };
   }
-  if (!await getCustomerAccountById(env, accountId)) {
-    return { ok: false as const, message: "Account could not be created." };
+
+  const account = await getCustomerAccountById(env, accountId);
+  if (!account) return { ok: false as const, message: "Account could not be created." };
+
+  // The welcome note is a courtesy, never a gate: a failed send must not undo a
+  // good account or keep the reader out of the room they just made.
+  const queued = await enqueueCustomerEmail({
+    env,
+    eventType: "customer.welcome",
+    templateKey: "customer_welcome_en",
+    recipientEmail: normalizedEmail,
+    recipientName: name,
+    payload: {
+      customerName: name,
+      accountUrl,
+    },
+    idempotencyKey: `customer-welcome:${accountId}`,
+  });
+  if (!queued.ok) console.error("Customer welcome email could not be queued.", queued.message);
+
+  if (!createSession) {
+    return { ok: true as const, account, cookies: [] as string[], csrfToken: "", created: true as const };
   }
-  // Email ownership must be proven before any session can be issued. Keep the
-  // legacy option in the interface for callers while deliberately ignoring it.
-  void createSession;
+  const session = await createCustomerSession({ env, accountId, request });
   return {
     ok: true as const,
-    account: pendingAccount,
-    cookies: [] as string[],
-    csrfToken: "",
-    verificationPending: true as const,
+    account,
+    cookies: session.cookies,
+    csrfToken: session.csrfToken,
+    created: true as const,
   };
 };
 
@@ -358,9 +336,6 @@ export const loginCustomer = async ({
   if (!timingSafeEqual(passwordResult.hash, String(row.password_hash ?? ""))) {
     return { ok: false as const, message: "Email or password is incorrect." };
   }
-  if (!safeString(row.email_verified_at)) {
-    return { ok: false as const, message: "Email or password is incorrect." };
-  }
   const account = accountFromRow(row);
   const session = await createCustomerSession({ env, accountId: account.id, request });
   return { ok: true as const, account, cookies: session.cookies, csrfToken: session.csrfToken };
@@ -383,13 +358,14 @@ export const requestCustomerPasswordReset = async ({
 
   const row = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE email = ?`, [normalizedEmail]);
   const genericMessage = "If an account exists for this email, password reset instructions will be available shortly.";
-  if (!row) return { ok: true as const, message: genericMessage, resetUrl: "" };
+  if (!row) return { ok: true as const, message: genericMessage, emailSent: false, resetUrl: "" };
 
   const token = randomHex(32);
   const resetUrl = `${requestOrigin(env, request)}/reset-password?token=${encodeURIComponent(token)}`;
   const now = nowIso();
   const expiresAt = new Date(Date.now() + passwordResetTtlMs).toISOString();
   const resetId = createId("cpwr");
+  let emailSent = false;
   try {
     await run(env, `UPDATE ${tables.customerPasswordResets}
       SET used_at = ? WHERE account_id = ? AND used_at IS NULL`, [now, String(row.id)]);
@@ -413,6 +389,7 @@ export const requestCustomerPasswordReset = async ({
       idempotencyKey: `customer-password-reset:${resetId}`,
     });
     if (!queued.ok) throw new Error(queued.message);
+    emailSent = true;
   } catch (error) {
     await run(env, `UPDATE ${tables.customerPasswordResets}
       SET used_at = ? WHERE id = ? AND used_at IS NULL`, [nowIso(), resetId]).catch(() => undefined);
@@ -422,7 +399,10 @@ export const requestCustomerPasswordReset = async ({
   return {
     ok: true as const,
     message: genericMessage,
-    resetUrl: "",
+    emailSent,
+    // A failed queue attempt marks the reset used above, so the link is already dead
+    // and is withheld rather than handed back as something the reader could follow.
+    resetUrl: emailSent && isLocalRequest(request) ? resetUrl : "",
   };
 };
 

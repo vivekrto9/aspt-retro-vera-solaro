@@ -47,6 +47,7 @@ import {
   veraBookingManageTokenExpiresAt,
 } from "./security.ts";
 import { createStripeRefund } from "./stripe.ts";
+import { deriveVeraBookingConfirmationState } from "./booking-confirmation.ts";
 import type { VeraEnv, VeraRow } from "./types.ts";
 import { VERA_TABLES as tables } from "./types.ts";
 
@@ -67,14 +68,20 @@ const bookingAccountUrl = (env: VeraEnv) => {
   return new URL("/account", origin).toString();
 };
 
+const bookingConfirmationUrl = (env: VeraEnv, bookingId: string) => {
+  const origin = publicOrigin(env);
+  if (!origin) return "";
+  return new URL(`/booking/${encodeURIComponent(bookingId)}/confirmation`, origin).toString();
+};
+
 const enqueueBookingConfirmedEmail = async (env: VeraEnv, bookingId: string) => {
   const booking = await first(env, `SELECT booking.*, service.name AS service_name
     FROM ${tables.bookings} booking
     JOIN ${tables.services} service ON service.slug = booking.service_slug
     WHERE booking.id = ?`, [bookingId]);
   if (!booking || safeString(booking.status) !== "confirmed") return;
-  const accountUrl = bookingAccountUrl(env);
-  if (!accountUrl) return;
+  const confirmationUrl = bookingConfirmationUrl(env, bookingId);
+  if (!confirmationUrl) return;
   await enqueueVeraEmail({
     env,
     eventType: "vera.booking.confirmed",
@@ -86,9 +93,7 @@ const enqueueBookingConfirmedEmail = async (env: VeraEnv, bookingId: string) => 
       bookingNumber: safeString(booking.booking_number),
       serviceName: safeString(booking.service_name),
       scheduledDateTime: safeString(booking.selected_start_at),
-      balanceAmount: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
-        .format(Number(booking.balance_cents) / 100),
-      accountUrl,
+      confirmationUrl,
     },
     idempotencyKey: `booking-confirmed:${bookingId}`,
   }).catch(() => undefined);
@@ -267,6 +272,7 @@ export const createVeraBooking = async ({
     ? input.intake as Record<string, unknown>
     : {};
   const birthDate = normalizeVeraBirthDate(intakeInput.birthDate);
+  const gender = safeString(intakeInput.gender);
   const birthTimeUnknown = intakeInput.birthTimeUnknown === true;
   const birthTime = birthTimeUnknown ? "" : normalizeVeraBirthTime(intakeInput.birthTime);
   const rawBirthTimeApproximation = safeString(intakeInput.birthTimeApproximation);
@@ -293,6 +299,7 @@ export const createVeraBooking = async ({
   }
   const intake = {
     birthDate,
+    ...(gender ? { gender } : {}),
     birthTime,
     birthTimeUnknown,
     ...(birthTimeUnknown ? { birthTimeApproximation } : {}),
@@ -445,13 +452,21 @@ export const getVeraBookingStatus = async ({
   const birthTimeApproximation = birthTimeUnknown
     ? normalizeVeraBirthTimeApproximation(intake?.birthTimeApproximation)
     : "";
+  const latestAttempt = await first(env, `SELECT status FROM ${tables.paymentAttempts}
+    WHERE booking_id = ? ORDER BY created_at DESC LIMIT 1`, [bookingId]);
+  const booking = publicBooking(access.booking);
   return {
     ok: true as const,
     status: 200,
     booking: {
-      ...publicBooking(access.booking),
+      ...booking,
       birthTimeUnknown,
       ...(birthTimeApproximation ? { birthTimeApproximation } : {}),
+      confirmationState: deriveVeraBookingConfirmationState({
+        bookingStatus: booking.status,
+        paymentState: booking.paymentState,
+        paymentAttemptStatus: safeString(latestAttempt?.status),
+      }),
     },
   };
 };
@@ -767,7 +782,7 @@ export const completeVeraReschedule = async ({
   const service = await first(env, `SELECT name, duration_minutes FROM ${tables.services}
     WHERE slug = ? AND active = 1`, [safeString(booking.service_slug)]);
   const durationMinutes = Number(service?.duration_minutes);
-  if (![90, 120].includes(durationMinutes)) {
+  if (![30, 90, 120].includes(durationMinutes)) {
     return { ok: false as const, status: 409, message: "The sitting duration is not configured." };
   }
   const eventTypeUri = safeString(booking.calendly_event_type_uri);

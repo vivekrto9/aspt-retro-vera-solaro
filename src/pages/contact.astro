@@ -19,16 +19,22 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
 
   <section class="vera-section vera-section--paper vera-contact-layout">
     <div>
-      <div class="vera-contact-grid">
-        {[1, 2, 3, 4].map((index) => (
-          <article class="vera-info-card">
-            <span class="vera-info-card__tag" {...builderEdit(`card_${index}_tag`)}>
-              {content[`card_${index}_tag`]}
-            </span>
-            <strong {...builderEdit(`card_${index}_value`)}>{content[`card_${index}_value`]}</strong>
-            <p {...builderEdit(`card_${index}_note`)}>{content[`card_${index}_note`]}</p>
-          </article>
-        ))}
+      <div class="vera-support-table-wrap">
+        <table class="vera-support-table">
+          <tbody>
+            {[1, 2, 3, 4].map((index) => (
+              <tr>
+                <th scope="row" {...builderEdit(`card_${index}_tag`)}>
+                  {content[`card_${index}_tag`]}
+                </th>
+                <td>
+                  <strong {...builderEdit(`card_${index}_value`)}>{content[`card_${index}_value`]}</strong>
+                  <span {...builderEdit(`card_${index}_note`)}>{content[`card_${index}_note`]}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <figure style="margin: 0">
         <VeraImage alt={content.map_alt} altField="map_alt" edit={builderEdit} class="vera-contact-map" />

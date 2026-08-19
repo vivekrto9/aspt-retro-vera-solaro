@@ -3,6 +3,7 @@ import {
   getSafePublicNextPath,
   loadPublicPageContent,
 } from "../builder/public-page.ts";
+import VeraBrandMark from "../components/vera/VeraBrandMark.astro";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 
 export const prerender = false;
@@ -28,12 +29,14 @@ const content: Record<string, string> = {
 };
 ---
 
-<VeraFrame {...page} content={content} currentPath="/account">
+<VeraFrame {...page} content={content} currentPath="/account" showHeader={false} showFooter={false}>
   <section class="vera-page-hero vera-page-hero--split">
     <div>
-      <div class="vera-placeholder-page__symbol" aria-hidden="true" {...builderEdit("auth_symbol")}>
-        {content.auth_symbol}
-      </div>
+      <VeraBrandMark
+        alt={content.auth_logo_alt}
+        field="auth_logo_alt"
+        edit={builderEdit}
+      />
       <p class="vera-eyebrow" style="margin-top: 34px" {...builderEdit("auth_eyebrow")}>
         {content.auth_eyebrow}
       </p>
@@ -47,6 +50,7 @@ const content: Record<string, string> = {
       class="vera-form-card"
       data-auth-form
       data-login-path={loginHref}
+      data-next-path={safeNext}
       aria-labelledby="signup-form-title"
     >
       <fieldset>
@@ -64,10 +68,6 @@ const content: Record<string, string> = {
         <label class="vera-field">
           <span class="vera-label" {...builderEdit("email_label")}>{content.email_label}</span>
           <input class="vera-input" type="email" name="email" autocomplete="email" required />
-        </label>
-        <label class="vera-field">
-          <span class="vera-label" {...builderEdit("signup_phone_label")}>{content.signup_phone_label}</span>
-          <input class="vera-input" type="tel" name="phone" autocomplete="tel" />
         </label>
         <label class="vera-field">
           <span class="vera-label" {...builderEdit("password_label")}>{content.password_label}</span>
@@ -144,13 +144,13 @@ const content: Record<string, string> = {
         body: JSON.stringify({
           name: formData.get("name"),
           email: formData.get("email"),
-          phone: formData.get("phone"),
           password: formData.get("password"),
         }),
       });
       const payload = await response.json().catch(() => null) as { status?: string } | null;
       if (!response.ok || payload?.status !== "ready") throw new Error("signup");
       showStatus("success");
+      window.location.assign(form.dataset.nextPath || "/account");
     } catch {
       showStatus("error");
       if (submit) submit.disabled = false;

@@ -123,15 +123,26 @@ test("FAQ schema contains only complete visible question and answer pairs", () =
 
 test("public discovery routes expose Vera pages without indexing private account access", () => {
   const canonicalOrigin = resolveSeoOrigin("https://preview.example.workers.dev", siteSettings.siteUrl);
-  const sitemap = buildPublicSitemapXml(canonicalOrigin, new Date("2026-08-05T00:00:00.000Z"));
+  const publishedPosts = [
+    { path: "/writing/saturn-is-not-punishing-you", label: "Saturn is not punishing you", note: "A transit is not a verdict." },
+  ];
+  const sitemap = buildPublicSitemapXml(
+    canonicalOrigin,
+    new Date("2026-08-05T00:00:00.000Z"),
+    publishedPosts.map((post) => post.path),
+  );
+  const emptySitemap = buildPublicSitemapXml(canonicalOrigin, new Date("2026-08-05T00:00:00.000Z"));
   const robots = buildPublicRobotsTxt(canonicalOrigin);
-  const llms = buildPublicLlmsTxt(canonicalOrigin, siteSettings);
+  const llms = buildPublicLlmsTxt(canonicalOrigin, siteSettings, publishedPosts);
 
   assert.equal(canonicalOrigin, "https://example.com");
   assert.equal(resolveSeoOrigin("https://preview.example.workers.dev", "not a url"), "https://preview.example.workers.dev");
   assert.match(sitemap, /<loc>https:\/\/example\.com\/<\/loc>/);
   assert.match(sitemap, /<loc>https:\/\/example\.com\/readings\/year-ahead<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.com\/writing<\/loc>/);
+  // Article URLs come from the caller's published `posts`, never from a hardcoded route list.
   assert.match(sitemap, /<loc>https:\/\/example\.com\/writing\/saturn-is-not-punishing-you<\/loc>/);
+  assert.doesNotMatch(emptySitemap, /<loc>https:\/\/example\.com\/writing\/[a-z-]+<\/loc>/);
   assert.match(sitemap, /<loc>https:\/\/example\.com\/letters<\/loc>/);
   assert.doesNotMatch(sitemap, /<loc>https:\/\/example\.com\/(?:login|signup|account|reset-password)<\/loc>/);
   assert.doesNotMatch(sitemap, /preview\.example\.workers\.dev/);
@@ -140,6 +151,11 @@ test("public discovery routes expose Vera pages without indexing private account
   assert.match(llms, /^# Example Brand$/m);
   assert.match(llms, /\[The sky kept a note for you\.\]\(https:\/\/example\.com\/\)/);
   assert.match(llms, /\[The Year Ahead\]\(https:\/\/example\.com\/readings\/year-ahead\)/);
+  assert.match(llms, /\[Saturn is not punishing you\]\(https:\/\/example\.com\/writing\/saturn-is-not-punishing-you\)/);
+  assert.doesNotMatch(
+    buildPublicLlmsTxt(canonicalOrigin, siteSettings),
+    /\(https:\/\/example\.com\/writing\/[a-z-]+\)/,
+  );
   assert.match(llms, /\[XML sitemap\]\(https:\/\/example\.com\/sitemap\.xml\)/);
   assert.doesNotMatch(llms, /kundli|vedic|jyotish/i);
 });

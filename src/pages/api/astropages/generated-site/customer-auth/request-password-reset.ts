@@ -34,7 +34,10 @@ export const POST: APIRoute = async (context) => {
     feature,
     capabilityKey: "customer-auth",
     message: result.message,
+    // The link travels by email; the aggregator echoes it back to localhost callers
+    // only, so this passes through whatever it decided rather than gating again.
     data: {
+      emailSent: result.emailSent,
       resetUrl: result.resetUrl,
     },
   });

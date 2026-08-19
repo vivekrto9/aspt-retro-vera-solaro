@@ -3,6 +3,7 @@ import {
   getSafePublicNextPath,
   loadPublicPageContent,
 } from "../builder/public-page.ts";
+import VeraBrandMark from "../components/vera/VeraBrandMark.astro";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 
 export const prerender = false;
@@ -29,12 +30,14 @@ const content: Record<string, string> = {
 };
 ---
 
-<VeraFrame {...page} content={content} currentPath="/account">
+<VeraFrame {...page} content={content} currentPath="/account" showHeader={false} showFooter={false}>
   <section class="vera-page-hero vera-page-hero--split">
     <div>
-      <div class="vera-placeholder-page__symbol" aria-hidden="true" {...builderEdit("auth_symbol")}>
-        {content.auth_symbol}
-      </div>
+      <VeraBrandMark
+        alt={content.auth_logo_alt}
+        field="auth_logo_alt"
+        edit={builderEdit}
+      />
       <p class="vera-eyebrow" style="margin-top: 34px" {...builderEdit("auth_eyebrow")}>
         {content.auth_eyebrow}
       </p>
@@ -60,7 +63,24 @@ const content: Record<string, string> = {
         </legend>
         <label class="vera-field">
           <span class="vera-label" {...builderEdit("email_label")}>{content.email_label}</span>
-          <input class="vera-input" type="email" name="email" autocomplete="email" required />
+          <input
+            class="vera-input"
+            type="email"
+            name="email"
+            autocomplete="email"
+            required
+            aria-describedby="login-email-error"
+          />
+          <span
+            id="login-email-error"
+            class="vera-form-note"
+            data-field-error="email"
+            data-auth-invalid
+            hidden
+            {...builderEdit("auth_email_invalid_error")}
+          >
+            {content.auth_email_invalid_error}
+          </span>
         </label>
         <label class="vera-field">
           <span class="vera-label" {...builderEdit("password_label")}>{content.password_label}</span>
@@ -71,10 +91,20 @@ const content: Record<string, string> = {
             autocomplete="current-password"
             required
             minlength="8"
-            aria-describedby="login-password-hint"
+            aria-describedby="login-password-hint login-password-error"
           />
           <span id="login-password-hint" class="vera-form-note" {...builderEdit("password_hint")}>
             {content.password_hint}
+          </span>
+          <span
+            id="login-password-error"
+            class="vera-form-note"
+            data-field-error="password"
+            data-auth-invalid
+            hidden
+            {...builderEdit("auth_password_short_error")}
+          >
+            {content.auth_password_short_error}
           </span>
         </label>
         <a
@@ -99,6 +129,9 @@ const content: Record<string, string> = {
           <p class="vera-form-note" data-auth-status="error" hidden {...builderEdit("login_error_status")}>
             {content.login_error_status}
           </p>
+          <p class="vera-form-note" data-auth-status="rate-limited" hidden {...builderEdit("login_rate_limited_status")}>
+            {content.login_rate_limited_status}
+          </p>
           <p class="vera-form-note" data-auth-status="verification-success" hidden {...builderEdit("verification_success_status")}>
             {content.verification_success_status}
           </p>
@@ -115,41 +148,71 @@ const content: Record<string, string> = {
 </VeraFrame>
 
 <script>
+  import {
+    bindField,
+    createStatusBoard,
+    failureState,
+    fieldErrorNote,
+    isLongEnough,
+    looksLikeEmail,
+    requireInput,
+    submitIsAllowed,
+    type AuthField,
+  } from "../scripts/vera/auth/forms.ts";
+
   const form = document.querySelector<HTMLFormElement>("[data-auth-form]");
   const submit = form?.querySelector<HTMLButtonElement>("button[type='submit']");
-  const statuses = [...document.querySelectorAll<HTMLElement>("[data-auth-status]")];
-  const showStatus = (state: string) => {
-    statuses.forEach((status) => {
-      status.hidden = status.dataset.authStatus !== state;
-    });
-  };
+  const showStatus = createStatusBoard();
 
   if (new URL(window.location.href).searchParams.get("verification") === "success") {
     showStatus("verification-success");
   }
 
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const formData = new FormData(form);
-    showStatus("submitting");
-    if (submit) submit.disabled = true;
+  if (form) {
+    const email: AuthField = {
+      input: requireInput(form, "email"),
+      error: fieldErrorNote(form, "email"),
+      validate: looksLikeEmail,
+    };
+    const password: AuthField = {
+      input: requireInput(form, "password"),
+      error: fieldErrorNote(form, "password"),
+      validate: (value) => isLongEnough(value),
+    };
+    bindField(email);
+    bindField(password);
 
-    try {
-      const response = await fetch("/api/astropages/generated-site/customer-auth/login", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email: formData.get("email"),
-          password: formData.get("password"),
-        }),
-      });
-      const payload = await response.json().catch(() => null) as { status?: string } | null;
-      if (!response.ok || payload?.status !== "ready") throw new Error("login");
-      window.location.assign(form.dataset.nextPath || "/account");
-    } catch {
-      showStatus("error");
-      if (submit) submit.disabled = false;
-    }
-  });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!submitIsAllowed([email, password])) {
+        showStatus("");
+        return;
+      }
+
+      showStatus("submitting");
+      if (submit) submit.disabled = true;
+
+      try {
+        const response = await fetch("/api/astropages/generated-site/customer-auth/login", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email: email.input.value.trim(),
+            password: password.input.value,
+          }),
+        });
+        const payload = await response.json().catch(() => null) as { status?: string } | null;
+        if (!response.ok || payload?.status !== "ready") {
+          showStatus(failureState(response.status));
+          if (submit) submit.disabled = false;
+          return;
+        }
+        window.location.assign(form.dataset.nextPath || "/account");
+      } catch {
+        showStatus("error");
+        if (submit) submit.disabled = false;
+      }
+    });
+  }
 </script>

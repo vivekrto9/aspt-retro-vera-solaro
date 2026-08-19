@@ -56,7 +56,7 @@ export const POST: APIRoute = async (context) => {
     email: parsedBody.body.email,
     phone: parsedBody.body.phone,
     password: parsedBody.body.password,
-    createSession: false,
+    createSession: true,
   });
   if (!result.ok) return errorResponse(feature, result.message, 400);
 
@@ -69,7 +69,7 @@ export const POST: APIRoute = async (context) => {
     data: {
       account: result.account,
       csrfToken: result.csrfToken,
-      verificationPending: result.verificationPending,
+      created: result.created,
     },
   });
   result.cookies.forEach((cookie) => response.headers.append("set-cookie", cookie));

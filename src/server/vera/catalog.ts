@@ -41,29 +41,36 @@ export const listVeraCatalog = async (env: VeraEnv) => {
   const services = await all(env, `SELECT slug, name, duration_minutes, price_cents, currency
     FROM ${tables.services} WHERE active = 1 ORDER BY sort_order`);
   const mappings = await all(env, `SELECT service_slug, mode, event_type_uri, active
-    FROM ${tables.calendlyMappings} ORDER BY service_slug, mode`);
+    FROM ${tables.calendlyMappings} WHERE mode = 'call' ORDER BY service_slug`);
   const runtimeRows = await all(env, `SELECT key, value FROM ap_runtime_config
-    WHERE key LIKE 'VERA_CALENDLY_%' AND status = 'active'`);
+    WHERE (key LIKE 'VERA_CALENDLY_%' OR key = 'CALENDLY_30_MIN_EVENT_TYPE_URI')
+      AND status = 'active'`);
   const stripeRow = await first(env, `SELECT value FROM ap_runtime_config
     WHERE key = 'STRIPE_PUBLISHABLE_KEY' AND status = 'active'`);
   const waitlist = await first(env, `SELECT COUNT(*) AS count FROM ${tables.waitlist}
     WHERE status = 'active'`);
   const runtimeMappings = new Map(runtimeRows.map((row) => [safeString(row.key), safeString(row.value)]));
+  const sharedUri = runtimeMappings.get(SHARED_CALENDLY_RUNTIME_KEY) ||
+    safeString(env[SHARED_CALENDLY_RUNTIME_KEY]);
   const resolvedMappings = mappings.map((row) => ({
     active: Number(row.active) === 1,
-    resolvedUri: runtimeMappings.get(calendlyRuntimeKey(
-      safeString(row.service_slug) as VeraServiceSlug,
-      safeString(row.mode) as VeraMode,
-    )) || safeString(row.event_type_uri),
+    resolvedUri: resolveCalendlyUri({
+      perService: runtimeMappings.get(calendlyRuntimeKey(
+        safeString(row.service_slug) as VeraServiceSlug,
+        safeString(row.mode) as VeraMode,
+      )),
+      shared: sharedUri,
+      rowValue: safeString(row.event_type_uri),
+    }),
   }));
   return {
     services: services.map(rowToService),
-    modes: [{ key: "call" }, { key: "in_person" }],
+    modes: [{ key: "call" }],
     depositCents: VERA_DEPOSIT_CENTS,
     holdMinutes: VERA_HOLD_MINUTES,
     stripePublishableKey: safeString(stripeRow?.value) || safeString(env.PUBLIC_STRIPE_PUBLISHABLE_KEY),
     activeWaitlistCount: Number(waitlist?.count || 0),
-    calendlyReady: resolvedMappings.length === 6 && resolvedMappings.every((row) =>
+    calendlyReady: resolvedMappings.length === 3 && resolvedMappings.every((row) =>
       row.active && /^https:\/\/api\.calendly\.com\/event_types\/[A-Za-z0-9_-]+$/.test(row.resolvedUri)
     ),
   };
@@ -71,6 +78,18 @@ export const listVeraCatalog = async (env: VeraEnv) => {
 
 export const calendlyRuntimeKey = (serviceSlug: VeraServiceSlug, mode: VeraMode) =>
   `VERA_CALENDLY_${serviceSlug.replaceAll("-", "_").toUpperCase()}_${mode.toUpperCase()}_URI`;
+
+export const SHARED_CALENDLY_RUNTIME_KEY = "CALENDLY_30_MIN_EVENT_TYPE_URI";
+
+export const resolveCalendlyUri = ({
+  perService,
+  shared,
+  rowValue,
+}: {
+  perService?: string;
+  shared?: string;
+  rowValue?: string;
+}) => safeString(perService) || safeString(shared) || safeString(rowValue);
 
 export const getVeraSelection = async (
   env: VeraEnv,
@@ -87,12 +106,20 @@ export const getVeraSelection = async (
       ON mapping.service_slug = service.slug AND mapping.mode = ?
     WHERE service.slug = ? AND service.active = 1 AND mapping.active = 1`, [mode, normalizedSlug]);
   if (!row) return null;
-  const runtime = await first(env, `SELECT value FROM ap_runtime_config
-    WHERE key = ? AND status = 'active'`, [calendlyRuntimeKey(normalizedSlug, mode)]);
+  const [runtime, shared] = await Promise.all([
+    first(env, `SELECT value FROM ap_runtime_config
+      WHERE key = ? AND status = 'active'`, [calendlyRuntimeKey(normalizedSlug, mode)]),
+    first(env, `SELECT value FROM ap_runtime_config
+      WHERE key = ? AND status = 'active'`, [SHARED_CALENDLY_RUNTIME_KEY]),
+  ]);
   return {
     ...rowToService(row),
     mode,
-    eventTypeUri: safeString(runtime?.value) || safeString(row.event_type_uri),
+    eventTypeUri: resolveCalendlyUri({
+      perService: safeString(runtime?.value),
+      shared: safeString(shared?.value) || safeString(env[SHARED_CALENDLY_RUNTIME_KEY]),
+      rowValue: safeString(row.event_type_uri),
+    }),
   };
 };
 
