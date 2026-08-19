@@ -41,6 +41,7 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
             class="vera-card-meta"
             style="align-self: center"
             data-writing-count
+            data-total={posts.length}
             data-filtered-template={content.count_filtered_template}
             {...builderEdit("count_label")}
           >
@@ -130,7 +131,9 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
     if (writingCount) {
       writingCount.textContent = selected === "all"
         ? writingCount.getAttribute("data-astropages-default") || writingCount.textContent
-        : (writingCount.dataset.filteredTemplate || "").replace("{{ shown }}", String(visible.length));
+        : (writingCount.dataset.filteredTemplate || "")
+            .replace("{{ shown }}", String(visible.length))
+            .replace("{{ count }}", writingCount.dataset.total || String(writingItems.length));
     }
     let number = visible.some((item) => item.hasAttribute("data-writing-featured")) ? 1 : 0;
     visible.forEach((item) => {
