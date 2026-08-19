@@ -56,6 +56,23 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
             {content.form_title}
           </legend>
           <p class="vera-form-note" {...builderEdit("form_intro")}>{content.form_intro}</p>
+          <div
+            class="vera-booking-alert vera-contact-alert"
+            data-contact-alert
+            data-message-missing={content.error_missing}
+            data-message-long={content.error_long}
+            data-message-rate={content.error_rate}
+            hidden
+            role="alert"
+            aria-live="assertive"
+            tabindex="-1"
+          >
+            <span class="vera-booking-alert__symbol" aria-hidden="true">!</span>
+            <div>
+              <h2 {...builderEdit("error_title")}>{content.error_title}</h2>
+              <p data-contact-alert-message>{content.error_body}</p>
+            </div>
+          </div>
           <label class="vera-field">
             <span class="vera-label" {...builderEdit("name_label")}>{content.name_label}</span>
             <input class="vera-input" name="name" autocomplete="name" required minlength="2" />
@@ -93,6 +110,7 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
               name="note"
               required
               minlength="10"
+              maxlength="4000"
             ></textarea>
           </label>
           <button class="vera-button vera-button--burnt vera-button--shadow" type="submit" {...builderEdit("form_cta")}>
@@ -117,15 +135,40 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
 
 <script>
   const contactEndpoint = "/api/astropages/generated-site/vera/contact";
+  const noteLimit = 4_000;
   const contactForm = document.querySelector<HTMLFormElement>("[data-contact-form]");
   const contactSuccess = document.querySelector<HTMLElement>("[data-contact-success]");
   const contactReset = document.querySelector<HTMLButtonElement>("[data-contact-reset]");
   const contactError = contactForm?.querySelector<HTMLElement>("[data-contact-error]");
+  const contactAlert = contactForm?.querySelector<HTMLElement>("[data-contact-alert]");
+  const contactAlertMessage = contactAlert?.querySelector<HTMLElement>("[data-contact-alert-message]");
   const contactSubmit = contactForm?.querySelector<HTMLButtonElement>("button[type='submit']");
+  const contactMessages = {
+    generic: contactAlertMessage?.textContent?.trim() || "That note did not send. Please try again.",
+    missing: contactAlert?.dataset.messageMissing?.trim()
+      || "Add your name, an email address, and a note of at least ten characters.",
+    long: contactAlert?.dataset.messageLong?.trim()
+      || `Keep the note under ${noteLimit.toLocaleString()} characters.`,
+    rate: contactAlert?.dataset.messageRate?.trim()
+      || "That's a few notes in a short while. Wait about fifteen minutes, then try again.",
+  };
+
+  const hideContactAlert = () => {
+    if (contactAlert) contactAlert.hidden = true;
+  };
+
+  const showContactAlert = (message: string) => {
+    if (!contactAlert) return;
+    if (contactAlertMessage) contactAlertMessage.textContent = message;
+    contactAlert.hidden = false;
+    contactAlert.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    contactAlert.focus();
+  };
 
   contactForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (contactError) contactError.hidden = true;
+    hideContactAlert();
 
     const formData = new FormData(contactForm);
     const name = String(formData.get("name") ?? "").trim();
@@ -134,6 +177,12 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
     const topicInput = contactForm.querySelector<HTMLInputElement>("input[name='topic']:checked");
     const topic = topicInput?.nextElementSibling?.textContent?.trim() ?? "";
     const emailInput = contactForm.elements.namedItem("email");
+    const noteInput = contactForm.elements.namedItem("note");
+    if (message.length > noteLimit) {
+      showContactAlert(contactMessages.long);
+      if (noteInput instanceof HTMLElement) noteInput.focus();
+      return;
+    }
     const firstInvalid = Array.from(contactForm.elements).find((control) =>
       control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement
         ? !control.validity.valid
@@ -142,6 +191,7 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
     if (name.length < 2 || message.length < 10 || !topic || firstInvalid) {
       const invalidEmail = emailInput instanceof HTMLInputElement && !emailInput.validity.valid;
       if (contactError) contactError.hidden = !invalidEmail;
+      showContactAlert(contactMessages.missing);
       if (invalidEmail) contactError?.focus();
       else if (firstInvalid instanceof HTMLElement) firstInvalid.focus();
       return;
@@ -163,8 +213,15 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
           consentMarketing: false,
         }),
       });
-      const result = await response.json().catch(() => null) as { status?: string } | null;
-      if (!response.ok || result?.status !== "ready") throw new Error("contact");
+      const result = await response.json().catch(() => null) as
+        { status?: string; message?: string } | null;
+      if (!response.ok || result?.status !== "ready") {
+        if (response.status === 429) showContactAlert(contactMessages.rate);
+        else if (response.status === 413) showContactAlert(contactMessages.long);
+        else showContactAlert(result?.message?.trim() || contactMessages.generic);
+        window.astroPagesTrack?.("contact_submitted", { status: "failed" });
+        return;
+      }
       contactForm.hidden = true;
       if (contactSuccess) {
         contactSuccess.hidden = false;
@@ -172,7 +229,7 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
       }
       window.astroPagesTrack?.("contact_submitted", { status: "submitted" });
     } catch {
-      contactForm.focus();
+      showContactAlert(contactMessages.generic);
     } finally {
       if (contactSubmit) contactSubmit.disabled = false;
     }
@@ -180,6 +237,7 @@ const selectedTopic = Astro.url.searchParams.get("topic") === "gift-certificate"
   contactReset?.addEventListener("click", () => {
     contactForm?.reset();
     if (contactError) contactError.hidden = true;
+    hideContactAlert();
     if (contactForm) contactForm.hidden = false;
     if (contactSuccess) contactSuccess.hidden = true;
     contactForm?.focus();

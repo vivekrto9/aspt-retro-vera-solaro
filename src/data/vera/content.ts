@@ -740,6 +740,12 @@ export const contactDefaults: VeraContent = {
   success_body:
     "Vera reads post in the mornings. You'll hear from her within two days — three if it's August, when she pretends not to be in.",
   success_reset: "Send another",
+  error_title: "That didn't send.",
+  error_body:
+    "Something went wrong between here and Vera's desk. Try again in a moment, or write straight to vera@verasolaro.it.",
+  error_missing: "Add your name, an email address, and a note of at least ten characters.",
+  error_long: "That note is longer than the form takes. Keep it under 4,000 characters and send the rest by post.",
+  error_rate: "That's a few notes in a short while. Wait about fifteen minutes, then try again.",
   ...seo(
     "Contact · Vera Solaro",
     "Write, ring, or visit the reading room above the greengrocer on Via delle Stelle in Trieste.",

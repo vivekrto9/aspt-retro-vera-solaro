@@ -291,7 +291,31 @@ async function upsertGithubRepositoryVariable(repository, githubToken, name, val
   console.log(`Updated GitHub repository variable: ${name}`);
 }
 
-async function github(path, options = {}, githubToken, behavior = {}) {
+export async function github(path, options = {}, githubToken, behavior = {}, retryOptions = {}) {
+  const attempts = retryOptions.attempts ?? retryableRequestAttempts;
+  const sleepFn = retryOptions.sleepFn ?? sleep;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await githubOnce(path, options, githubToken, behavior);
+    } catch (error) {
+      if (!isRetryableRequestError(error) || attempt === attempts) {
+        throw error;
+      }
+      const delayMs = Math.min(2_000 * attempt, 10_000);
+      console.warn(
+        `GitHub API request failed for ${path} on attempt ${attempt}/${attempts}; retrying in ${delayMs}ms: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      await sleepFn(delayMs);
+    }
+  }
+
+  throw new Error(`GitHub API request failed for ${path}`);
+}
+
+async function githubOnce(path, options = {}, githubToken, behavior = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
   const response = await fetchWithTimeout(`https://api.github.com${path}`, {
@@ -312,7 +336,9 @@ async function github(path, options = {}, githubToken, behavior = {}) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = body.message || response.statusText;
-    fail(`GitHub API request failed for ${path}: ${message}`);
+    const error = new Error(`GitHub API request failed for ${path}: ${message}`);
+    error.status = response.status;
+    throw error;
   }
   return { status: response.status, body };
 }

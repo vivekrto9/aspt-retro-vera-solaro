@@ -1189,7 +1189,7 @@ button.vera-pill[aria-pressed="true"] {
 .vera-field-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .vera-booking-step--compact {
@@ -1213,17 +1213,16 @@ button.vera-pill[aria-pressed="true"] {
 }
 
 .vera-form-card--compact {
+  display: grid;
+  gap: 14px;
   margin-top: 18px;
   padding: 22px 24px;
   box-shadow: 6px 6px 0 var(--vera-aubergine);
 }
 
 .vera-form-card--compact > legend {
+  margin-bottom: 4px;
   padding-inline: 8px;
-}
-
-.vera-form-card--compact .vera-field--wide {
-  margin-top: 12px;
 }
 
 .vera-form-card--compact .vera-input,
@@ -1485,6 +1484,13 @@ button.vera-pill[aria-pressed="true"] {
   display: block;
   width: auto;
   height: 48px;
+}
+
+/* The footer wordmark stands in for the logo when no logo asset is uploaded, so
+   it inherits the footer's own colour instead of the header's cream. */
+.vera-footer .vera-brand-fallback {
+  color: inherit;
+  font-size: clamp(24px, 2.4vw, 32px);
 }
 
 .vera-footer__about p {
