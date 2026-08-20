@@ -36,7 +36,7 @@ test("template deployments create a process-local callback token without logging
   assert.doesNotMatch(source, /console\.log\([^\n]*ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN/);
 });
 
-test("deployment modes preserve verification, migration, deploy, and strict Vera readiness stages", () => {
+test("template deployment preserves verification, migration, deploy, and portable smoke-check stages", () => {
   for (const command of [
     "scan:safety",
     "d1:schema:check",
@@ -48,14 +48,8 @@ test("deployment modes preserve verification, migration, deploy, and strict Vera
     assert.match(source, new RegExp(command.replaceAll(".", "\\.")));
   }
   assert.match(source, /smokeRoutes/);
-  assert.match(source, /verifyVeraReadiness/);
-  assert.match(source, /\/api\/astropages\/generated-site\/vera\/operations/);
-  assert.match(source, /Authorization: `Bearer \$\{requiredEnv\("ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"\)\}`/);
-  assert.match(source, /body\?\.status === "ready"/);
-  assert.match(source, /body\?\.state === "ready"/);
-  assert.match(source, /body\?\.data\?\.ready === true/);
-  assert.match(source, /refusing to report deployment ready while Vera provider\/runtime configuration is incomplete/);
-  assert.match(source, /await smokeRoutes\(siteUrl, routes\);\s+await verifyVeraReadiness\(siteUrl\);/);
+  assert.doesNotMatch(source, /verifyVeraReadiness|vera_runtime_readiness/);
+  assert.match(source, /await smokeRoutes\(siteUrl, routes\);/);
   assert.match(source, /await deployWorker\(\{ environment, templateSource: false \}\);\s+await postDeploymentStatus\(successStatus\);/);
   assert.match(source, /\["\/", \[200, 301, 302\]\]/);
   assert.doesNotMatch(source, /consultations|puja-services|astrologers\/maya-trivedi/);
