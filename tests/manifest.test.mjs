@@ -145,7 +145,7 @@ test("manifest distinguishes template deploy secrets from generated-site deploy 
   ]);
   assert.equal(
     manifest.secrets.deploymentMapping.generatedSiteRuntimeVars.includes("ASTROPAGES_SITE_URL"),
-    true,
+    false,
   );
   for (const key of manifest.secrets.generatedSiteRuntimeConfig) {
     assert.match(runtimeConfigSource, new RegExp(`"${key}"`), `${key} must be accepted by runtime config sync`);
