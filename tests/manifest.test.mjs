@@ -15,6 +15,7 @@ test("template manifest keeps the Vera Solaro source identity and market default
   assert.equal(packageJson.emdash.label, "Vera Solaro");
   assert.equal(manifest.templateKey, "aspt-retro-vera-solaro");
   assert.equal(manifest.displayName, "Vera Solaro");
+  assert.equal(manifest.stage, "production-template");
   assert.deepEqual(manifest.repo, {
     url: "https://github.com/vivekrto9/aspt-retro-vera-solaro.git",
     commitSha: "RESOLVED_AT_TEMPLATE_REGISTRATION",

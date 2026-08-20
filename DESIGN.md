@@ -61,7 +61,9 @@ The source package supplies exactly four image byte assets: Vera portrait, ephem
 
 Article artwork is the one approved exception: the project owner asked for the ephemeris, protractor and night-sky photographs to stand in for missing `featured_image` values on the journal cards and the `/writing` featured card. `blogFallbackImages` in `src/data/blog-posts.ts` is that stand-in's single owner, keyed by listing position, and it retires as real per-article media arrives.
 
-Every other canonical image slot must still exist in its source position with truthful editable alt text and a designed `VeraImage` placeholder until the project owner supplies media. Do not reuse one of the four home images to fill a missing room, letter, map, holiday, avatar, chart, or account artifact.
+The About hero portrait is a second project-owner-approved image slot. The generated `about-vera-portrait.jpg` asset is registered under the stable `about-vera-portrait` alias and is used only by `/about`; its alternative text remains editable through `vera_about/main`.
+
+Every other canonical image slot must still exist in its source position with truthful editable alt text and a designed `VeraImage` placeholder until the project owner supplies media. Do not reuse one of the registered images to fill a missing room, letter, map, holiday, avatar, chart, or account artifact.
 
 ## Interaction and state truth
 

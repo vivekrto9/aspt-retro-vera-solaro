@@ -3,6 +3,17 @@
   "seedRoot": "astropages/assets",
   "assets": [
     {
+      "seedKey": "about-vera-portrait.jpg",
+      "source": "about-vera-portrait.jpg",
+      "alias": "about-vera-portrait",
+      "displayName": "About Vera Portrait",
+      "mimeType": "image/jpeg",
+      "contentHash": "sha256:1e537e8013c770d8acaacdee62d25b0c401f337f6ede1bfe525dc72b02b34d36",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
       "seedKey": "blog-drawn-by-hand.svg",
       "source": "blog-drawn-by-hand.svg",
       "alias": "blog-drawn-by-hand",

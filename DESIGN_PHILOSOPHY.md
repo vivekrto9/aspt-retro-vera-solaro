@@ -12,7 +12,7 @@ Vera Solaro is a specific warm printed world: a Trieste astrologer’s working a
 2. **Production truth sits behind the pixels.** Replace prototype clicks with semantic, accessible controls and authoritative Calendly, Stripe, D1, email, account, and file behavior without replacing the source UI.
 3. **Editing is complete, not decorative.** Visitor-visible static copy and SEO resolve through the existing Content Studio entries; runtime facts resolve from APIs. There is no second content system.
 4. **Paper carries hierarchy.** Shrikhand makes the statement, Libre Baskerville carries the reading, and Barlow Condensed labels the working parts. Ink boundaries and offset shadows make state legible.
-5. **Missing media stays honest.** Use the four supplied images only in their supplied slots. Every other source image position remains a designed placeholder until real media arrives.
+5. **Missing media stays honest.** Use supplied or project-owner-approved images only in their registered slots. Every other source image position remains a designed placeholder until real media arrives.
 6. **Reflow without erasing identity.** Mobile keeps the Book path, key ornament, authoritative summaries, readable editorial rhythm, and accessible state changes.
 7. **Privacy is visible.** Sensitive customer, booking, birth, provider, and capability data never becomes analytics or decorative UI. Consent is meaningful and reversible.
 

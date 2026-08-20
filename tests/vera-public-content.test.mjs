@@ -199,6 +199,17 @@ test("source media stays in the home slots and the shared article stand-in", () 
   assert.match(authorized, /aliases\/vera-portrait\//);
 });
 
+test("the owner-approved About portrait stays in its registered hero slot", () => {
+  const about = read("src/pages/about.astro");
+  const manifest = JSON.parse(read("astropages/assets.manifest.json"));
+  const portrait = manifest.assets.find((asset) => asset.alias === "about-vera-portrait");
+
+  assert.match(about, /aliases\/about-vera-portrait\/about-vera-portrait\.jpg/);
+  assert.match(about, /alt=\{content\.portrait_alt\}/);
+  assert.equal(portrait?.source, "about-vera-portrait.jpg");
+  assert.equal(portrait?.mimeType, "image/jpeg");
+});
+
 test("article artwork loads without a lazy-image deadlock and stays aligned", () => {
   const article = read("src/pages/writing/[slug].astro");
   const styles = read("src/styles/vera.css");

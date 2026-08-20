@@ -5,7 +5,7 @@
     "url": "https://github.com/vivekrto9/aspt-retro-vera-solaro.git",
     "commitSha": "RESOLVED_AT_TEMPLATE_REGISTRATION"
   },
-  "stage": "starter-template",
+  "stage": "production-template",
   "runtime": {
     "type": "official-emdash-astro-cloudflare",
     "scaffold": {
