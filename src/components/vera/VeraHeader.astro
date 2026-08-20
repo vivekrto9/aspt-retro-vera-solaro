@@ -1,6 +1,4 @@
 ---
-import VeraImage from "./VeraImage.astro";
-
 type Edit = (field: string) => Record<string, unknown>;
 
 const { content, chromeEdit, currentPath } = Astro.props as {
@@ -15,7 +13,6 @@ const links = [
   { href: "/writing", field: "nav_writing" },
   // The monthly letter is not being offered, so it is kept out of the nav.
   // { href: "/letters", field: "nav_letters" },
-  { href: "/account", field: "nav_account" },
 ];
 
 const active = (href: string) =>
@@ -27,7 +24,7 @@ const isBooking = currentPath === "/booking";
 
 <header class="vera-header">
   <a class="vera-brand" href="/" aria-label={content.brand_name}>
-    <img class="vera-brand__logo" data-vera-brand-logo src="/_assets/aliases/logo/logo.svg" alt={content.brand_name} width="260" height="64" />
+    <img class="vera-brand__logo" data-vera-brand-logo src="/_assets/aliases/logo/logo.svg" alt={content.brand_name} width="380" height="88" />
     <span class="vera-brand-fallback" data-vera-brand-fallback hidden aria-hidden="true">{content.brand_name}</span>
   </a>
 
@@ -59,6 +56,18 @@ const isBooking = currentPath === "/booking";
         {content[link.field]}
       </a>
     ))}
+    <a
+      class="vera-nav__account"
+      href="/account"
+      aria-current={isAccount ? "page" : undefined}
+      {...chromeEdit("nav_account")}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5"></circle>
+        <path d="M5.5 19c.8-3.3 3-5 6.5-5s5.7 1.7 6.5 5"></path>
+      </svg>
+      <span>{content.nav_account}</span>
+    </a>
     {!isAccount ? (
       <a class="vera-nav__book" href="/booking" {...chromeEdit("book_cta")}>
         {content.book_cta}
@@ -66,21 +75,23 @@ const isBooking = currentPath === "/booking";
     ) : null}
   </nav>
 
-  {isAccount ? (
-    <div class="vera-account-identity" data-account-header-identity hidden>
-      <VeraImage
-        alt={content.account_avatar_alt}
-        altField="account_avatar_alt"
-        edit={chromeEdit}
-        shape="circle"
-      />
-      <div>
-        <span data-account-header-name>{content.profile_name}</span><br />
-        <span data-account-header-ref>{content.profile_ref}</span>
-      </div>
-    </div>
-  ) : (
-    <div class="vera-header__actions">
+  <div class="vera-header__actions">
+    <a
+      class="vera-header__account"
+      href="/account"
+      aria-current={isAccount ? "page" : undefined}
+      aria-label={content.nav_account}
+      title={content.nav_account}
+      {...chromeEdit("nav_account")}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5"></circle>
+        <path d="M5.5 19c.8-3.3 3-5 6.5-5s5.7 1.7 6.5 5"></path>
+      </svg>
+      <span>{content.nav_account}</span>
+    </a>
+    {!isAccount ? (
+      <>
       {!isClosed ? (
         <span class="vera-books-status" {...chromeEdit("books_status")}>
           <i aria-hidden="true"></i>{content.books_status}
@@ -95,8 +106,9 @@ const isBooking = currentPath === "/booking";
           {content.book_cta}
         </a>
       )}
-    </div>
-  )}
+      </>
+    ) : null}
+  </div>
 </header>
 
 {isClosed ? (
@@ -152,29 +164,4 @@ const isBooking = currentPath === "/booking";
     if (event.target instanceof HTMLAnchorElement) setHeaderNav(false);
   });
 
-  const accountIdentity = document.querySelector<HTMLElement>("[data-account-header-identity]");
-  const syncAccountIdentity = () => {
-    if (!accountIdentity) return;
-    const overview = document.querySelector<HTMLElement>("[data-account-overview]");
-    const sourceName = document.querySelector<HTMLElement>("[data-account-profile-name]");
-    const sourceRef = document.querySelector<HTMLElement>("[data-account-profile-ref]");
-    if (!overview || overview.hidden || !sourceName || !sourceRef) {
-      accountIdentity.hidden = true;
-      return;
-    }
-    const name = accountIdentity.querySelector<HTMLElement>("[data-account-header-name]");
-    const reference = accountIdentity.querySelector<HTMLElement>("[data-account-header-ref]");
-    if (name) name.textContent = sourceName.textContent;
-    if (reference) reference.textContent = sourceRef.textContent;
-    accountIdentity.hidden = false;
-  };
-  if (accountIdentity) {
-    syncAccountIdentity();
-    const observer = new MutationObserver(syncAccountIdentity);
-    observer.observe(document.querySelector("main") ?? document.body, {
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
-  }
 </script>

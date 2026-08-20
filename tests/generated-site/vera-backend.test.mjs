@@ -1393,7 +1393,6 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
       get(key) { return readinessCache.get(key) || null; },
       put(key, value) { readinessCache.set(key, value); },
     },
-    EMAIL_QUEUE: { send() {} },
     IMAGES: { input() {}, info() {} },
     ASTROPAGES_PROJECT_ID: "00000000-0000-4000-8000-000000000001",
     ASTROPAGES_SITE_ENVIRONMENT: "production",
@@ -1480,6 +1479,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
   assert.equal(readyPayload.state, "ready");
   assert.equal(readyPayload.data.ready, true);
   assert.equal(readyPayload.data.checks.cloudflare.ready, true);
+  assert.equal(readyPayload.data.checks.cloudflare.bindings.EMAIL_QUEUE, false);
   assert.equal(readyPayload.data.checks.posthog.enabled, false);
   assert.equal(readyPayload.data.checks.calendly.liveValidation.source, "provider");
   assert.equal(readyPayload.data.checks.stripe.webhookRegistration.ready, true);

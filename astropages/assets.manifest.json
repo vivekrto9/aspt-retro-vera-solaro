@@ -107,7 +107,7 @@
       "alias": "favicon",
       "displayName": "Favicon",
       "mimeType": "image/svg+xml",
-      "contentHash": "sha256:058ec19a7d7f9243fd1be7bb9ec54d80b7fe635358587871fe918c2b2387f43a",
+      "contentHash": "sha256:225505a2b5bc36a999d38d6124ddb4a2ea2f1895b223ddcc31c40d58bd04e96f",
       "visibility": "customer",
       "protected": true,
       "replaceable": true
@@ -118,7 +118,7 @@
       "alias": "logo",
       "displayName": "Logo",
       "mimeType": "image/svg+xml",
-      "contentHash": "sha256:fb4eb5c423ff9d2177953368d13d19ef0c3cc2c9d13e16ca10f4ce3ba7151ae4",
+      "contentHash": "sha256:ffc2ca2edd347424443b24be1f8d61a88e73b5976b6511cd1ceb34dfd8972efb",
       "visibility": "customer",
       "protected": true,
       "replaceable": true

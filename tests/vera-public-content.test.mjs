@@ -372,6 +372,10 @@ test("account, letters, and forms expose source-faithful integration states", as
   assert.match(account, /\/cancel/);
   assert.match(account, /\/account\/messages/);
   assert.match(account, /\/account\/files\//);
+  assert.doesNotMatch(account, /data-account-payment-(?:paid|balance)/);
+  assert.doesNotMatch(account, /data-account-balance-(?:payment|card|submit|status)/);
+  assert.doesNotMatch(account, /kind: "balance"/);
+  assert.match(account, /numberValue\(booking, "paid_cents", "paidCents"\) > 0/);
   assert.doesNotMatch(account, /<nav class="vera-account-nav"/);
   assert.doesNotMatch(account, /<button[^>]+data-account-nav-button/);
   assert.match(account, /window\.location\.hash\.replace/);

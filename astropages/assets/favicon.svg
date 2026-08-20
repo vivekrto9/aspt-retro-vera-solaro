@@ -1,13 +1,13 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
   <title id="title">Vera Solaro</title>
-  <desc id="desc">Vera Solaro astrology wheel icon.</desc>
-  <circle cx="32" cy="32" r="30" fill="#3B1E36" stroke="#2C1810" stroke-width="3"/>
-  <circle cx="32" cy="32" r="25" stroke="#C77B62" stroke-width="2"/>
-  <g stroke="#7A4A5E" stroke-width="3" stroke-linecap="round">
-    <path d="M32 8V18"/><path d="M32 46V56"/><path d="M8 32H18"/><path d="M46 32H56"/>
-    <path d="M15 15L22 22"/><path d="M42 42L49 49"/><path d="M49 15L42 22"/><path d="M22 42L15 49"/>
+  <desc id="desc">Retro celestial seal.</desc>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#3B1E36" stroke="#C77B62" stroke-width="2"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#E2A22C" stroke-width="2"/>
+  <circle cx="32" cy="32" r="16" fill="#F4E4C5" stroke="#C6491F" stroke-width="1.5"/>
+  <g stroke="#C77B62" stroke-width="2.5" stroke-linecap="square">
+    <path d="M32 4v7M32 53v7M4 32h7M53 32h7"/>
+    <path d="m12.5 12.5 5 5M46.5 46.5l5 5M51.5 12.5l-5 5M17.5 46.5l-5 5"/>
   </g>
-  <circle cx="32" cy="32" r="14" fill="#F4E4C5" stroke="#C6491F" stroke-width="2"/>
-  <circle cx="32" cy="32" r="9" fill="#E2A22C" stroke="#2C1810" stroke-width="2"/>
-  <path d="M32 25.5L33.8 30.2L38.5 32L33.8 33.8L32 38.5L30.2 33.8L25.5 32L30.2 30.2L32 25.5Z" fill="#3B1E36"/>
+  <path d="m32 19.5 3.1 9.4 9.4 3.1-9.4 3.1-3.1 9.4-3.1-9.4-9.4-3.1 9.4-3.1Z" fill="#E2A22C"/>
+  <circle cx="32" cy="32" r="3.5" fill="#3B1E36"/>
 </svg>

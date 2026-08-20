@@ -108,15 +108,17 @@ repair queries.
 
 ## Email Queue And Scheduled Delivery
 
-Each environment declares an `EMAIL_QUEUE` producer and consumer, a dedicated dead-letter Queue, and a two-minute scheduled trigger. The D1 email outbox is the authoritative idempotency and retry ledger; Queue delivery wakes the Worker promptly, while the scheduled handler recovers persisted work if a Queue publish or provider call is interrupted. Preview and production use environment-specific Queue names, and `ensure-cloudflare-resources.mjs` creates both the delivery Queue and DLQ before deployment.
+Template-source environments declare an `EMAIL_QUEUE` producer and consumer, a dedicated dead-letter Queue, and a two-minute scheduled trigger. The D1 email outbox is the authoritative idempotency and retry ledger; Queue delivery wakes the Worker promptly, while the scheduled handler recovers persisted work if a Queue publish or provider call is interrupted. Preview and production use environment-specific Queue names, and template-source provisioning creates both the delivery Queue and DLQ before deployment.
+
+Trusted generated-site deployments do not authorize project Queue bindings. In generated-site mode, `render-wrangler-config.mjs` removes Queue declarations from the rendered config while preserving the two-minute scheduled trigger. Generated sites therefore deliver the same D1 outbox through scheduled recovery without requiring an unauthorized Cloudflare Queue resource; launch readiness treats `EMAIL_QUEUE` as optional only in this mode.
 
 ## Bootstrap And Readiness
 
 The deployment order is fixed:
 
-1. provision/repair the environment-specific D1, R2, KV, email Queue, and DLQ;
+1. provision/repair the environment-specific D1, R2, and KV, plus the email Queue and DLQ for template-source deployments;
 2. render the environment config and attach Images, Worker Loader, Secret
-   Store, static assets, Queue consumer/producer, and cron bindings;
+   Store, static assets, cron bindings, and template-source Queue bindings when authorized;
 3. apply every forward D1 migration in `migrations/`;
 4. deploy the Worker;
 5. prepare EmDash and idempotently bootstrap Content Studio entries;

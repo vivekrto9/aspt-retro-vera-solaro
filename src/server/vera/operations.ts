@@ -487,8 +487,11 @@ export const listVeraOperationsReadiness = async (env: VeraEnv) => {
     EMAIL_QUEUE: callable(env.EMAIL_QUEUE, "send"),
     IMAGES: callable(env.IMAGES, "input") && callable(env.IMAGES, "info"),
   };
+  const requiredResourceBindingNames = new Set(
+    Object.keys(resourceBindings).filter((name) => !generated || name !== "EMAIL_QUEUE"),
+  );
   const missingBindingNames = Object.entries(resourceBindings)
-    .filter(([, configured]) => !configured)
+    .filter(([name, configured]) => requiredResourceBindingNames.has(name) && !configured)
     .map(([name]) => name);
 
   const [
