@@ -508,6 +508,17 @@ test("account signup copy opens the room immediately", async () => {
   assert.equal(authDefaults.verification_invalid_status, "Wrong address? Start over");
 });
 
+test("shared header and footer render the locked raster logo", () => {
+  for (const component of [
+    read("src/components/vera/VeraHeader.astro"),
+    read("src/components/vera/VeraFooter.astro"),
+  ]) {
+    assert.match(component, /data-vera-brand-logo/);
+    assert.match(component, /logo\.webp/);
+    assert.doesNotMatch(component, /logo\.svg/);
+  }
+});
+
 test("Vera typography has no remote font stylesheet", () => {
   const styles = read("src/styles/vera.css");
   const frame = read("src/components/vera/VeraFrame.astro");
