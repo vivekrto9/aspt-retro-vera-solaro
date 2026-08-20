@@ -143,10 +143,11 @@ test("manifest distinguishes template deploy secrets from generated-site deploy 
     "EMDASH_ENCRYPTION_KEY",
     "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN",
   ]);
-  assert.equal(
-    manifest.secrets.deploymentMapping.generatedSiteRuntimeVars.includes("ASTROPAGES_SITE_URL"),
-    true,
-  );
+  assert.deepEqual(manifest.secrets.deploymentMapping.generatedSiteRuntimeVars, [
+    "ASTROPAGES_PROJECT_ID",
+    "ASTROPAGES_SITE_ENVIRONMENT",
+    "ASTROPAGES_SSO_PUBLIC_JWK",
+  ]);
   for (const key of manifest.secrets.generatedSiteRuntimeConfig) {
     assert.match(runtimeConfigSource, new RegExp(`"${key}"`), `${key} must be accepted by runtime config sync`);
   }
