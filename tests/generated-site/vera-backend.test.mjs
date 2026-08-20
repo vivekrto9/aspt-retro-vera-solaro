@@ -1399,9 +1399,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
     ASTROPAGES_SITE_URL: "https://vera.example.test",
     ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN: "vera-readiness-control-contract",
     EMDASH_ENCRYPTION_KEY: "emdash_secret_must_not_leak",
-    ASTROPAGES_INTEGRATION_SECRETS_JSON: {
-      async get() { return JSON.stringify({ secrets: integrationSecrets }); },
-    },
+    ...integrationSecrets,
     ASTROPAGES_PLATFORM_GOOGLE_PLACES_API_KEY: {
       async get() { return "google_places_must_not_leak"; },
     },
@@ -1480,6 +1478,7 @@ test("Vera operations readiness blocks incomplete runtime and reports ready with
   assert.equal(readyPayload.data.ready, true);
   assert.equal(readyPayload.data.checks.cloudflare.ready, true);
   assert.equal(readyPayload.data.checks.cloudflare.bindings.EMAIL_QUEUE, false);
+  assert.equal(readyPayload.data.missingBindingNames.includes("ASTROPAGES_INTEGRATION_SECRETS_JSON"), false);
   assert.equal(readyPayload.data.checks.posthog.enabled, false);
   assert.equal(readyPayload.data.checks.calendly.liveValidation.source, "provider");
   assert.equal(readyPayload.data.checks.stripe.webhookRegistration.ready, true);
