@@ -66,6 +66,7 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
             src={featuredImage?.src}
             alt={featuredImage?.alt || featured.title}
             class="vera-writing-featured-image"
+            eager
           />
           <div>
             <div class="vera-card-badge vera-writing-featured-badge" {...builderEdit("featured_badge")}>
@@ -85,7 +86,7 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
 
   {
     rest.length > 0 ? (
-      <section class="vera-section vera-section--paper">
+      <section class="vera-section vera-section--paper" data-writing-list>
         <ol class="vera-list">
           {rest.map((post, index) => (
             <li data-writing-item data-category={post.categorySlug}>
@@ -127,6 +128,7 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
   const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-writing-filter]"));
   const writingItems = Array.from(document.querySelectorAll<HTMLElement>("[data-writing-item]"));
   const writingCount = document.querySelector<HTMLElement>("[data-writing-count]");
+  const writingList = document.querySelector<HTMLElement>("[data-writing-list]");
   const updateWritingCount = (selected = "all") => {
     const visible = writingItems.filter((item) => !item.hidden);
     if (writingCount) {
@@ -135,6 +137,11 @@ const fill = (template: string, count: number) => (template ?? "").replace("{{ c
         : (writingCount.dataset.filteredTemplate || "")
             .replace("{{ shown }}", String(visible.length))
             .replace("{{ count }}", writingCount.dataset.total || String(writingItems.length));
+    }
+    // A filter can leave every listed piece hidden (the only match being the featured one).
+    // The section keeps its full band of padding when that happens, so collapse it too.
+    if (writingList) {
+      writingList.hidden = !visible.some((item) => !item.hasAttribute("data-writing-featured"));
     }
     let number = visible.some((item) => item.hasAttribute("data-writing-featured")) ? 1 : 0;
     visible.forEach((item) => {

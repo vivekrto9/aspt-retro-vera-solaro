@@ -3,6 +3,72 @@
   "seedRoot": "astropages/assets",
   "assets": [
     {
+      "seedKey": "blog-drawn-by-hand.svg",
+      "source": "blog-drawn-by-hand.svg",
+      "alias": "blog-drawn-by-hand",
+      "displayName": "Blog Drawn By Hand",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:7c3be5f9d8be62107c5babf6d66ec84c568f4badac05349188fced86e4757e7c",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "blog-ephemeris-desk.svg",
+      "source": "blog-ephemeris-desk.svg",
+      "alias": "blog-ephemeris-desk",
+      "displayName": "Blog Ephemeris Desk",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:8bc1f61218d276754f8133c20960c916dced699495ea964896ae3bb4f6ef9c87",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "blog-night-sky.svg",
+      "source": "blog-night-sky.svg",
+      "alias": "blog-night-sky",
+      "displayName": "Blog Night Sky",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:bf968da4a5f2ef7b46aaef519f5a56719a85dbac690c9119be3bc400d5b8803e",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "blog-retrograde-loop.svg",
+      "source": "blog-retrograde-loop.svg",
+      "alias": "blog-retrograde-loop",
+      "displayName": "Blog Retrograde Loop",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:85e8695b321d9c2bb6c2ed7bd34f4fbc797bc9cb6d3ae3555cd883ca90c3aef6",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "blog-saturn-transit.svg",
+      "source": "blog-saturn-transit.svg",
+      "alias": "blog-saturn-transit",
+      "displayName": "Blog Saturn Transit",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:14920cb17f8f9b39644b093a05b1ca920cd010bf83637672417f95557ded5bd6",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
+      "seedKey": "blog-zodiac-wheel.svg",
+      "source": "blog-zodiac-wheel.svg",
+      "alias": "blog-zodiac-wheel",
+      "displayName": "Blog Zodiac Wheel",
+      "mimeType": "image/svg+xml",
+      "contentHash": "sha256:5e3d611ac8a69a9cf641ef253789515a00f4ddc395457d731a77b376016e9b9c",
+      "visibility": "customer",
+      "protected": true,
+      "replaceable": true
+    },
+    {
       "seedKey": "brass-protractor.webp",
       "source": "brass-protractor.webp",
       "alias": "brass-protractor",

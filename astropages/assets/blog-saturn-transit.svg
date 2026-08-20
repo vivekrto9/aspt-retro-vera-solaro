@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img" aria-label="A ringed planet crossing a striped retro sky">
+  <defs>
+    <pattern id="st-dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.6" fill="#2c1810" opacity=".18"/>
+    </pattern>
+    <radialGradient id="st-glow" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#e2a22c"/>
+      <stop offset="55%" stop-color="#e2a22c" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#e2a22c" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="st-frame"><rect width="1200" height="720"/></clipPath>
+  </defs>
+  <g clip-path="url(#st-frame)">
+    <rect width="1200" height="720" fill="#3b1e36"/>
+    <g transform="translate(600 340)">
+      <g fill="#4a2a44">
+        <g id="st-ray"><path d="M0 0 L900 -120 L900 120 Z"/></g>
+        <use href="#st-ray" transform="rotate(45)"/>
+        <use href="#st-ray" transform="rotate(90)"/>
+        <use href="#st-ray" transform="rotate(135)"/>
+        <use href="#st-ray" transform="rotate(180)"/>
+        <use href="#st-ray" transform="rotate(225)"/>
+        <use href="#st-ray" transform="rotate(270)"/>
+        <use href="#st-ray" transform="rotate(315)"/>
+      </g>
+    </g>
+    <circle cx="600" cy="340" r="330" fill="url(#st-glow)"/>
+    <g fill="#f4e4c5">
+      <circle cx="120" cy="110" r="4"/><circle cx="255" cy="60" r="3"/><circle cx="1050" cy="140" r="5"/>
+      <circle cx="980" cy="70" r="3"/><circle cx="180" cy="600" r="4"/><circle cx="1090" cy="560" r="3.5"/>
+      <circle cx="420" cy="80" r="3"/><circle cx="760" cy="105" r="3.5"/>
+    </g>
+    <g stroke="#f4e4c5" stroke-width="3" stroke-linecap="round" opacity=".8">
+      <path d="M95 90 v-22 M95 132 v22 M74 111 h-22 M116 111 h22"/>
+      <path d="M1075 545 v-18 M1075 583 v18 M1056 564 h-18 M1094 564 h18"/>
+    </g>
+    <!-- planet -->
+    <g transform="translate(600 340)">
+      <circle r="185" fill="#c6491f"/>
+      <path d="M-185 -55 a185 185 0 0 0 370 0 Z" fill="#e2a22c" opacity=".22"/>
+      <g stroke="#2c1810" stroke-width="7" stroke-linecap="round" opacity=".75">
+        <path d="M-160 -85 h320"/><path d="M-178 -20 h356"/><path d="M-165 45 h330"/><path d="M-125 105 h250"/>
+      </g>
+      <circle r="185" fill="url(#st-dots)"/>
+      <circle r="185" fill="none" stroke="#2c1810" stroke-width="10"/>
+      <!-- rings -->
+      <g transform="rotate(-18)" fill="none" stroke="#2c1810" stroke-width="10">
+        <ellipse rx="315" ry="86" fill="#ebd3a8" fill-opacity=".92"/>
+        <ellipse rx="255" ry="66" stroke-width="7" fill="#f9efd8" fill-opacity=".9"/>
+      </g>
+      <path d="M-185 0 a185 185 0 0 0 370 0 Z" fill="#c6491f"/>
+      <path d="M-185 0 a185 185 0 0 0 370 0 Z" fill="url(#st-dots)"/>
+      <path d="M-185 0 a185 185 0 0 0 370 0" fill="none" stroke="#2c1810" stroke-width="10"/>
+      <g stroke="#2c1810" stroke-width="7" stroke-linecap="round" opacity=".75">
+        <path d="M-165 45 h330"/><path d="M-125 105 h250"/>
+      </g>
+    </g>
+    <rect x="0" y="612" width="1200" height="108" fill="#2c1810"/>
+    <g fill="#e2a22c">
+      <path d="M0 612 h1200 v10 H0z"/>
+    </g>
+    <g fill="#f4e4c5" opacity=".85">
+      <circle cx="70" cy="666" r="6"/><circle cx="110" cy="666" r="6"/><circle cx="150" cy="666" r="6"/>
+      <circle cx="1050" cy="666" r="6"/><circle cx="1090" cy="666" r="6"/><circle cx="1130" cy="666" r="6"/>
+    </g>
+    <rect width="1200" height="720" fill="url(#st-dots)" opacity=".35"/>
+  </g>
+</svg>

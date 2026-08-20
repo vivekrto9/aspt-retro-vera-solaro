@@ -1058,6 +1058,9 @@ button.vera-pill[aria-pressed="true"] {
 }
 
 .vera-journal-card {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 210px minmax(0, 1fr);
   overflow: hidden;
   box-shadow: none;
   color: inherit;
@@ -1065,13 +1068,15 @@ button.vera-pill[aria-pressed="true"] {
 }
 
 .vera-journal-card .vera-image {
-  height: 220px;
+  height: 210px;
   border: 0;
   border-bottom: var(--vera-border);
   border-radius: 0;
 }
 
 .vera-journal-card__copy {
+  display: flex;
+  flex-direction: column;
   padding: 24px 26px 28px;
 }
 
@@ -1411,6 +1416,8 @@ button.vera-pill[aria-pressed="true"] {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 1;
+  transition: opacity 180ms ease;
 }
 
 .vera-image__fallback {
@@ -1428,9 +1435,15 @@ button.vera-pill[aria-pressed="true"] {
   text-align: center;
 }
 
-.vera-image--pending > img,
 .vera-image--missing > img {
   display: none;
+}
+
+/* Keep a pending lazy image in layout so the browser is still able to discover and
+   fetch it. `display: none` here creates a deadlock: the image never loads, so the
+   placeholder can never be cleared. */
+.vera-image--pending > img {
+  opacity: 0;
 }
 
 .vera-image--pending > .vera-image__fallback,
@@ -2790,6 +2803,15 @@ a.vera-list-item:hover {
   text-align: center;
 }
 
+.vera-article-hero {
+  padding-top: clamp(40px, 4vw, 58px);
+  padding-bottom: clamp(34px, 3.4vw, 48px);
+}
+
+.vera-article-layout {
+  padding-top: clamp(34px, 3.8vw, 54px);
+}
+
 .vera-article-header__inner > div:last-child {
   justify-content: center;
   border-top: 2px solid var(--vera-sand-deep);
@@ -2805,7 +2827,8 @@ a.vera-list-item:hover {
 }
 
 .vera-article-figure {
-  height: 400px;
+  height: auto;
+  aspect-ratio: 5 / 3;
   border-width: 3px;
   border-radius: 20px;
 }

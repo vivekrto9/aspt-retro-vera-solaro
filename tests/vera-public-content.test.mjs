@@ -159,9 +159,10 @@ test("account access forms validate fields locally and name every failure in Stu
 });
 
 test("source media stays in the home slots and the shared article stand-in", () => {
-  // The three photographs also stand in for article artwork until the owner supplies
-  // per-article media; `src/data/blog-posts.ts` is their single owner for that use, so
-  // routes and components still may not reach for them directly.
+  // Article artwork is the drawn `blog-*` plates until the owner supplies per-article media;
+  // `src/data/blog-posts.ts` is their single owner, so routes and components still may not
+  // reach for any seeded alias directly. The three photographs remain in the seed library for
+  // the owner to place, which is why nothing here requires them to be referenced in code.
   const home = read("src/pages/index.astro");
   const blogData = read("src/data/blog-posts.ts");
   const authorized = `${home}\n${blogData}`;
@@ -181,10 +182,32 @@ test("source media stays in the home slots and the shared article stand-in", () 
     .join("\n");
 
   for (const alias of ["vera-portrait", "ephemeris-pages", "brass-protractor", "night-sky"]) {
-    assert.match(authorized, new RegExp(`aliases/${alias}/`));
+    assert.doesNotMatch(otherVeraSources, new RegExp(`aliases/${alias}/`));
+  }
+  for (const alias of [
+    "blog-saturn-transit",
+    "blog-drawn-by-hand",
+    "blog-ephemeris-desk",
+    "blog-zodiac-wheel",
+    "blog-night-sky",
+    "blog-retrograde-loop",
+  ]) {
+    assert.match(blogData, new RegExp(`aliases/${alias}/`));
     assert.doesNotMatch(otherVeraSources, new RegExp(`aliases/${alias}/`));
   }
   assert.match(home, /aliases\/vera-portrait\//);
+  assert.match(authorized, /aliases\/vera-portrait\//);
+});
+
+test("article artwork loads without a lazy-image deadlock and stays aligned", () => {
+  const article = read("src/pages/writing/[slug].astro");
+  const styles = read("src/styles/vera.css");
+
+  assert.match(article, /class="vera-article-figure" eager/);
+  assert.match(styles, /\.vera-image--pending > img\s*{\s*opacity: 0;/);
+  assert.doesNotMatch(styles, /\.vera-image--pending > img,\s*\.vera-image--missing > img/);
+  assert.match(styles, /\.vera-journal-card\s*{[\s\S]*grid-template-rows: 210px minmax\(0, 1fr\)/);
+  assert.match(styles, /\.vera-article-figure\s*{[\s\S]*aspect-ratio: 5 \/ 3/);
 });
 
 test("Vera uses the existing manifests without JSON sidecars", () => {
@@ -430,10 +453,17 @@ test("warm source reading, letter, writing, and closed screens stay reachable", 
   assert.match(writing, /writing_meta_count/);
   assert.match(writing, /writing_meta_note/);
   assert.match(writing, /writing_empty_title/);
+  // The listed pieces sit in their own section; a filter that matches only the featured
+  // piece has to collapse that section rather than leave an empty band of padding.
+  assert.match(writing, /data-writing-list/);
+  assert.match(writing, /writingList\.hidden =/);
   assert.match(article, /getBlogPost\(slug, locale\)/);
   assert.match(article, /PortableText/);
-  assert.match(article, /article_author_alt/);
-  assert.match(article, /author_alt/);
+  // An article shows only what the piece actually carries. Neither author avatar had an image
+  // behind it, so the page renders the byline and the bio as text rather than empty frames.
+  assert.doesNotMatch(article, /author_alt/);
+  assert.match(article, /article_byline/);
+  assert.match(article, /author_bio/);
   assert.match(article, /buildArticleJsonLd/);
   assert.match(article, /buildBreadcrumbJsonLd/);
   assert.equal(aboutDefaults.about_eyebrow, "About");

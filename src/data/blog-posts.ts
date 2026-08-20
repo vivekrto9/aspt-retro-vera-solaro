@@ -175,19 +175,34 @@ export const normalizeBlogDetail = (entry: BlogEntry, locale: string): BlogPostD
   };
 };
 
-// Interim article artwork. The project owner has not supplied per-article media yet, so the
-// three home photographs stand in, keyed by listing position so a post keeps the same picture
-// wherever it appears. Replace with real `featured_image` values as they arrive.
+// Interim article artwork. The project owner has not supplied per-article media yet, so a set of
+// drawn retro plates from the seed asset store stands in: keyed by slug where a piece has its own
+// plate, otherwise by listing
+// position so a post keeps the same picture wherever it appears. Replace with real `featured_image`
+// values as they arrive.
 export const blogFallbackImages: BlogImage[] = [
-  { src: "/_assets/aliases/ephemeris-pages/ephemeris-pages.webp", alt: "Ephemeris pages, close up" },
-  { src: "/_assets/aliases/brass-protractor/brass-protractor.webp", alt: "A brass protractor resting on a chart" },
-  { src: "/_assets/aliases/night-sky/night-sky.webp", alt: "The night sky above Trieste" },
+  { src: "/_assets/aliases/blog-ephemeris-desk/blog-ephemeris-desk.svg", alt: "An open ephemeris with columns of figures under a rising sunburst" },
+  { src: "/_assets/aliases/blog-zodiac-wheel/blog-zodiac-wheel.svg", alt: "A twelve-house wheel printed in retro ink on cream" },
+  { src: "/_assets/aliases/blog-night-sky/blog-night-sky.svg", alt: "Moon phases arching over the rooftops of Trieste" },
+  { src: "/_assets/aliases/blog-retrograde-loop/blog-retrograde-loop.svg", alt: "A planet tracing a retrograde loop across a striped sky" },
 ];
+
+// Per-article plates, drawn to match the piece rather than the position it happens to sit in.
+export const blogImagesBySlug: Record<string, BlogImage> = {
+  "saturn-is-not-punishing-you": {
+    src: "/_assets/aliases/blog-saturn-transit/blog-saturn-transit.svg",
+    alt: "A ringed planet crossing a striped retro sky",
+  },
+  "why-i-still-draw-by-hand": {
+    src: "/_assets/aliases/blog-drawn-by-hand/blog-drawn-by-hand.svg",
+    alt: "A brass compass drawing a chart wheel on ruled paper",
+  },
+};
 
 export const blogImageAt = (post: BlogPostSummary, index: number): BlogImage => {
   if (post.image?.src) return { src: post.image.src, alt: post.image.alt || post.title };
-  const fallback = blogFallbackImages[index % blogFallbackImages.length];
-  return { src: fallback.src, alt: fallback.alt || post.title };
+  const plate = blogImagesBySlug[post.slug] ?? blogFallbackImages[index % blogFallbackImages.length];
+  return { src: plate.src, alt: plate.alt || post.title };
 };
 
 export const listBlogCategories = (posts: BlogPostSummary[]) => {
