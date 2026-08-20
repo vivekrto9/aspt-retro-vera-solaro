@@ -325,16 +325,16 @@ WHEN NEW.status = 'reserved'
 BEGIN
   UPDATE ap_vera_gift_certificates
   SET remaining_amount_cents = remaining_amount_cents - NEW.amount_cents,
-      status = CASE
+      status = (CASE
         WHEN remaining_amount_cents - NEW.amount_cents = 0 THEN 'depleted'
         ELSE 'active'
-      END,
+      END),
       updated_at = NEW.created_at
   WHERE id = NEW.gift_certificate_id
     AND status = 'active'
     AND (expires_at IS NULL OR expires_at > NEW.created_at)
     AND remaining_amount_cents >= NEW.amount_cents;
-  SELECT CASE WHEN changes() != 1 THEN RAISE(ABORT, 'vera_gift_unavailable') END;
+  SELECT (CASE WHEN changes() != 1 THEN RAISE(ABORT, 'vera_gift_unavailable') END);
 END;
 
 CREATE TRIGGER IF NOT EXISTS trg_ap_vera_gift_release
