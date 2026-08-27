@@ -52,7 +52,7 @@ const createReadinessDb = async ({
   }
   const bootstrapRows = bootstrapState
     ? [{
-        template_key: "astropages-base-template",
+        template_key: "aspt-retro-vera-solaro",
         template_version: "test",
         builder_registry_hash: contract.registryHash,
         expected_collections: contract.expectedCollections,
@@ -188,14 +188,16 @@ test("generated-site SSO exchange has bounded browser-safe failure handling", ()
 test("starter homepage mounts the Content Studio launcher when Builder auth is present", () => {
   const layout = read("src/layouts/BaseLayout.astro");
   const page = read("src/pages/index.astro");
+  const frame = read("src/components/vera/VeraFrame.astro");
 
   assert.match(layout, /import BuilderToolbar from "\.\.\/builder\/BuilderToolbar\.astro"/);
   assert.match(layout, /builderToolbar/);
   assert.match(layout, /<BuilderToolbar \{\.\.\.builderToolbar\} \/>/);
-  assert.match(page, /reviewTargets/);
-  assert.match(page, /launcherEnabled: builder\.launcherEnabled/);
-  assert.match(page, /studioModeEnabled: builder\.studioModeEnabled/);
-  assert.match(page, /hasSavedDraft: builderPage\.hasSavedDraft \|\| chromePage\.hasSavedDraft/);
+  assert.match(page, /<VeraFrame \{\.\.\.page\}/);
+  assert.match(frame, /reviewTargets/);
+  assert.match(frame, /launcherEnabled: Boolean\(builder\.launcherEnabled\)/);
+  assert.match(frame, /studioModeEnabled: Boolean\(builder\.studioModeEnabled\)/);
+  assert.match(frame, /hasSavedDraft: builderPage\.hasSavedDraft \|\| chromePage\.hasSavedDraft/);
 });
 
 test("localhost does not bypass Content Studio authentication", () => {

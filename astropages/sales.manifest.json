@@ -2,24 +2,36 @@
   "version": 1,
   "contract": "sales-mcp.v1",
   "semanticModel": "commerce.v1",
-  "schemaRevision": "base-template-sales-2026-07-27-1",
-  "paymentStatuses": ["pending", "paid", "captured", "succeeded", "completed", "failed", "cancelled", "refunded"],
+  "schemaRevision": "vera-solaro-sales-2026-08-15-2",
+  "paymentStatuses": ["pending", "succeeded", "failed", "cancelled"],
   "transactionKinds": [
     {
-      "key": "report_order",
-      "label": "Paid report orders",
-      "description": "Paid or attempted report orders.",
-      "examples": ["report order", "custom report"]
+      "key": "consultation_booking",
+      "label": "Consultation bookings",
+      "description": "Stripe payment attempts for Vera Solaro astrology consultation bookings.",
+      "examples": ["The Natal Hour", "The Year Ahead", "Two Charts"]
     }
   ],
   "dimensions": [
     {
-      "key": "report_type",
-      "label": "Report type",
-      "description": "The specific type of report ordered."
+      "key": "service_slug",
+      "label": "Consultation service",
+      "description": "The Vera Solaro consultation service selected for the booking."
+    },
+    {
+      "key": "consultation_mode",
+      "label": "Consultation mode",
+      "description": "Whether the consultation is by call or in person."
+    },
+    {
+      "key": "payment_option",
+      "label": "Payment option",
+      "description": "Whether the client selected the deposit or full-payment option."
     }
   ],
   "entities": [
-    { "type": "item", "key": "report_order", "label": "Report Order", "transactionKind": "report_order" }
+    { "type": "item", "key": "natal-hour", "label": "The Natal Hour", "transactionKind": "consultation_booking" },
+    { "type": "item", "key": "year-ahead", "label": "The Year Ahead", "transactionKind": "consultation_booking" },
+    { "type": "item", "key": "two-charts", "label": "Two Charts", "transactionKind": "consultation_booking" }
   ]
 }

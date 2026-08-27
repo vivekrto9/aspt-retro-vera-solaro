@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "astropages-base-template",
+  "name": "aspt-retro-vera-solaro",
   "main": "./src/worker.ts",
-  "compatibility_date": "2026-02-24",
+  "compatibility_date": "2026-05-28",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist/client",
@@ -12,23 +12,56 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "astropages-base-template-site",
+      "database_name": "aspt-retro-vera-solaro-site",
     },
   ],
   "r2_buckets": [
     {
       "binding": "MEDIA",
-      "bucket_name": "astropages-base-template-media",
+      "bucket_name": "aspt-retro-vera-solaro-media",
     },
   ],
   "kv_namespaces": [
     {
       "binding": "SESSION",
-      "id": "LOCAL_ASTROPAGES_BASE_TEMPLATE_SESSION_KV",
+      "id": "LOCAL_ASPT_RETRO_VERA_SOLARO_SESSION_KV",
     },
   ],
   "images": {
     "binding": "IMAGES",
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "EMAIL_QUEUE",
+        "queue": "aspt-retro-vera-solaro-email",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "aspt-retro-vera-solaro-email",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5,
+        "retry_delay": 60,
+        "dead_letter_queue": "aspt-retro-vera-solaro-email-dlq",
+      },
+    ],
+  },
+  "triggers": {
+    "crons": ["*/2 * * * *"],
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+    },
   },
   "worker_loaders": [
     {
@@ -37,7 +70,7 @@
   ],
   "env": {
     "preview": {
-      "name": "astropages-base-template-preview",
+      "name": "aspt-retro-vera-solaro-preview",
       "assets": {
         "directory": "./dist/client",
         "binding": "ASSETS",
@@ -46,14 +79,14 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "astropages-base-template-preview-site",
+          "database_name": "aspt-retro-vera-solaro-preview-site",
           "database_id": "PREVIEW_D1_DATABASE_ID_FROM_WRANGLER_CREATE",
         },
       ],
       "r2_buckets": [
         {
           "binding": "MEDIA",
-          "bucket_name": "astropages-base-template-preview-media",
+          "bucket_name": "aspt-retro-vera-solaro-preview-media",
         },
       ],
       "kv_namespaces": [
@@ -65,17 +98,43 @@
       "images": {
         "binding": "IMAGES",
       },
-      "vars": {
-        "PUBLIC_GTM_CONTAINER_ID": "",
-        "PUBLIC_META_PIXEL_ID": "",
-        "PUBLIC_GOOGLE_ADS_TAG_ID": "",
-        "PUBLIC_GOOGLE_ADS_CONVERSION_LABEL": "",
+      "queues": {
+        "producers": [
+          {
+            "binding": "EMAIL_QUEUE",
+            "queue": "aspt-retro-vera-solaro-preview-email",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "aspt-retro-vera-solaro-preview-email",
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 5,
+            "retry_delay": 60,
+            "dead_letter_queue": "aspt-retro-vera-solaro-preview-email-dlq",
+          },
+        ],
+      },
+      "triggers": {
+        "crons": ["*/2 * * * *"],
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.1,
+        },
       },
       "secrets": {
         "required": [
           "EMDASH_ENCRYPTION_KEY",
-          "BUILDER_MCP_TOKEN",
-          "BUILDER_MCP_PROVISION_SECRET"
+          "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"
         ],
       },
       "worker_loaders": [
@@ -85,7 +144,7 @@
       ],
     },
     "production": {
-      "name": "astropages-base-template-production",
+      "name": "aspt-retro-vera-solaro-production",
       "assets": {
         "directory": "./dist/client",
         "binding": "ASSETS",
@@ -94,14 +153,14 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "astropages-base-template-production-site",
+          "database_name": "aspt-retro-vera-solaro-production-site",
           "database_id": "PRODUCTION_D1_DATABASE_ID_FROM_WRANGLER_CREATE",
         },
       ],
       "r2_buckets": [
         {
           "binding": "MEDIA",
-          "bucket_name": "astropages-base-template-production-media",
+          "bucket_name": "aspt-retro-vera-solaro-production-media",
         },
       ],
       "kv_namespaces": [
@@ -113,17 +172,43 @@
       "images": {
         "binding": "IMAGES",
       },
-      "vars": {
-        "PUBLIC_GTM_CONTAINER_ID": "",
-        "PUBLIC_META_PIXEL_ID": "",
-        "PUBLIC_GOOGLE_ADS_TAG_ID": "",
-        "PUBLIC_GOOGLE_ADS_CONVERSION_LABEL": "",
+      "queues": {
+        "producers": [
+          {
+            "binding": "EMAIL_QUEUE",
+            "queue": "aspt-retro-vera-solaro-production-email",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "aspt-retro-vera-solaro-production-email",
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 5,
+            "retry_delay": 60,
+            "dead_letter_queue": "aspt-retro-vera-solaro-production-email-dlq",
+          },
+        ],
+      },
+      "triggers": {
+        "crons": ["*/2 * * * *"],
+      },
+      "observability": {
+        "enabled": true,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.1,
+        },
       },
       "secrets": {
         "required": [
           "EMDASH_ENCRYPTION_KEY",
-          "BUILDER_MCP_TOKEN",
-          "BUILDER_MCP_PROVISION_SECRET"
+          "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"
         ],
       },
       "worker_loaders": [

@@ -14,10 +14,10 @@ export type RuntimeEnv = Record<string, unknown> & {
 export const nowIso = () => new Date().toISOString();
 
 export const createId = (prefix: string) => {
-  const random =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
+  if (typeof crypto === "undefined" || !("randomUUID" in crypto)) {
+    throw new Error("A cryptographically secure runtime is required to create identifiers.");
+  }
+  const random = crypto.randomUUID();
   return `${prefix}_${String(random).replace(/-/g, "").slice(0, 18)}`;
 };
 

@@ -1,24 +1,53 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("shared layout installs the immediate PostHog bootstrap", () => {
+test("shared layout installs consent-gated private PostHog analytics", () => {
   const layout = read("src/layouts/BaseLayout.astro");
   const client = read("src/scripts/posthog-analytics.ts");
 
   assert.match(layout, /getPublicPosthogConfig/);
   assert.match(layout, /data-posthog-config/);
-  assert.match(layout, /Analytics consent UI is intentionally disabled/);
+  assert.match(layout, /data-analytics-consent-banner/);
+  assert.match(layout, /data-analytics-consent-decline/);
+  assert.match(layout, /data-analytics-consent-accept/);
   assert.match(layout, /posthog-analytics\.ts/);
-  assert.match(client, /capture_pageview:\s*true/);
-  assert.match(client, /capture_pageleave:\s*true/);
-  assert.match(client, /autocapture:\s*true/);
-  assert.match(client, /Analytics consent is intentionally disabled/);
-  assert.match(client, /if \(config\.enabled && projectApiKey\) \{\s*\/\/ Analytics consent is intentionally disabled[\s\S]*?void initializePosthog\(\);/);
+  assert.match(client, /capture_pageview:\s*false/);
+  assert.match(client, /capture_pageleave:\s*false/);
+  assert.match(client, /autocapture:\s*false/);
+  assert.match(client, /disable_session_recording:\s*true/);
+  assert.match(client, /readConsent\(\) !== "granted"/);
+  assert.match(client, /vera-solaro:analytics-consent/);
+  assert.match(client, /allowedEvents/);
+  assert.match(client, /"payment_failed"/);
+  assert.match(client, /"scheduling_retry_requested"/);
+  assert.match(client, /allowedPayloadKeys = new Set\(\["service", "mode", "step", "status", "source"\]\)/);
+  assert.match(client, /safePayload/);
+  // Payment failures belong to the same-page wizard; scheduling retries belong to
+  // the authoritative confirmation screen.
+  const bookingPayment = read("src/pages/booking.astro");
+  const bookingConfirmation = read("src/pages/booking/[id]/confirmation.astro");
+  const booking = `${bookingPayment}\n${bookingConfirmation}`;
+  assert.match(bookingPayment, /track\("payment_failed",\s*\{/);
+  assert.match(bookingConfirmation, /track\("scheduling_retry_requested",\s*\{/);
+  assert.doesNotMatch(booking, /(?:payment_failed|scheduling_retry_requested)[\s\S]{0,180}\breason\s*:/);
+  assert.doesNotMatch(client, /void initializePosthog\(\);\s*\/\*\s*To restore consent/);
   assert.doesNotMatch(client, /phc_[a-z0-9]+/i);
   assert.doesNotMatch(layout, /phx_[a-z0-9]+/i);
+});
+
+test("analytics consent copy makes the privacy boundary explicit", () => {
+  const copy = read("src/data/vera/content.ts");
+  assert.match(copy, /No name, email, birth details or session recording is collected/);
+  assert.match(copy, /Decline/);
+  assert.match(copy, /Allow analytics/);
+  assert.equal(
+    existsSync(new URL("../src/data/analytics-consent.ts", import.meta.url)),
+    false,
+    "analytics consent copy belongs in the existing Vera content registry",
+  );
 });
 
 test("template manifest declares PostHog runtime values without an analytics file", () => {

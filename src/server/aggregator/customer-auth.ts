@@ -1,5 +1,7 @@
 import { AP_TABLES as tables } from "./db/tables.ts";
 import { createId, nowIso, safeString, type RuntimeEnv } from "./runtime.ts";
+import { enqueueVeraEmail } from "../vera/email.ts";
+import type { VeraEnv } from "../vera/types.ts";
 
 type Row = Record<string, unknown>;
 
@@ -40,17 +42,30 @@ const first = async <T extends Row = Row>(env: RuntimeEnv, sql: string, values: 
 
 const run = async (env: RuntimeEnv, sql: string, values: unknown[] = []) => {
   if (!env.DB) return;
-  await env.DB.prepare(sql).bind(...values).run?.();
+  return await env.DB.prepare(sql).bind(...values).run?.();
+};
+
+const changeCount = (result: unknown) => {
+  if (!result || typeof result !== "object") return 0;
+  const changes = Number((result as { meta?: { changes?: unknown } }).meta?.changes);
+  return Number.isFinite(changes) ? changes : 0;
 };
 
 const normalizeEmail = (email: unknown) => safeString(email).toLowerCase();
 
 const requestOrigin = (env: RuntimeEnv, request: Request) => {
-  const configured = safeString(env.SITE_ORIGIN);
-  if (configured) return configured.replace(/\/+$/, "");
+  const configured = safeString(env.ASTROPAGES_SITE_URL) || safeString(env.SITE_ORIGIN) || safeString(env.SITE_URL);
+  try {
+    const url = new URL(configured);
+    if (["http:", "https:"].includes(url.protocol)) return url.origin;
+  } catch {
+    // The request origin remains the safe same-site fallback.
+  }
   return new URL(request.url).origin;
 };
 
+// Mirrors the Pandit reference: the reset link is handed back over the API only when
+// the caller is on the developer's own machine, so a deployed origin never echoes it.
 const isLocalRequest = (request: Request) => {
   const hostname = new URL(request.url).hostname;
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
@@ -111,15 +126,36 @@ const accountFromRow = (row: Row) => ({
 
 export type CustomerAccount = ReturnType<typeof accountFromRow>;
 
-const getCustomerAccountByEmail = async (env: RuntimeEnv, email: string) => {
-  const row = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE email = ?`, [normalizeEmail(email)]);
-  return row ? accountFromRow(row) : null;
-};
-
 const getCustomerAccountById = async (env: RuntimeEnv, accountId: string) => {
   const row = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE id = ?`, [accountId]);
   return row ? accountFromRow(row) : null;
 };
+
+const enqueueCustomerEmail = async ({
+  env,
+  eventType,
+  templateKey,
+  recipientEmail,
+  recipientName,
+  payload,
+  idempotencyKey,
+}: {
+  env: RuntimeEnv;
+  eventType: string;
+  templateKey: string;
+  recipientEmail: string;
+  recipientName: string;
+  payload: Record<string, unknown>;
+  idempotencyKey: string;
+}) => enqueueVeraEmail({
+  env: env as VeraEnv,
+  eventType,
+  templateKey,
+  recipientEmail,
+  recipientName,
+  payload,
+  idempotencyKey,
+});
 
 const createCustomerSession = async ({ env, accountId, request }: { env: RuntimeEnv; accountId: string; request: Request }) => {
   const token = randomHex(32);
@@ -150,7 +186,7 @@ export const signupCustomer = async ({
   email,
   phone,
   password,
-  createSession = false,
+  createSession = true,
 }: {
   env: RuntimeEnv;
   request: Request;
@@ -167,37 +203,116 @@ export const signupCustomer = async ({
   if (!name) return { ok: false as const, message: "Full name is required." };
   if (!normalizedEmail || !normalizedEmail.includes("@")) return { ok: false as const, message: "Enter a valid email address." };
   if (rawPassword.length < 8) return { ok: false as const, message: "Password must be at least 8 characters." };
-  if (await getCustomerAccountByEmail(env, normalizedEmail)) {
-    return { ok: false as const, message: "An account already exists for this email. Please login." };
-  }
 
   const now = nowIso();
   const accountId = createId("acct");
+  const accountUrl = new URL("/account", requestOrigin(env, request)).toString();
   const passwordResult = await hashPassword(rawPassword);
-  await run(
-    env,
-    `INSERT INTO ${tables.customerAccounts} (
-      id, email, display_name, phone, password_hash, password_salt,
-      default_language, email_verified_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      accountId,
-      normalizedEmail,
-      name,
-      safeString(phone) || null,
-      passwordResult.hash,
-      passwordResult.salt,
-      "English",
-      now,
-      now,
-      now,
-    ],
-  );
+
+  // A reader who already owns the email and gives its password is simply let
+  // back in, so a second signup never strands them on their own account.
+  const existing = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE email = ?`, [normalizedEmail]);
+  if (existing) {
+    const existingCheck = await hashPassword(rawPassword, String(existing.password_salt ?? ""));
+    if (!timingSafeEqual(existingCheck.hash, String(existing.password_hash ?? ""))) {
+      return { ok: false as const, message: "That email is already in the book. Log in instead." };
+    }
+    const account = accountFromRow(existing);
+    if (!createSession) {
+      return { ok: true as const, account, cookies: [] as string[], csrfToken: "", created: false as const };
+    }
+    const session = await createCustomerSession({ env, accountId: account.id, request });
+    return {
+      ok: true as const,
+      account,
+      cookies: session.cookies,
+      csrfToken: session.csrfToken,
+      created: false as const,
+    };
+  }
+
+  try {
+    await run(
+      env,
+      `INSERT INTO ${tables.customerAccounts} (
+        id, email, display_name, phone, password_hash, password_salt,
+        default_language, email_verified_at, email_verification_token_hash,
+        email_verification_expires_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)`,
+      [
+        accountId,
+        normalizedEmail,
+        name,
+        safeString(phone) || null,
+        passwordResult.hash,
+        passwordResult.salt,
+        "English",
+        now,
+        now,
+        now,
+      ],
+    );
+  } catch (error) {
+    console.error("Customer account could not be created.", error);
+    return { ok: false as const, message: "That account could not be made. Check the details and try again." };
+  }
+
   const account = await getCustomerAccountById(env, accountId);
   if (!account) return { ok: false as const, message: "Account could not be created." };
-  if (!createSession) return { ok: true as const, account, cookies: [], csrfToken: "" };
-  const session = await createCustomerSession({ env, accountId: account.id, request });
-  return { ok: true as const, account, cookies: session.cookies, csrfToken: session.csrfToken };
+
+  // The welcome note is a courtesy, never a gate: a failed send must not undo a
+  // good account or keep the reader out of the room they just made.
+  const queued = await enqueueCustomerEmail({
+    env,
+    eventType: "customer.welcome",
+    templateKey: "customer_welcome_en",
+    recipientEmail: normalizedEmail,
+    recipientName: name,
+    payload: {
+      customerName: name,
+      accountUrl,
+    },
+    idempotencyKey: `customer-welcome:${accountId}`,
+  });
+  if (!queued.ok) console.error("Customer welcome email could not be queued.", queued.message);
+
+  if (!createSession) {
+    return { ok: true as const, account, cookies: [] as string[], csrfToken: "", created: true as const };
+  }
+  const session = await createCustomerSession({ env, accountId, request });
+  return {
+    ok: true as const,
+    account,
+    cookies: session.cookies,
+    csrfToken: session.csrfToken,
+    created: true as const,
+  };
+};
+
+export const verifyCustomerEmail = async ({
+  env,
+  token,
+}: {
+  env: RuntimeEnv;
+  token: unknown;
+}) => {
+  if (!env.DB) return { ok: false as const, message: "Customer account storage is not ready." };
+  const rawToken = safeString(token);
+  if (!rawToken) return { ok: false as const, message: "Email verification is invalid or expired." };
+  const now = nowIso();
+  const result = await run(
+    env,
+    `UPDATE ${tables.customerAccounts}
+      SET email_verified_at = ?, email_verification_token_hash = NULL,
+        email_verification_expires_at = NULL, updated_at = ?
+      WHERE email_verification_token_hash = ?
+        AND email_verified_at IS NULL
+        AND email_verification_expires_at > ?`,
+    [now, now, await sha256Hex(rawToken), now],
+  );
+  return changeCount(result) === 1
+    ? { ok: true as const, message: "Email verified." }
+    : { ok: false as const, message: "Email verification is invalid or expired." };
 };
 
 export const loginCustomer = async ({
@@ -243,24 +358,51 @@ export const requestCustomerPasswordReset = async ({
 
   const row = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE email = ?`, [normalizedEmail]);
   const genericMessage = "If an account exists for this email, password reset instructions will be available shortly.";
-  if (!row) return { ok: true as const, message: genericMessage, resetUrl: "" };
+  if (!row) return { ok: true as const, message: genericMessage, emailSent: false, resetUrl: "" };
 
   const token = randomHex(32);
   const resetUrl = `${requestOrigin(env, request)}/reset-password?token=${encodeURIComponent(token)}`;
   const now = nowIso();
   const expiresAt = new Date(Date.now() + passwordResetTtlMs).toISOString();
-  await run(
-    env,
-    `INSERT INTO ${tables.customerPasswordResets} (
-      id, account_id, reset_token_hash, expires_at, used_at, created_at
-    ) VALUES (?, ?, ?, ?, NULL, ?)`,
-    [createId("cpwr"), String(row.id), await sha256Hex(token), expiresAt, now],
-  );
+  const resetId = createId("cpwr");
+  let emailSent = false;
+  try {
+    await run(env, `UPDATE ${tables.customerPasswordResets}
+      SET used_at = ? WHERE account_id = ? AND used_at IS NULL`, [now, String(row.id)]);
+    await run(
+      env,
+      `INSERT INTO ${tables.customerPasswordResets} (
+        id, account_id, reset_token_hash, expires_at, used_at, created_at
+      ) VALUES (?, ?, ?, ?, NULL, ?)`,
+      [resetId, String(row.id), await sha256Hex(token), expiresAt, now],
+    );
+    const queued = await enqueueCustomerEmail({
+      env,
+      eventType: "customer.password_reset",
+      templateKey: "customer_password_reset_en",
+      recipientEmail: normalizedEmail,
+      recipientName: safeString(row.display_name),
+      payload: {
+        customerName: safeString(row.display_name),
+        resetUrl,
+      },
+      idempotencyKey: `customer-password-reset:${resetId}`,
+    });
+    if (!queued.ok) throw new Error(queued.message);
+    emailSent = true;
+  } catch (error) {
+    await run(env, `UPDATE ${tables.customerPasswordResets}
+      SET used_at = ? WHERE id = ? AND used_at IS NULL`, [nowIso(), resetId]).catch(() => undefined);
+    console.error("Customer password reset email could not be queued.", error);
+  }
 
   return {
     ok: true as const,
     message: genericMessage,
-    resetUrl: isLocalRequest(request) ? resetUrl : "",
+    emailSent,
+    // A failed queue attempt marks the reset used above, so the link is already dead
+    // and is withheld rather than handed back as something the reader could follow.
+    resetUrl: emailSent && isLocalRequest(request) ? resetUrl : "",
   };
 };
 
@@ -296,14 +438,27 @@ export const resetCustomerPassword = async ({
 
   const passwordResult = await hashPassword(rawPassword);
   const now = nowIso();
+  const consumed = await run(
+    env,
+    `UPDATE ${tables.customerPasswordResets}
+      SET used_at = ?
+      WHERE id = ? AND used_at IS NULL AND expires_at > ?`,
+    [now, String(row.id), now],
+  );
+  if (changeCount(consumed) !== 1) {
+    return { ok: false as const, message: "Reset link is invalid or expired." };
+  }
   await run(
     env,
     `UPDATE ${tables.customerAccounts}
-        SET password_hash = ?, password_salt = ?, updated_at = ?
+        SET password_hash = ?, password_salt = ?,
+          email_verified_at = COALESCE(email_verified_at, ?),
+          email_verification_token_hash = NULL,
+          email_verification_expires_at = NULL,
+          updated_at = ?
       WHERE id = ?`,
-    [passwordResult.hash, passwordResult.salt, now, String(row.account_id)],
+    [passwordResult.hash, passwordResult.salt, now, now, String(row.account_id)],
   );
-  await run(env, `UPDATE ${tables.customerPasswordResets} SET used_at = ? WHERE id = ?`, [now, String(row.id)]);
   await run(env, `UPDATE ${tables.customerSessions} SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL`, [
     now,
     String(row.account_id),
@@ -322,13 +477,19 @@ export const getCustomerSession = async (env: RuntimeEnv, request: Request) => {
     [tokenHash],
   );
   if (!session || new Date(String(session.expires_at)).getTime() < Date.now()) return null;
-  const account = await getCustomerAccountById(env, String(session.account_id));
-  if (!account) return null;
+  const csrfToken = cookieValue(request, csrfCookieName);
+  if (
+    !csrfToken ||
+    !timingSafeEqual(await sha256Hex(csrfToken), String(session.csrf_token_hash ?? ""))
+  ) return null;
+  const accountRow = await first(env, `SELECT * FROM ${tables.customerAccounts} WHERE id = ?`, [String(session.account_id)]);
+  if (!accountRow || !safeString(accountRow.email_verified_at)) return null;
+  const account = accountFromRow(accountRow);
   await run(env, `UPDATE ${tables.customerSessions} SET last_seen_at = ? WHERE id = ?`, [nowIso(), String(session.id)]);
   return {
     sessionId: String(session.id),
     account,
-    csrfToken: cookieValue(request, csrfCookieName),
+    csrfToken,
     csrfTokenHash: String(session.csrf_token_hash ?? ""),
   };
 };

@@ -37,7 +37,7 @@ export const GET: APIRoute = async (context) => {
     return json({
       status: "not_ready",
       state: "missing_d1",
-      feature: "astropages-base-template.generated-site.edit-readiness",
+      feature: "aspt-retro-vera-solaro.generated-site.edit-readiness",
       ready: false,
       mode,
       missingTables: requiredTables,
@@ -60,7 +60,7 @@ export const GET: APIRoute = async (context) => {
   return json({
     status: ready ? "ready" : "not_ready",
     state: ready ? "ready" : missingTables.length ? "missing_tables" : "missing_builder_content",
-    feature: "astropages-base-template.generated-site.edit-readiness",
+    feature: "aspt-retro-vera-solaro.generated-site.edit-readiness",
     ready,
     missingTables,
     bootstrap,

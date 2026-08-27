@@ -59,7 +59,7 @@ const server = http.createServer((incoming, outgoing) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-  console.log(`AstroPages base template local admin proxy`);
+  console.log(`Vera Solaro local admin proxy`);
   console.log(`- Target: ${target.origin}`);
   console.log(`- Proxy:  ${proxyOrigin}`);
   console.log(`- SSO:    ${subject} (${role})`);

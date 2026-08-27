@@ -4,13 +4,11 @@
   "source": "d1",
   "table": "ap_leads",
   "eventsTable": "ap_business_events",
-  "kinds": ["consultation", "commerce", "puja", "report", "newsletter", "contact"],
+  "kinds": ["consultation", "waitlist", "newsletter", "contact"],
   "sources": {
-    "consultation_booking": ["bookingNumber", "serviceSlug", "serviceName", "consultationMode", "consultationDate", "consultationSlot", "mainIssue", "amountCents", "currency"],
-    "product_order": ["orderNumber", "productSlug", "productTitle", "amountCents", "currency", "city", "pincode"],
-    "puja_order": ["orderNumber", "pujaSlug", "pujaTitle", "ritualSite", "gotra", "amountCents", "currency"],
-    "report_order": ["orderNumber", "reportSlug", "reportTitle", "astrologerSlug", "amountCents", "currency", "birthDate", "birthTime", "birthPlace", "partnerName", "partnerBirthDate", "partnerBirthTime", "partnerBirthPlace"],
+    "consultation_booking": ["bookingNumber", "serviceSlug", "serviceName", "consultationMode", "consultationDate", "consultationSlot", "paymentOption", "amountCents", "currency"],
+    "waitlist": ["serviceSlug", "serviceName", "consultationMode", "earliestDate", "latestDate", "shortNotice"],
     "newsletter": [],
-    "support": ["topic", "message", "subject", "bookingId", "orderType", "orderId"]
+    "contact": ["topic"]
   }
 }

@@ -14,6 +14,8 @@ type TokenRow = {
   expires_at?: unknown;
 };
 
+export type McpBearerAuthorization = "authorized" | "unauthorized" | "forbidden";
+
 const mcpPath = "/_emdash/api/mcp";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -69,25 +71,51 @@ const readJsonRpcRequest = async (request: Request): Promise<JsonRpcRequest | nu
   return isRecord(body) ? body : null;
 };
 
-const validateMcpBearerToken = async (request: Request, db: AnalyticsQueryDb | undefined) => {
+const storedTokenScopes = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return new Set(value.filter((scope): scope is string => typeof scope === "string"));
+  }
+  if (typeof value !== "string") return new Set<string>();
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return new Set(parsed.filter((scope): scope is string => typeof scope === "string"));
+    }
+  } catch {
+    // Older EmDash tokens may store a single scope or a comma-separated list.
+  }
+  return new Set(value.split(/[\s,]+/).map((scope) => scope.trim()).filter(Boolean));
+};
+
+export const authorizeMcpBearerToken = async (
+  request: Request,
+  db: AnalyticsQueryDb | undefined,
+  requiredScope: string,
+): Promise<McpBearerAuthorization> => {
   const token = readBearerToken(request);
   if (!token || !db) {
-    return false;
+    return "unauthorized";
   }
   const tokenHash = await sha256Base64Url(token);
   const row = await db.prepare(
     "SELECT id, scopes, expires_at FROM _emdash_api_tokens WHERE token_hash = ? LIMIT 1",
   ).bind(tokenHash).first?.<TokenRow>();
   if (!row?.id) {
-    return false;
+    return "unauthorized";
   }
   const expiresAt = typeof row.expires_at === "string" ? row.expires_at : "";
   if (expiresAt && Date.parse(expiresAt) <= Date.now()) {
-    return false;
+    return "unauthorized";
   }
 
-  return true;
+  const scopes = storedTokenScopes(row.scopes);
+  return scopes.has(requiredScope) || scopes.has("*") ? "authorized" : "forbidden";
 };
+
+const authorizationError = (rpc: JsonRpcRequest, authorization: McpBearerAuthorization) =>
+  authorization === "forbidden"
+    ? jsonRpcError(rpc.id, -32003, "forbidden: analytics:read scope is required", 403)
+    : jsonRpcError(rpc.id, -32001, "unauthorized", 401);
 
 const jsonRpcError = (id: unknown, code: number, message: string, status = 200) =>
   json({
@@ -109,9 +137,8 @@ const analyticsToolResult = async (
   }
 
   const db = dbFromEnv(env);
-  if (!(await validateMcpBearerToken(request, db))) {
-    return jsonRpcError(rpc.id, -32001, "unauthorized", 401);
-  }
+  const authorization = await authorizeMcpBearerToken(request, db, "analytics:read");
+  if (authorization !== "authorized") return authorizationError(rpc, authorization);
 
   try {
     const result = await answerAnalyticsQuery({
@@ -150,9 +177,8 @@ const salesToolResult = async (
   const params = isRecord(rpc.params) ? rpc.params : {};
   const argumentsValue = isRecord(params.arguments) ? params.arguments : {};
   const db = dbFromEnv(env);
-  if (!(await validateMcpBearerToken(request, db))) {
-    return jsonRpcError(rpc.id, -32001, "unauthorized", 401);
-  }
+  const authorization = await authorizeMcpBearerToken(request, db, "analytics:read");
+  if (authorization !== "authorized") return authorizationError(rpc, authorization);
   try {
     const result = await executeSalesMcpMethod(db, method, argumentsValue);
     return json({

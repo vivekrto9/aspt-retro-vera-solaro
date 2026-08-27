@@ -4,10 +4,16 @@ import { dirname, join } from "node:path";
 import { runtimeContract } from "./cloudflare-runtime-contract.mjs";
 
 const runnerTemp = process.env.RUNNER_TEMP ?? ".wrangler/generated";
-const outputPath = join(runnerTemp, "astropages-base-template-worker-secrets.json");
+const outputPath = join(runnerTemp, "aspt-retro-vera-solaro-worker-secrets.json");
 const secrets = {};
+const generatedSiteMode =
+  Boolean(process.env.ASTROPAGES_PROJECT_ID) ||
+  process.env.ASTROPAGES_GENERATED_SITE_MODE === "1";
+const requiredSecretNames = generatedSiteMode
+  ? runtimeContract.generatedSiteRequiredSecretNames ?? runtimeContract.requiredSecretNames
+  : runtimeContract.requiredSecretNames;
 
-for (const name of runtimeContract.requiredSecretNames) {
+for (const name of requiredSecretNames) {
   const value = process.env[name];
   if (!value) {
     console.error(`${name} is required to write the Worker secrets file`);

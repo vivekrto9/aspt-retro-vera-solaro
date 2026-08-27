@@ -199,6 +199,7 @@ test("explicit EmDash bootstrap materializes full builder content for MCP before
 
 test("explicit EmDash bootstrap can run in bounded batches for deployed Workers", async () => {
   const { bootstrapAstroPagesEmDashContent } = await import("../../src/server/generated-site/emdash-bootstrap.ts");
+  const { getBuilderReleaseTargets } = await import("../../src/builder/registry.ts");
   const env = {
     ASTROPAGES_SITE_ENVIRONMENT: "preview",
     DB: createFakeD1(),
@@ -214,7 +215,7 @@ test("explicit EmDash bootstrap can run in bounded batches for deployed Workers"
   assert.equal(first.processedTargets, 2);
   assert.equal(first.nextCursor, 2);
   assert.equal(second.cursor, 2);
-  assert.equal(second.processedTargets, 1);
+  assert.equal(second.processedTargets, Math.min(2, getBuilderReleaseTargets().length - 2));
 });
 
 test("explicit EmDash bootstrap uses D1 batch when the Worker binding supports it", async () => {

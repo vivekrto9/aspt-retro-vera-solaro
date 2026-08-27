@@ -5,7 +5,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 import { requireContentReleaseServiceAuth } from "../content-release/auth.ts";
 
 export const prerender = false;
-const feature = "astropages-base-template.project-assets.export";
+const feature = "aspt-retro-vera-solaro.project-assets.export";
 
 export const POST: APIRoute = async (context) => {
   const auth = await requireContentReleaseServiceAuth(context, feature);
@@ -16,7 +16,7 @@ export const POST: APIRoute = async (context) => {
       state: "ready",
       feature,
       message: "Project asset snapshot is ready.",
-      data: await buildAssetSnapshot({ env: auth.env, templateKey: "astropages-base-template" }),
+      data: await buildAssetSnapshot({ env: auth.env, templateKey: "aspt-retro-vera-solaro" }),
     });
   } catch (error) {
     return errorResponse(feature, error instanceof Error ? error.message : "Asset export failed.", 500);

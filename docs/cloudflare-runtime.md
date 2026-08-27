@@ -1,16 +1,18 @@
 # Cloudflare Runtime Contract
 
-The base template supports two repository modes.
+The Vera Solaro template supports two repository modes.
 
 ## Template Source Mode
 
-This repo keeps template release workflows:
+Template CI and release deployments run through the signed AstroPages
+Woodpecker extension using:
 
-- `.github/workflows/deploy-template-preview.yml`
-- `.github/workflows/deploy-production.yml`
-- `.astropages/generated-site-workflows/*`
+- `pnpm run astropages:pipeline`
+- `template_ci`, `template_preview`, and `template_production` purposes
 
-Template release workflows may use template deployment secrets such as `BUILDER_MCP_TOKEN` and `BUILDER_MCP_PROVISION_SECRET` because they validate and release the source template itself.
+Preview and production template pipelines generate an ephemeral control-plane
+callback token in process before the Worker secrets file is written. No
+preconfigured Builder MCP deployment secrets are required.
 
 ## Generated-Site Mode
 
@@ -24,6 +26,34 @@ Generated-site Worker runtime secrets are:
 - `EMDASH_ENCRYPTION_KEY`
 - `ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN`
 
+The template-source Worker uses the same two secrets. Neither repository mode
+requires `BUILDER_MCP_TOKEN` or `BUILDER_MCP_PROVISION_SECRET` for deployment.
+
+Provider credentials are not copied into the workflow environment or generated
+Worker secrets file. The control plane synchronizes them directly as individual
+Worker secrets. The generated config binds only the platform Places Secret Store value
+`ASTROPAGES_PLATFORM_GOOGLE_PLACES_GOOGLE_PLACES_API_KEY` as the runtime binding
+`ASTROPAGES_PLATFORM_GOOGLE_PLACES_API_KEY`. Therefore
+`CLOUDFLARE_SECRETS_STORE_ID` is required whenever `ASTROPAGES_PROJECT_ID` is
+set.
+
+The Vera individual Worker-secret set contains only the credentials used by
+this template:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `CALENDLY_API_TOKEN`
+- `CALENDLY_WEBHOOK_SIGNING_KEY`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- optional `POSTHOG_PERSONAL_API_KEY`
+
+Google Places is supplied through the separate platform binding. Do not place
+any of these values in `wrangler.jsonc`, a manifest, a workflow command, or a
+committed dotenv file.
+
+`ASTROPAGES_INTEGRATION_SECRETS_JSON` is retained only as a legacy read fallback when an individual Worker secret is absent; generated Wrangler configuration must not bind it.
+
 Generated-site deployments require generic resource variables only:
 
 - `PREVIEW_SITE_URL`
@@ -33,9 +63,75 @@ Generated-site deployments require generic resource variables only:
 - `PRODUCTION_SITE_D1_DATABASE_ID`
 - `PRODUCTION_SITE_SESSION_KV_NAMESPACE_ID`
 
-Generated-site deployments must not require Builder MCP deploy secrets. MCP access is provisioned through generated-site editor/token endpoints and EmDash, not by Worker deploy secrets.
+`render-wrangler-config.mjs` validates the selected environment URL as an HTTPS
+origin and exposes it to the Worker as `ASTROPAGES_SITE_URL`. This is the
+canonical origin for Stripe return URLs, booking/account links, newsletter
+confirmation, reports, and lifecycle email links.
+
+Builder MCP values remain legacy/local endpoint compatibility inputs only. MCP
+access is provisioned through generated-site editor/token endpoints and EmDash,
+not by Worker deployment secrets.
+
+## Vera Runtime Configuration
+
+After migrations, the control plane must configure these non-secret values in
+the existing D1 runtime configuration/operations surface:
+
+- `STRIPE_PUBLISHABLE_KEY`
+- `CALENDLY_EVENT_TYPE_URI`
+- `SES_SENDER_EMAIL`, `SES_SENDER_NAME`, and `AWS_REGION`
+- `POSTHOG_PROJECT_API_KEY`, `POSTHOG_HOST`, and `POSTHOG_PROJECT_ID` when
+  consented analytics is enabled
+
+Calendly configuration validates that the shared provider event is active and
+exactly 30 minutes before activation. `PUBLIC_STRIPE_PUBLISHABLE_KEY` is only the
+local/template fallback; generated sites use the D1 `STRIPE_PUBLISHABLE_KEY`.
+
+Launch readiness also verifies active provider-side webhook registrations for
+the exact `ASTROPAGES_SITE_URL` callbacks and the event sets handled by this
+Worker. Stripe and Calendly intentionally do not return an existing endpoint's
+signing secret. After creating or rotating those endpoints, the authenticated
+control plane must call `POST /api/astropages/generated-site/vera/operations`
+with action `validate_provider_webhooks` and SHA-256 fingerprints of the two
+creation-time signing secrets. The Worker compares those fingerprints with its
+resolved individual Worker secret values and persists one aggregate, origin-
+and provider-bound proof; no token, signing secret, individual secret fingerprint, endpoint
+identifier, or provider payload is stored or returned. Secret, origin, or
+provider-account rotation invalidates that proof. Readiness rechecks the live
+registrations with bounded calls and a short KV cache, so a stale proof cannot
+make a removed or misconfigured webhook ready.
+
+The same service-authenticated operations route supports
+`list_calendly_reconciliations` and `resolve_calendly_reconciliation`. Staff can
+reconcile a known invitee, retry a definitive create failure, or explicitly
+confirm that an ambiguous create produced no provider event before one
+idempotently audited retry. These actions preserve terminal booking states,
+verified-payment requirements, and active-refund guards; they replace raw D1
+repair queries.
+
+## Email Queue And Scheduled Delivery
+
+Template-source environments declare an `EMAIL_QUEUE` producer and consumer, a dedicated dead-letter Queue, and a two-minute scheduled trigger. The D1 email outbox is the authoritative idempotency and retry ledger; Queue delivery wakes the Worker promptly, while the scheduled handler recovers persisted work if a Queue publish or provider call is interrupted. Preview and production use environment-specific Queue names, and template-source provisioning creates both the delivery Queue and DLQ before deployment.
+
+Trusted generated-site deployments do not authorize project Queue bindings. In generated-site mode, `render-wrangler-config.mjs` removes Queue declarations from the rendered config while preserving the two-minute scheduled trigger. Generated sites therefore deliver the same D1 outbox through scheduled recovery without requiring an unauthorized Cloudflare Queue resource; launch readiness treats `EMAIL_QUEUE` as optional only in this mode.
 
 ## Bootstrap And Readiness
+
+The deployment order is fixed:
+
+1. provision/repair the environment-specific D1, R2, and KV, plus the email Queue and DLQ for template-source deployments;
+2. render the environment config and attach Images, Worker Loader, Secret
+   Store, static assets, cron bindings, and template-source Queue bindings when authorized;
+3. apply every forward D1 migration in `migrations/`;
+4. deploy the Worker;
+5. prepare EmDash and idempotently bootstrap Content Studio entries;
+6. run health/edit-readiness smokes (plus public/admin smokes in production);
+7. acknowledge the exact preview or production deployment to the control plane.
+
+Template-source deployments also seed the approved Project Assets into the
+environment R2/D1 projection before Worker deploy. Generated projects receive
+their release asset projection through the control-plane project lifecycle and
+must not invent a second asset manifest.
 
 After D1 migrations and Worker deploy, workflows run:
 

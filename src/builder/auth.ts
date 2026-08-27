@@ -26,7 +26,7 @@ export type BuilderAccess = BuilderAccessResult;
 
 const allowedRoles = new Set<BuilderRole>(["owner", "admin", "editor"]);
 const publisherRoles = new Set<BuilderRole>(["owner", "admin"]);
-export const builderCsrfToken = "base-template-builder";
+export const builderCsrfToken = "aspt-retro-vera-solaro-builder";
 
 const error = (message: string, status: 401 | 403) =>
   new Response(message, { status });

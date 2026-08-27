@@ -2,31 +2,23 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
-const manifest = JSON.parse(await readFile(new URL("../astropages/secrets.manifest.json", import.meta.url), "utf8"));
+import { runtimeContract } from "./cloudflare-runtime-contract.mjs";
 
-assert.equal(manifest.version, 1);
-assert.ok(Array.isArray(manifest.integrations));
+const manifest = JSON.parse(
+  await readFile(new URL("../astropages/secrets.manifest.json", import.meta.url), "utf8"),
+);
 
+assert.equal(manifest.version, 1, "Secrets manifest version must be 1");
+assert.ok(Array.isArray(manifest.integrations), "integrations must be an array");
+
+// Secrets the platform always provisions for this template. Everything else a
+// source file reads has to be declared by the manifest so the deployment knows
+// which credentials to collect.
 const builtInSecretKeys = new Set([
-  "RAZORPAY_KEY_SECRET",
-  "RAZORPAY_WEBHOOK_SECRET",
-  "STRIPE_SECRET_KEY",
-  "STRIPE_WEBHOOK_SECRET",
-  "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY",
-  "GA4_API_SECRET",
-  "POSTHOG_PERSONAL_API_KEY",
-  "ZAPIER_WEBHOOK_URL",
-  "ZAPIER_REST_HOOK_SUBSCRIPTIONS_JSON",
-  "GOOGLE_CALENDAR_CLIENT_ID",
-  "GOOGLE_CALENDAR_CLIENT_SECRET",
-  "GOOGLE_CALENDAR_REFRESH_TOKEN",
-  "CALENDLY_API_TOKEN",
-  "CALENDLY_WEBHOOK_SIGNING_KEY",
-  "WATI_API_TOKEN",
-  "MAILCHIMP_API_KEY",
-  "X_ASTROLOGYAPI_KEY",
-  "GOOGLE_PLACES_API_KEY",
+  ...runtimeContract.requiredSecretNames,
+  ...(runtimeContract.generatedSiteRequiredSecretNames ?? []),
+  ...runtimeContract.sensitiveProviderSecretBindings.map((entry) => entry.binding),
+  "ASTROPAGES_PLATFORM_GOOGLE_PLACES_API_KEY",
   "ASTROPAGES_PLATFORM_GOOGLE_PLACES_GOOGLE_PLACES_API_KEY",
 ]);
 

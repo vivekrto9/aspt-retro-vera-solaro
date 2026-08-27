@@ -15,6 +15,7 @@ import {
 import { getRuntimeEnv } from "../server/generated-site/request.ts";
 import { getPublicPosthogConfig } from "../server/aggregator/integrations/posthog.ts";
 import BuilderToolbar from "../builder/BuilderToolbar.astro";
+import { chromeDefaults } from "../data/vera/content.ts";
 import "../styles/base.css";
 
 type SeoContent = {
@@ -45,6 +46,22 @@ type BuilderToolbarProps = {
   reviewTargets?: Array<{ collection: string; entry: string; locale: string }>;
 };
 
+type AnalyticsConsentCopy = {
+  title: string;
+  message: string;
+  declineLabel: string;
+  acceptLabel: string;
+};
+
+type AnalyticsConsentEdit = (field: string) => Record<string, unknown>;
+
+const analyticsConsentDefaults: AnalyticsConsentCopy = {
+  title: chromeDefaults.analytics_consent_title,
+  message: chromeDefaults.analytics_consent_message,
+  declineLabel: chromeDefaults.analytics_consent_decline,
+  acceptLabel: chromeDefaults.analytics_consent_accept,
+};
+
 const {
   title,
   description,
@@ -52,6 +69,8 @@ const {
   seo: seoContent = {},
   jsonLd = [],
   builderToolbar,
+  analyticsConsent = analyticsConsentDefaults,
+  analyticsConsentEdit = () => ({}),
 } = Astro.props as {
   title?: string;
   description?: string;
@@ -59,6 +78,8 @@ const {
   seo?: SeoContent;
   jsonLd?: Array<Record<string, unknown>>;
   builderToolbar?: BuilderToolbarProps;
+  analyticsConsent?: AnalyticsConsentCopy;
+  analyticsConsentEdit?: AnalyticsConsentEdit;
 };
 const siteSettings = generatedSettings.siteSettings;
 const fallbackLocale = isActiveLocale(siteSettings.defaultLocale) ? siteSettings.defaultLocale : "en";
@@ -98,7 +119,7 @@ const seo = buildPublicSeo({
     <script is:inline define:vars={{ locale, defaultLocale, activeLocaleCodesJson }}>
       (() => {
         try {
-          const localeStorageKey = "base-template:selected-locale";
+          const localeStorageKey = "vera-solaro:selected-locale";
           const activeLocaleSet = new Set(JSON.parse(activeLocaleCodesJson));
           const currentUrl = new URL(window.location.href);
           const requestedLocale = currentUrl.searchParams.get("locale");
@@ -115,11 +136,11 @@ const seo = buildPublicSeo({
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/_assets/aliases/favicon/favicon.svg" />
     <title>{seo.title}</title>
     <meta name="description" content={seo.description} />
     <meta name="robots" content={seo.robots} />
     <meta name="theme-color" content={siteSettings.primaryColor} />
-    <link rel="icon" href="/_assets/aliases/logo/logo.svg" />
     <link rel="canonical" href={seo.canonicalUrl} />
     {seo.alternates.map((alternate) => (
       <link rel="alternate" hreflang={alternate.locale} href={alternate.href} />
@@ -127,37 +148,42 @@ const seo = buildPublicSeo({
     <meta name="twitter:card" content={seo.twitter.card} />
     <meta name="twitter:title" content={seo.twitter.title} />
     <meta name="twitter:description" content={seo.twitter.description} />
-    <meta name="twitter:image" content={seo.twitter.image} />
+    {seo.twitter.image ? <meta name="twitter:image" content={seo.twitter.image} /> : null}
     <meta property="og:type" content="website" />
     <meta property="og:title" content={seo.og.title} />
     <meta property="og:description" content={seo.og.description} />
-    <meta property="og:image" content={seo.og.image} />
-    <meta property="og:image:alt" content={seo.og.imageAlt} />
+    {seo.og.image ? <meta property="og:image" content={seo.og.image} /> : null}
+    {seo.og.imageAlt ? <meta property="og:image:alt" content={seo.og.imageAlt} /> : null}
     <meta property="og:url" content={seo.canonicalUrl} />
     <meta property="og:site_name" content={siteSettings.brandName} />
     {seo.jsonLd.map((entry) => (
       <script is:inline type="application/ld+json" set:html={JSON.stringify(entry).replace(/</g, "\\u003c")}></script>
     ))}
   </head>
-  <body data-runtime-substrate="cloudflare" data-site-source="base-template" data-locale={locale} class={bodyClass}>
+  <body data-runtime-substrate="cloudflare" data-site-source="vera-solaro" data-locale={locale} class={bodyClass}>
     <slot />
     {builderToolbar ? <BuilderToolbar {...builderToolbar} /> : null}
     {posthogConfig.enabled ? (
       <>
         <script is:inline type="application/json" data-posthog-config set:html={posthogConfigJson}></script>
-        {/*
-          Analytics consent UI is intentionally disabled. PostHog starts as soon as
-          its project configuration is available. To restore consent-gated tracking,
-          uncomment this banner together with the consent block in
-          src/scripts/posthog-analytics.ts.
-        <aside data-analytics-consent-banner hidden>
-          <p>Allow analytics cookies to help this site improve its pages and visitor experience.</p>
-          <div>
-            <button type="button" data-analytics-consent-decline>Decline</button>
-            <button type="button" data-analytics-consent-accept>Allow analytics</button>
+        <aside
+          data-analytics-consent-banner
+          data-ph-no-capture
+          role="dialog"
+          aria-label={analyticsConsent.title}
+          hidden
+        >
+          <strong {...analyticsConsentEdit("analytics_consent_title")}>{analyticsConsent.title}</strong>
+          <p {...analyticsConsentEdit("analytics_consent_message")}>{analyticsConsent.message}</p>
+          <div data-analytics-consent-actions>
+            <button type="button" data-analytics-consent-decline {...analyticsConsentEdit("analytics_consent_decline")}>
+              {analyticsConsent.declineLabel}
+            </button>
+            <button type="button" data-analytics-consent-accept {...analyticsConsentEdit("analytics_consent_accept")}>
+              {analyticsConsent.acceptLabel}
+            </button>
           </div>
         </aside>
-        */}
       </>
     ) : null}
     <script>

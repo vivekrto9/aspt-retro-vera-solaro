@@ -177,7 +177,7 @@ test("content release snapshot is deterministic and restricted to builder fields
   const first = await buildContentReleaseSnapshot({ env, emdash });
   const second = await buildContentReleaseSnapshot({ env, emdash });
 
-  assert.equal(first.templateKey, "astropages-base-template");
+  assert.equal(first.templateKey, "aspt-retro-vera-solaro");
   assert.equal(first.environment, "preview");
   assert.equal(first.snapshotHash, second.snapshotHash);
   assert.equal(first.entries.some((entry) => "private_note" in entry.data), false);
@@ -209,7 +209,7 @@ test("content release snapshot reads direct D1 content without EmDash runtime", 
 
   const snapshot = await buildContentReleaseSnapshot({ env });
 
-  assert.equal(snapshot.templateKey, "astropages-base-template");
+  assert.equal(snapshot.templateKey, "aspt-retro-vera-solaro");
   assert.equal(snapshot.environment, "preview");
   assert.equal(snapshot.entries.some((entry) => "private_note" in entry.data), false);
   assert.equal(snapshot.entries.some((entry) => entry.collection === "site_pages" && entry.entry === "home"), true);
@@ -318,7 +318,7 @@ test("content release import batches entry and revision writes through D1", asyn
     env,
     snapshot: {
       schemaVersion: 1,
-      templateKey: "astropages-base-template",
+      templateKey: "aspt-retro-vera-solaro",
       environment: "preview",
       contentRevision: 1,
       snapshotHash: "sha256:batch-snapshot",

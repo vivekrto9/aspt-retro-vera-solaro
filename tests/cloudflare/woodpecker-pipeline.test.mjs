@@ -34,9 +34,14 @@ test("template deployments create a process-local callback token without logging
   assert.match(source, /randomBytes\(32\)\.toString\("hex"\)/);
   assert.match(source, /process\.env\.ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN/);
   assert.doesNotMatch(source, /console\.log\([^\n]*ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN/);
+  assert.ok(
+    source.indexOf('randomBytes(32).toString("hex")') <
+      source.indexOf('run("node", ["scripts/write-worker-secrets-file.mjs"]'),
+    "template callback token must be generated before the Worker secrets file is written",
+  );
 });
 
-test("deployment modes preserve verification, migration, deploy, and neutral smoke stages", () => {
+test("template deployment preserves verification, migration, deploy, and portable smoke-check stages", () => {
   for (const command of [
     "scan:safety",
     "d1:schema:check",
@@ -48,6 +53,9 @@ test("deployment modes preserve verification, migration, deploy, and neutral smo
     assert.match(source, new RegExp(command.replaceAll(".", "\\.")));
   }
   assert.match(source, /smokeRoutes/);
+  assert.doesNotMatch(source, /verifyVeraReadiness|vera_runtime_readiness/);
+  assert.match(source, /await smokeRoutes\(siteUrl, routes\);/);
+  assert.match(source, /await deployWorker\(\{ environment, templateSource: false \}\);\s+await postDeploymentStatus\(successStatus\);/);
   assert.match(source, /\["\/", \[200, 301, 302\]\]/);
   assert.doesNotMatch(source, /consultations|puja-services|astrologers\/maya-trivedi/);
 });

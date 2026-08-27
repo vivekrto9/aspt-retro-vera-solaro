@@ -11,7 +11,7 @@ const ignoredDirs = new Set([
   "dist",
   "node_modules",
 ]);
-const ignoredFiles = new Set([".dev.vars"]);
+const ignoredFiles = new Set([".dev.vars", ".dev.vars.local", ".env", ".env.local"]);
 const scannedExtensions = new Set([
   ".astro",
   ".css",
@@ -54,10 +54,12 @@ const providerLeakAllowedPrefixes = [
 const browserFacingPrefixes = ["src/pages/", "src/layouts/", "src/utils/"];
 const serverRoutePrefixes = ["src/pages/api/"];
 
-if (existsSync(join(root, ".dev.vars"))) {
-  const status = await run("git", ["check-ignore", "-q", ".dev.vars"]);
-  if (status !== 0) {
-    failures.push(".dev.vars exists but is not ignored by Git");
+for (const localSecretFile of ignoredFiles) {
+  if (existsSync(join(root, localSecretFile))) {
+    const status = await run("git", ["check-ignore", "-q", localSecretFile]);
+    if (status !== 0) {
+      failures.push(`${localSecretFile} exists but is not ignored by Git`);
+    }
   }
 }
 

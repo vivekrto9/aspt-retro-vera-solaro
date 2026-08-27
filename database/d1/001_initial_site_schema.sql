@@ -1,4 +1,4 @@
--- Base template runtime schema reference.
+-- Vera Solaro runtime schema reference.
 -- EmDash core tables are managed by the EmDash Cloudflare integration and
 -- mirrored in migrations/0000_emdash_schema_bootstrap.sql.
 --

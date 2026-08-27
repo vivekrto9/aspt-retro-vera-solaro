@@ -66,6 +66,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const optionalString = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : undefined;
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 const paidStatuses = ["paid", "captured", "succeeded", "completed"];
+const transactionKindKeys = new Set(salesManifest.transactionKinds.map((kind) => kind.key));
+const paymentStatusKeys = new Set(salesManifest.paymentStatuses);
+const filterDimensionKeys = new Set([
+  "transaction_kind",
+  "item",
+  "payment_provider",
+  "payment_status",
+  "business_status",
+  "fulfillment_status",
+  ...salesManifest.dimensions.map((dimension) => dimension.key),
+]);
 
 const rangeFrom = (value: unknown): Range => {
   if (!isRecord(value) || typeof value.from !== "string" || typeof value.to !== "string" ||
@@ -97,9 +108,24 @@ const argumentsFrom = (value: unknown): Arguments => {
     const dimension = optionalString(value.filters.dimension)?.toLowerCase();
     const dimensionValue = optionalString(value.filters.dimensionValue);
     if (currency) filters.currency = currency;
-    if (transactionKind && transactionKind !== "all") filters.transactionKind = transactionKind;
-    if (paymentStatus) filters.paymentStatus = paymentStatus;
-    if (dimension) filters.dimension = dimension;
+    if (transactionKind && transactionKind !== "all") {
+      if (!transactionKindKeys.has(transactionKind)) {
+        throw new SalesMcpMethodError(`Unsupported Sales transaction kind ${transactionKind}`, "INVALID_SALES_ARGUMENTS");
+      }
+      filters.transactionKind = transactionKind;
+    }
+    if (paymentStatus) {
+      if (!paymentStatusKeys.has(paymentStatus)) {
+        throw new SalesMcpMethodError(`Unsupported Sales payment status ${paymentStatus}`, "INVALID_SALES_ARGUMENTS");
+      }
+      filters.paymentStatus = paymentStatus;
+    }
+    if (dimension) {
+      if (!filterDimensionKeys.has(dimension)) {
+        throw new SalesMcpMethodError(`Unsupported Sales dimension ${dimension}`, "UNSUPPORTED_SALES_DIMENSION");
+      }
+      filters.dimension = dimension;
+    }
     if (dimensionValue) filters.dimensionValue = dimensionValue;
     if (Object.keys(filters).length) args.filters = filters;
   }
@@ -120,8 +146,7 @@ const firstRow = async (db: AnalyticsQueryDb, sql: string, values: unknown[] = [
 
 const builtInDimensions = [
   { key: "transaction_kind", label: "Transaction type", description: "The canonical payable business flow.", keyColumn: "kind_key", labelColumn: "kind_label" },
-  { key: "item", label: "Item or service", description: "The purchased product or consultation service.", keyColumn: "item_key", labelColumn: "item_label" },
-  { key: "owner", label: "Astrologer", description: "The astrologer attached to a consultation.", keyColumn: "owner_key", labelColumn: "owner_label" },
+  { key: "item", label: "Consultation service", description: "The Vera Solaro consultation service.", keyColumn: "item_key", labelColumn: "item_label" },
   { key: "payment_provider", label: "Payment provider", keyColumn: "payment_provider", labelColumn: "payment_provider" },
   { key: "payment_status", label: "Payment status", keyColumn: "payment_status", labelColumn: "payment_status" },
   { key: "business_status", label: "Business status", keyColumn: "business_status", labelColumn: "business_status" },
@@ -157,8 +182,7 @@ const salesSchema = async (db: AnalyticsQueryDb) => {
       ...statuses.map((row) => String(row.status)),
     ])].sort(),
     entityTypes: [
-      { key: "item", label: "Item or service", description: "A named shop product or consultation service." },
-      { key: "owner", label: "Astrologer", description: "A named astrologer attached to a booking." },
+      { key: "item", label: "Consultation service", description: "One of Vera Solaro's three consultation services." },
     ],
   };
 };
@@ -202,7 +226,7 @@ const salesResolveEntity = (rawArguments: unknown) => {
   const type = optionalString(rawArguments.entityType)?.toLowerCase();
   const query = optionalString(rawArguments.query);
   const transactionKind = optionalString(rawArguments.transactionKind)?.toLowerCase();
-  if (!type || !query || !["item", "owner"].includes(type)) {
+  if (!type || !query || type !== "item") {
     throw new SalesMcpMethodError("A supported entityType and query are required", "INVALID_SALES_ARGUMENTS");
   }
   const ranked = (salesManifest.entities as SalesEntity[])

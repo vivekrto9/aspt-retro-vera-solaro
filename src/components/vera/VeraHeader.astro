@@ -1,0 +1,167 @@
+---
+type Edit = (field: string) => Record<string, unknown>;
+
+const { content, chromeEdit, currentPath } = Astro.props as {
+  content: Record<string, string>;
+  chromeEdit: Edit;
+  currentPath: string;
+};
+
+const links = [
+  { href: "/readings", field: "nav_readings" },
+  { href: "/about", field: "nav_about" },
+  { href: "/writing", field: "nav_writing" },
+  // The monthly letter is not being offered, so it is kept out of the nav.
+  // { href: "/letters", field: "nav_letters" },
+];
+
+const active = (href: string) =>
+  href === "/" ? currentPath === href : currentPath === href || currentPath.startsWith(`${href}/`);
+const isClosed = currentPath === "/closed";
+const isAccount = currentPath === "/account" || currentPath.startsWith("/account/");
+const isBooking = currentPath === "/booking";
+---
+
+<header class="vera-header">
+  <a class="vera-brand" href="/" aria-label={content.brand_name}>
+    <img class="vera-brand__logo" data-vera-brand-logo src="/_assets/aliases/logo/logo.webp" alt={content.brand_name} width="380" height="88" />
+    <span class="vera-brand-fallback" data-vera-brand-fallback hidden aria-hidden="true">{content.brand_name}</span>
+  </a>
+
+  <button
+    class="vera-nav-toggle"
+    type="button"
+    aria-label={content.nav_menu_label}
+    aria-expanded="false"
+    aria-controls="vera-primary-nav"
+    data-vera-nav-toggle
+    data-open-label={content.nav_menu_label}
+    data-close-label={content.nav_close_label}
+  >
+    <span></span><span></span><span></span>
+  </button>
+
+  <nav
+    class="vera-nav"
+    id="vera-primary-nav"
+    aria-label={content.nav_primary_label}
+    data-vera-nav
+  >
+    {links.map((link) => (
+      <a
+        href={link.href}
+        aria-current={active(link.href) ? "page" : undefined}
+        {...chromeEdit(link.field)}
+      >
+        {content[link.field]}
+      </a>
+    ))}
+    <a
+      class="vera-nav__account"
+      href="/account"
+      aria-current={isAccount ? "page" : undefined}
+      {...chromeEdit("nav_account")}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5"></circle>
+        <path d="M5.5 19c.8-3.3 3-5 6.5-5s5.7 1.7 6.5 5"></path>
+      </svg>
+      <span>{content.nav_account}</span>
+    </a>
+    {!isAccount ? (
+      <a class="vera-nav__book" href="/booking" {...chromeEdit("book_cta")}>
+        {content.book_cta}
+      </a>
+    ) : null}
+  </nav>
+
+  <div class="vera-header__actions">
+    <a
+      class="vera-header__account"
+      href="/account"
+      aria-current={isAccount ? "page" : undefined}
+      aria-label={content.nav_account}
+      title={content.nav_account}
+      {...chromeEdit("nav_account")}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5"></circle>
+        <path d="M5.5 19c.8-3.3 3-5 6.5-5s5.7 1.7 6.5 5"></path>
+      </svg>
+      <span>{content.nav_account}</span>
+    </a>
+    {!isAccount ? (
+      <>
+      {!isClosed ? (
+        <span class="vera-books-status" {...chromeEdit("books_status")}>
+          <i aria-hidden="true"></i>{content.books_status}
+        </span>
+      ) : null}
+      {isBooking ? (
+        <a class="vera-header__help" href="tel:+390405550112" {...chromeEdit("booking_help")}>
+          {content.booking_help}
+        </a>
+      ) : (
+        <a class="vera-button vera-button--mustard vera-button--small" href="/booking" {...chromeEdit("book_cta")}>
+          {content.book_cta}
+        </a>
+      )}
+      </>
+    ) : null}
+  </div>
+</header>
+
+{isClosed ? (
+  <div class="vera-holiday-bar" {...chromeEdit("closed_notice")}>
+    <span aria-hidden="true">✷</span>
+    <span>{content.closed_notice}</span>
+    <span aria-hidden="true">✷</span>
+  </div>
+) : null}
+
+<script>
+  document.querySelectorAll<HTMLImageElement>("[data-vera-brand-logo]").forEach((logo) => {
+    const revealFallback = () => {
+      logo.hidden = true;
+      const fallback = logo.nextElementSibling;
+      if (fallback instanceof HTMLElement && fallback.matches("[data-vera-brand-fallback]")) {
+        fallback.hidden = false;
+      }
+    };
+    if (logo.complete && logo.naturalWidth === 0) revealFallback();
+    else logo.addEventListener("error", revealFallback, { once: true });
+  });
+
+  const headerToggle = document.querySelector<HTMLButtonElement>("[data-vera-nav-toggle]");
+  const headerNav = document.querySelector<HTMLElement>("[data-vera-nav]");
+  const setHeaderNav = (expanded: boolean, moveFocus = false) => {
+    if (!headerToggle || !headerNav) return;
+    headerToggle.setAttribute("aria-expanded", String(expanded));
+    headerToggle.setAttribute(
+      "aria-label",
+      expanded ? headerToggle.dataset.closeLabel || "" : headerToggle.dataset.openLabel || "",
+    );
+    headerNav.toggleAttribute("data-open", expanded);
+    if (expanded && moveFocus) headerNav.querySelector<HTMLElement>("a")?.focus();
+  };
+
+  headerToggle?.addEventListener("click", () => {
+    const expanded = headerToggle.getAttribute("aria-expanded") === "true";
+    setHeaderNav(!expanded, !expanded);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || headerToggle?.getAttribute("aria-expanded") !== "true") return;
+    setHeaderNav(false);
+    headerToggle?.focus();
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (headerToggle?.getAttribute("aria-expanded") !== "true") return;
+    const target = event.target;
+    if (!(target instanceof Node) || headerToggle?.contains(target) || headerNav?.contains(target)) return;
+    setHeaderNav(false);
+  });
+  headerNav?.addEventListener("click", (event) => {
+    if (event.target instanceof HTMLAnchorElement) setHeaderNav(false);
+  });
+
+</script>

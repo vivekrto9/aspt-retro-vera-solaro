@@ -1,12 +1,9 @@
 # SEO, AEO, and GEO Implementation Guide
 
-This document explains the reusable search and discovery implementation in the
-AstroPages base template. It is both a reference for this repository and a guide
-for templates derived from it.
-
-The implementation is deliberately neutral. It does not include astrology,
-commerce, product, article, FAQ, or service schema unless a derived site actually
-renders that content. Structured data must describe visible page content.
+This document explains the search and discovery implementation in the Vera
+Solaro AstroPages template. Shared builders remain reusable, while the emitted
+metadata and structured data are Vera-specific and must describe content that is
+actually visible on the corresponding public route.
 
 ## Design rules
 
@@ -28,7 +25,7 @@ renders that content. Structured data must describe visible page content.
 | Sitemap, robots, `llms.txt`, and canonical-origin helpers | `src/server/generated-site/public-seo-routes.ts` |
 | HTTP routing for public discovery files | `src/middleware.ts` |
 | Brand defaults and optional canonical domain | `src/generated/site-settings.json` |
-| Editable home-page SEO defaults | `src/data/public-copy.ts` and Content Studio |
+| Editable page SEO defaults | `src/data/vera/content.ts` and Content Studio |
 | Focused regression coverage | `tests/seo-aeo-geo.test.mjs` |
 
 ## Request flow
@@ -63,7 +60,7 @@ For `/robots.txt`, `/sitemap.xml`, and `/llms.txt`:
 - Twitter card, title, description, and image;
 - the JSON-LD array rendered by the shared layout.
 
-The base template uses query-parameter localization. Only enabled locales from
+Vera Solaro uses query-parameter localization. Only enabled locales from
 `src/data/localization-contract.ts` are emitted. Enabling another locale updates
 hreflang and sitemap output through the existing localization contract.
 
@@ -197,6 +194,9 @@ The disallow rules do not replace authentication or route guards.
 ### `/sitemap.xml`
 
 - lists the repository's declared public routes;
+- appends the published `posts` slugs the middleware resolves at request time, so no
+  article URL is ever declared in `PUBLIC_ROUTES`, and de-duplicates the result;
+- still renders the static routes when the content store is unreachable;
 - emits one URL per active locale;
 - XML-escapes URLs;
 - emits an ISO `lastmod` value;
@@ -205,7 +205,7 @@ The disallow rules do not replace authentication or route guards.
 ### `/llms.txt`
 
 - returns Markdown as `text/plain; charset=utf-8`;
-- uses neutral, configuration-driven brand copy;
+- uses Vera's configuration-driven public brand copy;
 - points only to curated public content and the sitemap;
 - uses the same canonical origin as robots and sitemap.
 
@@ -214,7 +214,9 @@ The disallow rules do not replace authentication or route guards.
 1. Implement the route using the closest existing page/layout pattern.
 2. Supply route-specific title, description, canonical path, robots, and social
    metadata through the existing `seo` prop or Content Studio fields.
-3. Add the route to `PUBLIC_ROUTES` only when it is canonical and indexable.
+3. Add the route to `PUBLIC_ROUTES` only when it is canonical and indexable. Articles are
+   never added there: `/writing/[slug]` URLs reach the sitemap and `llms.txt` through the
+   published `posts` collection.
 4. Add it to `llms.txt` only when it is useful, stable, and public.
 5. Add FAQ, Article, or Breadcrumb JSON-LD only when matching content is visible.
 6. Do not add private, authenticated, operational, preview-only, or `noindex`

@@ -1,9 +1,9 @@
 {
-  "name": "@astropages/base-template",
+  "name": "@astropages/aspt-retro-vera-solaro",
   "private": true,
   "type": "module",
   "emdash": {
-    "label": "AstroPages Base Template",
+    "label": "Vera Solaro",
     "seed": "seed/seed.json"
   },
   "scripts": {
@@ -14,8 +14,8 @@
     "typecheck": "astro check",
     "wrangler:dev": "wrangler dev --local --port 4331",
     "dev:admin-proxy": "node scripts/dev/local-admin-proxy.mjs",
-    "d1:migrate:local": "wrangler d1 migrations apply astropages-base-template-site --local",
-    "d1:verify:local": "wrangler d1 execute astropages-base-template-site --local --file database/d1/verify_runtime_tables.sql",
+    "d1:migrate:local": "wrangler d1 migrations apply aspt-retro-vera-solaro-site --local",
+    "d1:verify:local": "wrangler d1 execute aspt-retro-vera-solaro-site --local --file database/d1/verify_runtime_tables.sql",
     "d1:schema:check": "node scripts/validate-d1-schema.mjs",
     "cloudflare:contract": "node scripts/validate-cloudflare-runtime.mjs",
     "cloudflare:contract:check": "node scripts/validate-cloudflare-runtime.mjs",
@@ -34,6 +34,10 @@
     "@astrojs/cloudflare": "^13.5.3",
     "@astrojs/react": "^5.0.0",
     "@emdash-cms/cloudflare": "^0.14.0",
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/libre-baskerville": "5.3.0",
+    "@fontsource/shrikhand": "5.3.0",
+    "@stripe/stripe-js": "9.13.0",
     "astro": "^6.3.0",
     "emdash": "^0.14.0",
     "posthog-js": "1.399.2",
@@ -43,8 +47,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.7",
-    "@cloudflare/workers-types": "^4.20260305.1",
-    "wrangler": "^4.94.0"
+    "@cloudflare/workers-types": "^5.20260813.1",
+    "wrangler": "4.94.0"
   },
   "packageManager": "pnpm@11.1.3+sha512.c85357fe17ca12dd23dd7071822666dfd7e3cb76fe214e3370b5ea2fb34f2a231185509b63e717f3cd0acb38dd3f8d82bcd5e8172400ae678b70ea4fbed0896d"
 }

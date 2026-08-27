@@ -85,11 +85,12 @@ export const buildPublicSeo = ({
   jsonLd = [],
 }: PublicSeoInput) => {
   const seoRequestUrl = resolveSiteRequestUrl(requestUrl, siteSettings.siteUrl);
-  const resolvedTitle = text(title) || text(siteSettings.seoTitle) || text(siteSettings.brandName) || "Base Template";
+  const resolvedTitle = text(title) || text(siteSettings.seoTitle) || text(siteSettings.brandName) || "Vera Solaro";
   const resolvedDescription = text(description) || text(siteSettings.seoDescription) || "";
   const resolvedCanonicalPath = text(canonicalPath) || new URL(seoRequestUrl).pathname || "/";
   const canonicalUrl = absoluteUrl(seoRequestUrl, localizePath(resolvedCanonicalPath, locale));
-  const resolvedOgImage = text(ogImage) || "/_assets/aliases/logo/logo.svg";
+  const resolvedOgImage = text(ogImage);
+  const resolvedTwitterImage = text(twitterImage) || resolvedOgImage;
 
   return {
     title: resolvedTitle,
@@ -100,14 +101,18 @@ export const buildPublicSeo = ({
     og: {
       title: text(ogTitle) || resolvedTitle,
       description: text(ogDescription) || resolvedDescription,
-      image: absoluteUrl(seoRequestUrl, resolvedOgImage),
-      imageAlt: text(ogImageAlt) || text(siteSettings.brandName) || "Base Template",
+      ...(resolvedOgImage
+        ? {
+            image: absoluteUrl(seoRequestUrl, resolvedOgImage),
+            imageAlt: text(ogImageAlt) || text(siteSettings.brandName) || "Vera Solaro",
+          }
+        : {}),
     },
     twitter: {
       card: text(twitterCard) || "summary_large_image",
       title: text(twitterTitle) || text(ogTitle) || resolvedTitle,
       description: text(twitterDescription) || text(ogDescription) || resolvedDescription,
-      image: absoluteUrl(seoRequestUrl, text(twitterImage) || resolvedOgImage),
+      ...(resolvedTwitterImage ? { image: absoluteUrl(seoRequestUrl, resolvedTwitterImage) } : {}),
     },
     jsonLd,
   };
@@ -122,7 +127,7 @@ export const buildOrganizationJsonLd = ({
 }) => ({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: text(siteSettings.brandName) || "Base Template",
+  name: text(siteSettings.brandName) || "Vera Solaro",
   url: new URL(resolveSiteRequestUrl(requestUrl, siteSettings.siteUrl)).origin,
   email: text(siteSettings.contactEmail) || undefined,
   telephone: text(siteSettings.supportPhone) || undefined,
@@ -137,7 +142,7 @@ export const buildWebSiteJsonLd = ({
 }) => ({
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: text(siteSettings.brandName) || "Base Template",
+  name: text(siteSettings.brandName) || "Vera Solaro",
   url: new URL(resolveSiteRequestUrl(requestUrl, siteSettings.siteUrl)).origin,
 });
 
@@ -220,7 +225,7 @@ export const buildArticleJsonLd = ({
     mainEntityOfPage: text(url) ? absoluteUrl(seoRequestUrl, text(url)) : new URL(seoRequestUrl).toString(),
     publisher: {
       "@type": "Organization",
-      name: text(siteSettings.brandName) || "Base Template",
+      name: text(siteSettings.brandName) || "Vera Solaro",
       url: new URL(seoRequestUrl).origin,
     },
   };

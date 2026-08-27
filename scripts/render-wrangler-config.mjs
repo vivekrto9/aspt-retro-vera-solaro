@@ -17,6 +17,8 @@ const sourceConfig = loadWranglerConfig();
 const config = loadDeployConfig();
 const section = structuredClone(sourceConfig.env?.[envName]);
 if (!section) fail(`wrangler.jsonc is missing env.${envName}`);
+const generatedSiteMode = isGeneratedSiteMode();
+const requiredSecretNames = requiredWorkerSecretNames(generatedSiteMode);
 
 const d1Id = requiredEnv(`${variablePrefix}_SITE_D1_DATABASE_ID`);
 const kvId = requiredEnv(`${variablePrefix}_SITE_SESSION_KV_NAMESPACE_ID`);
@@ -44,15 +46,18 @@ if (secretStoreBindings.length > 0) {
 applyGeneratedSiteSsoVars(section, envName);
 
 config.secrets = {
-  required: runtimeContract.requiredSecretNames,
+  required: requiredSecretNames,
 };
 section.secrets = {
-  required: runtimeContract.requiredSecretNames,
+  required: requiredSecretNames,
 };
 config.env = {
   ...(config.env ?? {}),
   [envName]: section,
 };
+if (generatedSiteMode) {
+  stripGeneratedSiteQueueBindings(config);
+}
 
 const outputPath = join(".wrangler", "generated", `wrangler.${envName}.jsonc`);
 mkdirSync(dirname(outputPath), { recursive: true });
@@ -162,6 +167,14 @@ function generatedSiteSecretStoreBindings(envName) {
 }
 
 function applyGeneratedSiteSsoVars(section, envName) {
+  const variablePrefix = deploymentVariablePrefix(envName);
+  const siteUrlVariable = `${variablePrefix}_SITE_URL`;
+  const siteUrl = normalizeSiteUrl(requiredEnv(siteUrlVariable), siteUrlVariable);
+  section.vars = {
+    ...(section.vars ?? {}),
+    ASTROPAGES_SITE_URL: siteUrl,
+  };
+
   const projectId = process.env.ASTROPAGES_PROJECT_ID;
   if (!projectId) {
     return;
@@ -181,6 +194,47 @@ function applyGeneratedSiteSsoVars(section, envName) {
     ASTROPAGES_SSO_PUBLIC_JWK: publicJwk,
     ASTROPAGES_CONTROL_PLANE_CALLBACK_BASE_URL: callbackBaseUrl.replace(/\/+$/, ""),
   };
+}
+
+function normalizeSiteUrl(value, variableName) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    fail(`${variableName} must be an absolute HTTPS origin`);
+  }
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash ||
+    (parsed.pathname && parsed.pathname !== "/")
+  ) {
+    fail(`${variableName} must be an absolute HTTPS origin`);
+  }
+  return parsed.origin;
+}
+
+function isGeneratedSiteMode() {
+  return Boolean(process.env.ASTROPAGES_PROJECT_ID) ||
+    process.env.ASTROPAGES_GENERATED_SITE_MODE === "1";
+}
+
+function requiredWorkerSecretNames(generatedSiteMode) {
+  if (generatedSiteMode) {
+    return runtimeContract.generatedSiteRequiredSecretNames ?? runtimeContract.requiredSecretNames;
+  }
+  return runtimeContract.requiredSecretNames;
+}
+
+function stripGeneratedSiteQueueBindings(config) {
+  delete config.queues;
+  for (const environment of Object.values(config.env ?? {})) {
+    if (environment && typeof environment === "object") {
+      delete environment.queues;
+    }
+  }
 }
 
 function fail(message) {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import path from "node:path";
 import test from "node:test";
 import { loadWranglerConfig, validateCloudflareRuntimeConfig } from "../scripts/cloudflare-runtime-contract.mjs";
 import { schemaContract } from "../scripts/d1-schema-contract.mjs";
@@ -8,6 +9,15 @@ import { deploymentWorkflowPaths } from "./cloudflare/workflow-mode.mjs";
 const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 const readJson = (path) => JSON.parse(read(path));
+
+const standardAstroPagesManifests = [
+  "assets.manifest.json",
+  "email-templates.manifest.json",
+  "leads.manifest.json",
+  "sales.manifest.json",
+  "secrets.manifest.json",
+  "users-data.manifest.json",
+];
 
 const baseTables = new Set([
   "ap_runtime_config",
@@ -42,8 +52,14 @@ test("template manifest declares core platform metadata without generated-site a
   assert.equal(manifest.workflows.generatedSite.productionSeed, ".astropages/generated-site-workflows/deploy-production.yml");
   assert.equal(manifest.secrets.valuesAllowedInSource, false);
   assert.equal(manifest.localization.requiredDefaultLocale, "en");
-  assert.deepEqual(manifest.localization.availableLocaleCatalog, ["en", "hi", "ta", "te", "bn", "mr"]);
-  assert.deepEqual(manifest.runtimePersistence.tables, [...baseTables]);
+  assert.deepEqual(manifest.localization.availableLocaleCatalog, ["en"]);
+  for (const table of baseTables) {
+    assert.equal(
+      manifest.runtimePersistence.tables.includes(table),
+      true,
+      `${table} base runtime table must remain declared`,
+    );
+  }
   assert.equal(Object.hasOwn(manifest.runtime, "generatedSiteAdminPath"), false);
   assert.doesNotMatch(serialized, /\/astropages\/admin/);
 
@@ -60,6 +76,91 @@ test("template manifest declares core platform metadata without generated-site a
   }
   assert.equal(manifest.secrets.requiredForGeneratedSiteDeployment.includes("BUILDER_MCP_TOKEN"), false);
   assert.equal(manifest.secrets.requiredForGeneratedSiteDeployment.includes("BUILDER_MCP_PROVISION_SECRET"), false);
+  assert.equal(manifest.secrets.requiredForTemplateDeployment.includes("BUILDER_MCP_TOKEN"), false);
+  assert.equal(manifest.secrets.requiredForTemplateDeployment.includes("BUILDER_MCP_PROVISION_SECRET"), false);
+  assert.equal(manifest.secrets.deploymentMapping.workerSecrets.includes("BUILDER_MCP_TOKEN"), false);
+  assert.equal(manifest.secrets.deploymentMapping.workerSecrets.includes("BUILDER_MCP_PROVISION_SECRET"), false);
+  assert.equal(manifest.secrets.deploymentMapping.workerSecrets.includes("ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"), true);
+  assert.equal(manifest.secrets.requiredForGeneratedSiteDeployment.includes("CLOUDFLARE_SECRETS_STORE_ID"), false);
+  assert.equal(manifest.secrets.deploymentVariables.includes("CLOUDFLARE_SECRETS_STORE_ID"), true);
+});
+
+test("AstroPages keeps the six standard manifests without parallel sidecar contracts", () => {
+  const manifestNames = readdirSync(new URL("../astropages/", import.meta.url))
+    .filter((name) => name.endsWith(".json"))
+    .sort();
+  assert.deepEqual(manifestNames, standardAstroPagesManifests);
+
+  const forbiddenNames = [
+    `asset${"-usage"}.manifest.json`,
+    `source${"-provenance"}.json`,
+  ];
+  const searchableExtensions = new Set([
+    ".astro",
+    ".css",
+    ".json",
+    ".md",
+    ".mjs",
+    ".toml",
+    ".ts",
+    ".yaml",
+    ".yml",
+  ]);
+  const searchRoots = [
+    "template.manifest.json",
+    "package.json",
+    "README.md",
+    "astropages",
+    "scripts",
+    "src",
+    "tests",
+    ".astropages",
+    ".github",
+  ];
+  const files = searchRoots.flatMap((relativePath) => {
+    const absolutePath = new URL(`../${relativePath}`, import.meta.url);
+    if (!existsSync(absolutePath)) return [];
+    if (!statSync(absolutePath).isDirectory()) return [absolutePath];
+    return readdirSync(absolutePath, { recursive: true })
+      .filter((entry) => typeof entry === "string" && searchableExtensions.has(path.extname(entry)))
+      .map((entry) => new URL(entry, `${absolutePath.href.replace(/\/?$/, "/")}`));
+  });
+  const searchableSource = files.map((file) => readFileSync(file, "utf8")).join("\n");
+  for (const forbiddenName of forbiddenNames) {
+    assert.doesNotMatch(searchableSource, new RegExp(forbiddenName.replace(".", "\\.")));
+  }
+});
+
+test("Content Studio manifest, live Vera entries, and release registry stay in exact parity", async () => {
+  const manifest = readJson("template.manifest.json");
+  const { veraEntries } = await import("../src/data/vera/content.ts");
+  const { getBuilderEntryConfig, getBuilderReleaseTargets } = await import(
+    "../src/builder/registry.ts"
+  );
+  const liveKeys = veraEntries.map(({ collection, entry }) => `${collection}/${entry}`);
+  const releaseTargets = getBuilderReleaseTargets();
+  const releaseKeys = releaseTargets.map(({ collection, entry }) => `${collection}/${entry}`);
+
+  assert.equal(liveKeys.length, 22);
+  assert.equal(new Set(liveKeys).size, 22);
+  assert.equal(manifest.localization.publicEditableEntries.length, 22);
+  assert.equal(new Set(manifest.localization.publicEditableEntries).size, 22);
+  assert.deepEqual(
+    [...manifest.localization.publicEditableEntries].sort(),
+    [...liveKeys].sort(),
+  );
+  assert.deepEqual(releaseKeys, liveKeys);
+  assert.equal(liveKeys.includes("vera_auth/main"), true);
+
+  for (const [index, definition] of veraEntries.entries()) {
+    const config = getBuilderEntryConfig(definition.collection, definition.entry);
+    assert.ok(config, `${liveKeys[index]} must have a registry config`);
+    assert.deepEqual(
+      releaseTargets[index].fields,
+      Object.keys(definition.defaults),
+      `${liveKeys[index]} release fields must match its live Studio defaults`,
+    );
+  }
 });
 
 test("SSO default target is EmDash content studio and source does not declare generated-site admin", () => {
@@ -116,7 +217,7 @@ test("D1 schema contract is limited to base runtime and auth infrastructure", ()
   }
 });
 
-test("deployment workflows keep required command order and smoke only core routes", () => {
+test("deployment workflows keep required command order and gate release on Vera readiness", () => {
   const orderedMarkers = [
     "pnpm install --frozen-lockfile",
     "pnpm run test",
@@ -132,6 +233,7 @@ test("deployment workflows keep required command order and smoke only core route
     "node scripts/prepare-deployed-emdash.mjs",
     'smoke "/api/astropages/generated-site/health"',
     'smoke "/api/astropages/generated-site/edit-readiness"',
+    "verify_vera_readiness",
   ];
 
   for (const workflow of deploymentWorkflowPaths(root)) {
@@ -145,6 +247,12 @@ test("deployment workflows keep required command order and smoke only core route
     }
     assert.doesNotMatch(text, /\/astropages\/admin/);
     assert.doesNotMatch(text, /\/consultations|\/puja-services|\/reports|\/shop/);
+    assert.match(text, /\/api\/astropages\/generated-site\/vera\/operations/);
+    assert.match(text, /Authorization: Bearer \$\{ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN\}/);
+    assert.match(text, /body\.status !== "ready" \|\| body\.state !== "ready" \|\| body\.data\?\.ready !== true/);
+    assert.match(text, /refusing to report (?:preview ready|production live) while Vera provider\/runtime configuration is incomplete/);
+    const callbackMarker = text.includes("Notify preview ready") ? "Notify preview ready" : "Notify production live";
+    assert.equal(text.indexOf("verify_vera_readiness") < text.indexOf(callbackMarker), true);
   }
 });
 
@@ -157,8 +265,13 @@ test("localization manifest and localization contract stay aligned", () => {
 
   assert.deepEqual(manifest.localization.availableLocaleCatalog, catalogCodes);
   assert.deepEqual(manifest.localization.activeLocales, activeCodes);
+  assert.deepEqual(catalogCodes, ["en"]);
+  assert.deepEqual(activeCodes, ["en"]);
   assert.equal(manifest.localization.requiredDefaultLocale, "en");
+  assert.equal(manifest.localization.defaultLocale, "en");
+  assert.equal(manifest.localization.strategy, "query-param");
   assert.equal(manifest.localization.rtlSupported, false);
+  assert.match(contract, /defaultLocale\s*=\s*"en"/);
   assert.equal(/rtlSupported\s*=\s*false/.test(contract), true);
 });
 
@@ -185,4 +298,10 @@ test("core environment examples document deployment and SSO names", () => {
   ]) {
     assert.match(examples, new RegExp(`\\b${name}\\b`), `${name} must be documented`);
   }
+});
+
+test("operator-facing scripts use the Vera Solaro identity", () => {
+  assert.doesNotMatch(read("scripts/dev/local-admin-proxy.mjs"), /base template/i);
+  assert.doesNotMatch(read("scripts/d1-schema-contract.mjs"), /base template/i);
+  assert.match(read("database/d1/001_initial_site_schema.sql"), /^-- Vera Solaro runtime schema reference\./);
 });

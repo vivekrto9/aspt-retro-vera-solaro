@@ -1,0 +1,23 @@
+---
+type Edit = (field: string) => Record<string, unknown>;
+
+const {
+  alt,
+  field,
+  edit,
+  class: className = "",
+} = Astro.props as {
+  alt: string;
+  field?: string;
+  edit?: Edit;
+  class?: string;
+};
+
+const editAttrs = field && edit ? edit(field) : {};
+---
+
+<figure class:list={["vera-brand-mark", className]}>
+  <img data-vera-brand-logo src="/_assets/aliases/logo/logo.webp" alt={alt} width="380" height="88" />
+  <span class="vera-brand-fallback" data-vera-brand-fallback hidden aria-hidden="true">{alt}</span>
+  <figcaption class="vera-visually-hidden" {...editAttrs}>{alt}</figcaption>
+</figure>

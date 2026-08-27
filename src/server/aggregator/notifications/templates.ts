@@ -46,11 +46,25 @@ export const validateTemplateVariables = ({
   return { ok: true };
 };
 
-const renderPart = (part: string, payload: Record<string, unknown>) =>
+const htmlEntities: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => htmlEntities[character]);
+
+const renderPart = (
+  part: string,
+  payload: Record<string, unknown>,
+  transform: (value: string) => string = (value) => value,
+) =>
   part.replace(tokenPattern, (_, variable: string) => {
     const value = payload[variable];
     if (value === null || value === undefined) return "";
-    return String(value);
+    return transform(String(value));
   });
 
 export const renderEmailTemplate = ({
@@ -82,7 +96,7 @@ export const renderEmailTemplate = ({
   return {
     ok: true,
     subject: renderPart(template.subject, payload),
-    htmlBody: renderPart(template.htmlBody, payload),
+    htmlBody: renderPart(template.htmlBody, payload, escapeHtml),
     textBody: renderPart(template.textBody, payload),
   };
 };

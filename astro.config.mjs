@@ -90,7 +90,9 @@ export default defineConfig({
 			alias: cloudflareNativeModuleAliases,
 		},
 		server: {
-			allowedHosts: ["7e44-223-181-57-33.ngrok-free.app"],
+			allowedHosts: ["7e44-223-181-57-33.ngrok-free.app",
+				"peristomial-johnnie-unprosaically.ngrok-free.dev"
+			],
 		},
 		optimizeDeps: {
 			include: ["tz-lookup"],

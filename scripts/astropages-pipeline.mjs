@@ -179,7 +179,7 @@ async function deployWorker({ environment, templateSource }) {
         ["/", [200, 301, 302]],
         ["/api/astropages/generated-site/health", [200]],
         ["/api/astropages/generated-site/edit-readiness", [200]],
-        ["/_assets/aliases/logo/logo.svg", [200, 301, 302]],
+        ["/_assets/aliases/vera-portrait/vera-portrait.webp", [200, 301, 302]],
         ["/_emdash/admin", [200, 302]],
         ["/_emdash/api/setup/status", [200]],
       ]

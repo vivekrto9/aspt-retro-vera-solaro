@@ -15,7 +15,7 @@ import {
 } from "../../../../../server/generated-site/responses.ts";
 
 export const prerender = false;
-const feature = "base-template.generated-site-operations.email-template-publish";
+const feature = "aspt-retro-vera-solaro.generated-site-operations.email-template-publish";
 
 export const POST: APIRoute = async (context) => {
   const methodError = requirePost(context.request);

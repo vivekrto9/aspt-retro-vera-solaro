@@ -21,6 +21,11 @@ for (const field of [...manifest.columns, ...manifest.detailFields]) {
   assert.match(field.key, /^[a-z][a-z0-9_]*$/);
   assert.doesNotMatch(field.key, sensitive);
 }
+for (const section of manifest.relatedSections) {
+  assert.match(section.key, /^[a-z][a-z0-9_]*$/);
+  assert.match(implementation, new RegExp(`sectionKey === "${section.key}"`), `${section.key} needs a fixed adapter`);
+}
+assert.doesNotMatch(JSON.stringify(manifest), /birth|encrypted|message_body|storage_key|provider_payment/i);
 for (const method of ["users_schema", "users_list", "users_get", "users_related"]) {
   assert.match(implementation, new RegExp(`"${method}"`), `${method} must remain exposed`);
 }

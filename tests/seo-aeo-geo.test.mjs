@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
+
+import { homeDefaults } from "../src/data/vera/content.ts";
 
 import {
   buildArticleJsonLd,
@@ -45,12 +48,34 @@ test("canonical configuration rebases public metadata while preserving request p
   });
 
   assert.equal(seo.canonicalUrl, "https://example.com/");
-  assert.equal(seo.og.image, "https://example.com/_assets/aliases/logo/logo.svg");
-  assert.equal(seo.twitter.image, "https://example.com/_assets/aliases/logo/logo.svg");
+  assert.equal(Object.hasOwn(seo.og, "image"), false);
+  assert.equal(Object.hasOwn(seo.og, "imageAlt"), false);
+  assert.equal(Object.hasOwn(seo.twitter, "image"), false);
   assert.deepEqual(seo.alternates, [
     { locale: "en", href: "https://example.com/" },
     { locale: "x-default", href: "https://example.com/" },
   ]);
+});
+
+test("social image fields are projected only from route-owned editable SEO content", () => {
+  const seo = buildPublicSeo({
+    requestUrl: "https://preview.example.workers.dev/?preview=1",
+    siteSettings,
+    locale: "en",
+    canonicalPath: homeDefaults.seo_canonical_path,
+    ogImage: homeDefaults.og_image,
+    ogImageAlt: homeDefaults.og_image_alt,
+    twitterImage: homeDefaults.twitter_image,
+  });
+
+  assert.equal(seo.og.image, "https://example.com/_assets/aliases/vera-portrait/vera-portrait.webp");
+  assert.equal(seo.og.imageAlt, "Vera Solaro at her desk in Trieste");
+  assert.equal(seo.twitter.image, "https://example.com/_assets/aliases/vera-portrait/vera-portrait.webp");
+
+  const layout = readFileSync(new URL("../src/layouts/BaseLayout.astro", import.meta.url), "utf8");
+  assert.match(layout, /seo\.twitter\.image \? <meta name="twitter:image"/);
+  assert.match(layout, /seo\.og\.image \? <meta property="og:image"/);
+  assert.match(layout, /seo\.og\.imageAlt \? <meta property="og:image:alt"/);
 });
 
 test("site-wide and page-specific JSON-LD use the configured canonical origin", () => {
@@ -96,23 +121,43 @@ test("FAQ schema contains only complete visible question and answer pairs", () =
   assert.equal(buildFaqJsonLd([]), null);
 });
 
-test("public discovery routes use the canonical domain and neutral site content", () => {
+test("public discovery routes expose Vera pages without indexing private account access", () => {
   const canonicalOrigin = resolveSeoOrigin("https://preview.example.workers.dev", siteSettings.siteUrl);
-  const sitemap = buildPublicSitemapXml(canonicalOrigin, new Date("2026-08-05T00:00:00.000Z"));
+  const publishedPosts = [
+    { path: "/writing/saturn-is-not-punishing-you", label: "Saturn is not punishing you", note: "A transit is not a verdict." },
+  ];
+  const sitemap = buildPublicSitemapXml(
+    canonicalOrigin,
+    new Date("2026-08-05T00:00:00.000Z"),
+    publishedPosts.map((post) => post.path),
+  );
+  const emptySitemap = buildPublicSitemapXml(canonicalOrigin, new Date("2026-08-05T00:00:00.000Z"));
   const robots = buildPublicRobotsTxt(canonicalOrigin);
-  const llms = buildPublicLlmsTxt(canonicalOrigin, siteSettings);
+  const llms = buildPublicLlmsTxt(canonicalOrigin, siteSettings, publishedPosts);
 
   assert.equal(canonicalOrigin, "https://example.com");
   assert.equal(resolveSeoOrigin("https://preview.example.workers.dev", "not a url"), "https://preview.example.workers.dev");
   assert.match(sitemap, /<loc>https:\/\/example\.com\/<\/loc>/);
-  assert.match(sitemap, /<loc>https:\/\/example\.com\/login<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.com\/readings\/year-ahead<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.com\/writing<\/loc>/);
+  // Article URLs come from the caller's published `posts`, never from a hardcoded route list.
+  assert.match(sitemap, /<loc>https:\/\/example\.com\/writing\/saturn-is-not-punishing-you<\/loc>/);
+  assert.doesNotMatch(emptySitemap, /<loc>https:\/\/example\.com\/writing\/[a-z-]+<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.com\/letters<\/loc>/);
+  assert.doesNotMatch(sitemap, /<loc>https:\/\/example\.com\/(?:login|signup|account|reset-password)<\/loc>/);
   assert.doesNotMatch(sitemap, /preview\.example\.workers\.dev/);
   assert.match(robots, /Disallow: \/_emdash/);
   assert.match(robots, /Sitemap: https:\/\/example\.com\/sitemap\.xml/);
   assert.match(llms, /^# Example Brand$/m);
-  assert.match(llms, /\[Home\]\(https:\/\/example\.com\/\)/);
+  assert.match(llms, /\[The sky kept a note for you\.\]\(https:\/\/example\.com\/\)/);
+  assert.match(llms, /\[The Year Ahead\]\(https:\/\/example\.com\/readings\/year-ahead\)/);
+  assert.match(llms, /\[Saturn is not punishing you\]\(https:\/\/example\.com\/writing\/saturn-is-not-punishing-you\)/);
+  assert.doesNotMatch(
+    buildPublicLlmsTxt(canonicalOrigin, siteSettings),
+    /\(https:\/\/example\.com\/writing\/[a-z-]+\)/,
+  );
   assert.match(llms, /\[XML sitemap\]\(https:\/\/example\.com\/sitemap\.xml\)/);
-  assert.doesNotMatch(llms, /kundli|vedic|jyotish|horoscope/i);
+  assert.doesNotMatch(llms, /kundli|vedic|jyotish/i);
 });
 
 test("all public SEO endpoints are recognized without matching unrelated routes", () => {

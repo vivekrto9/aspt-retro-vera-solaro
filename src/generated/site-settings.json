@@ -1,17 +1,18 @@
 {
   "siteSettings": {
-    "brandName": "Base Template",
+    "brandName": "Vera Solaro",
     "siteUrl": "",
-    "primaryColor": "#9F2F1F",
-    "contactEmail": "hello@example.com",
+    "primaryColor": "#C6491F",
+    "contactEmail": "vera@verasolaro.it",
     "defaultLocale": "en",
-    "timezone": "Asia/Kolkata",
-    "seoTitle": "AstroPages Base Template",
-    "seoDescription": "A reusable AstroPages starter with Astro, Cloudflare, EmDash, and SEO infrastructure.",
-    "navigationMode": "single-page",
-    "tone": "neutral",
+    "currency": "USD",
+    "timezone": "Europe/Rome",
+    "seoTitle": "Vera Solaro",
+    "seoDescription": "Birth charts, transits and the long slow turns of a life — read the old way, in plain speech, over an unhurried hour. No apps, no algorithms. Just your chart, a pot of tea, and one very attentive stranger.",
+    "navigationMode": "multi-page",
+    "tone": "warm-retro",
     "typography": "editorial",
-    "buttonStyle": "rounded",
+    "buttonStyle": "pill",
     "enableAnnouncementBanner": false,
     "announcementText": ""
   }

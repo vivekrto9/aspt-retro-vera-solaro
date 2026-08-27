@@ -1,11 +1,11 @@
 {
-  "templateKey": "astropages-base-template",
-  "displayName": "AstroPages Base Template",
+  "templateKey": "aspt-retro-vera-solaro",
+  "displayName": "Vera Solaro",
   "repo": {
-    "url": "https://github.com/vivekrto9/base-template.git",
+    "url": "https://github.com/vivekrto9/aspt-retro-vera-solaro.git",
     "commitSha": "RESOLVED_AT_TEMPLATE_REGISTRATION"
   },
-  "stage": "starter-template",
+  "stage": "production-template",
   "runtime": {
     "type": "official-emdash-astro-cloudflare",
     "scaffold": {
@@ -32,20 +32,24 @@
     "environments": [
       {
         "name": "preview",
-        "workerName": "astropages-base-template-preview",
-        "d1DatabaseName": "astropages-base-template-preview-site",
-        "r2BucketName": "astropages-base-template-preview-media",
-        "kvNamespaceName": "astropages-base-template-preview-session",
+        "workerName": "aspt-retro-vera-solaro-preview",
+        "d1DatabaseName": "aspt-retro-vera-solaro-preview-site",
+        "r2BucketName": "aspt-retro-vera-solaro-preview-media",
+        "kvNamespaceName": "aspt-retro-vera-solaro-preview-session",
+        "emailQueueName": "aspt-retro-vera-solaro-preview-email",
+        "emailDeadLetterQueueName": "aspt-retro-vera-solaro-preview-email-dlq",
         "siteUrlVariable": "PREVIEW_SITE_URL",
         "d1DatabaseIdVariable": "PREVIEW_SITE_D1_DATABASE_ID",
         "sessionKvNamespaceIdVariable": "PREVIEW_SITE_SESSION_KV_NAMESPACE_ID"
       },
       {
         "name": "production",
-        "workerName": "astropages-base-template-production",
-        "d1DatabaseName": "astropages-base-template-production-site",
-        "r2BucketName": "astropages-base-template-production-media",
-        "kvNamespaceName": "astropages-base-template-production-session",
+        "workerName": "aspt-retro-vera-solaro-production",
+        "d1DatabaseName": "aspt-retro-vera-solaro-production-site",
+        "r2BucketName": "aspt-retro-vera-solaro-production-media",
+        "kvNamespaceName": "aspt-retro-vera-solaro-production-session",
+        "emailQueueName": "aspt-retro-vera-solaro-production-email",
+        "emailDeadLetterQueueName": "aspt-retro-vera-solaro-production-email-dlq",
         "siteUrlVariable": "PRODUCTION_SITE_URL",
         "d1DatabaseIdVariable": "PRODUCTION_SITE_D1_DATABASE_ID",
         "sessionKvNamespaceIdVariable": "PRODUCTION_SITE_SESSION_KV_NAMESPACE_ID"
@@ -76,22 +80,23 @@
         "name": "IMAGES",
         "type": "images",
         "purpose": "Astro Cloudflare image transformation"
+      },
+      {
+        "name": "EMAIL_QUEUE",
+        "type": "queue",
+        "purpose": "Durable transactional and newsletter email delivery"
       }
     ]
   },
   "secrets": {
     "requiredNow": [
-      "EMDASH_ENCRYPTION_KEY",
-      "BUILDER_MCP_TOKEN",
-      "BUILDER_MCP_PROVISION_SECRET"
+      "EMDASH_ENCRYPTION_KEY"
     ],
     "requiredForTemplateDeployment": [
       "CLOUDFLARE_API_TOKEN",
       "CLOUDFLARE_ACCOUNT_ID",
       "CLOUDFLARE_DEV_WORKERS_SUBDOMAIN",
-      "EMDASH_ENCRYPTION_KEY",
-      "BUILDER_MCP_TOKEN",
-      "BUILDER_MCP_PROVISION_SECRET"
+      "EMDASH_ENCRYPTION_KEY"
     ],
     "requiredForGeneratedSiteDeployment": [
       "CLOUDFLARE_API_TOKEN",
@@ -113,11 +118,10 @@
       "PRODUCTION_SITE_URL"
     ],
     "deploymentMapping": {
-      "workerSecretsFile": "astropages-base-template-worker-secrets.json",
+      "workerSecretsFile": "aspt-retro-vera-solaro-worker-secrets.json",
       "workerSecrets": [
         "EMDASH_ENCRYPTION_KEY",
-        "BUILDER_MCP_TOKEN",
-        "BUILDER_MCP_PROVISION_SECRET"
+        "ASTROPAGES_CONTROL_PLANE_CALLBACK_TOKEN"
       ],
       "generatedSiteWorkerSecrets": [
         "EMDASH_ENCRYPTION_KEY",
@@ -128,7 +132,6 @@
         "ASTROPAGES_SITE_ENVIRONMENT",
         "ASTROPAGES_SSO_PUBLIC_JWK"
       ],
-      "secretStoreBundleBinding": "ASTROPAGES_INTEGRATION_SECRETS_JSON",
       "platformGooglePlacesBinding": "ASTROPAGES_PLATFORM_GOOGLE_PLACES_API_KEY"
     },
     "valuesAllowedInSource": false,
@@ -136,13 +139,20 @@
       "SES_SENDER_EMAIL",
       "SES_SENDER_NAME",
       "AWS_REGION",
+      "STRIPE_PUBLISHABLE_KEY",
+      "CALENDLY_EVENT_TYPE_URI",
       "POSTHOG_PROJECT_API_KEY",
       "POSTHOG_HOST",
       "POSTHOG_PROJECT_ID"
     ],
     "providerCredentials": [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "CALENDLY_API_TOKEN",
+      "CALENDLY_WEBHOOK_SIGNING_KEY",
       "AWS_ACCESS_KEY_ID",
       "AWS_SECRET_ACCESS_KEY",
+      "GOOGLE_PLACES_API_KEY",
       "POSTHOG_PROJECT_API_KEY",
       "POSTHOG_HOST",
       "POSTHOG_PROJECT_ID",
@@ -157,21 +167,35 @@
       "en"
     ],
     "availableLocaleCatalog": [
-      "en",
-      "hi",
-      "ta",
-      "te",
-      "bn",
-      "mr"
+      "en"
     ],
     "maxActiveLocales": 8,
     "rtlSupported": false,
-    "editableContentSource": "src/data/public-copy.ts",
+    "editableContentSource": "emdash-flat-section-collections",
     "publicEditableCollection": "multiple",
     "publicEditableEntries": [
       "site_chrome/main",
       "site_pages/home",
-      "site_pages/not_found_page"
+      "site_pages/not_found_page",
+      "vera_home_sections/main",
+      "vera_readings/main",
+      "vera_booking/main",
+      "vera_booking_payment/main",
+      "vera_writing/main",
+      "vera_article/main",
+      "vera_about/main",
+      "vera_questions/main",
+      "vera_contact/main",
+      "vera_legal/main",
+      "vera_letters/main",
+      "vera_letters_status/main",
+      "vera_account/main",
+      "vera_account_room/main",
+      "vera_account_schedule/main",
+      "vera_account_cancel/main",
+      "vera_account_receipt/main",
+      "vera_closed/main",
+      "vera_auth/main"
     ],
     "disabledLocalePolicy": "available locales remain inactive until AstroPages enables and verifies translated copy"
   },
@@ -214,6 +238,108 @@
       {
         "method": "GET",
         "path": "/",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/about",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/readings",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "GET",
+        "path": "/readings/[service]",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "GET",
+        "path": "/booking",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/booking/details",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/booking/[id]/payment",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/booking/[id]/confirmation",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET",
+        "path": "/writing",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/writing/[slug]",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/questions",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/contact",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "GET",
+        "path": "/letters",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "GET",
+        "path": "/legal",
+        "status": "implemented",
+        "capabilityKey": "content-seo-localization"
+      },
+      {
+        "method": "GET",
+        "path": "/account",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/account/profile",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/account/billing",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/closed",
         "status": "implemented",
         "capabilityKey": "content-seo-localization"
       },
@@ -304,7 +430,7 @@
         "capabilityKey": "customer-auth"
       },
       {
-        "method": "POST",
+        "method": "GET/POST",
         "path": "/api/astropages/generated-site/customer-auth/signup",
         "status": "implemented",
         "capabilityKey": "customer-auth"
@@ -426,15 +552,257 @@
         "status": "implemented",
         "capabilityKey": "transactional-notifications",
         "capabilityFacet": "email-templates"
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropages/generated-site/vera/catalog",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropages/generated-site/vera/availability",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropages/generated-site/vera/places/autocomplete",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/places/details",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/bookings",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/bookings/[id]/status",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/bookings/[id]/quote",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/bookings/[id]/payment-intent",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/bookings/[id]/reschedule",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/bookings/[id]/cancel",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/contact",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/waitlist",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/newsletter",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/newsletter/confirm",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/newsletter/unsubscribe",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/account",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/account/messages",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropages/generated-site/vera/account/files/[id]",
+        "status": "implemented",
+        "capabilityKey": "customer-auth"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/webhooks/stripe",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/webhooks/calendly",
+        "status": "implemented",
+        "capabilityKey": "consultation-marketplace"
+      },
+      {
+        "method": "GET/POST",
+        "path": "/api/astropages/generated-site/vera/operations",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/astropages/generated-site/vera/operations/calendly-mappings",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/gift-certificates",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/newsletter-campaigns",
+        "status": "implemented",
+        "capabilityKey": "growth-and-automation"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/process-email",
+        "status": "implemented",
+        "capabilityKey": "transactional-notifications"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/private-files",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/reports",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/messages",
+        "status": "implemented",
+        "capabilityKey": "generated-site-operations"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/refunds",
+        "status": "implemented",
+        "capabilityKey": "checkout-and-payments"
+      },
+      {
+        "method": "POST",
+        "path": "/api/astropages/generated-site/vera/operations/suppressions",
+        "status": "implemented",
+        "capabilityKey": "transactional-notifications"
       }
     ]
   },
   "supportedCapabilities": [
+    "capability-consultation-marketplace@0.3.0",
+    "capability-checkout-and-payments@0.3.0",
     "capability-content-seo-localization@0.3.0",
     "capability-generated-site-operations@0.3.0",
     "capability-customer-auth@0.1.0",
-    "capability-transactional-notifications@0.3.0"
+    "capability-transactional-notifications@0.3.0",
+    "capability-growth-and-automation@0.3.0"
   ],
+  "integrationRequirements": {
+    "required": [
+      {
+        "key": "scheduling",
+        "label": "Calendly scheduling",
+        "description": "Six live Calendly event types are required for Vera's three readings in call and in-person modes.",
+        "evaluation": "all_of",
+        "providers": [
+          {
+            "providerKey": "calendly",
+            "environment": "both",
+            "credentialMode": "live"
+          }
+        ]
+      },
+      {
+        "key": "live-payments",
+        "label": "Stripe payments",
+        "description": "Stripe PaymentIntents and a signed webhook are required before a Vera sitting can be confirmed.",
+        "evaluation": "all_of",
+        "providers": [
+          {
+            "providerKey": "stripe",
+            "environment": "both",
+            "credentialMode": "live"
+          }
+        ]
+      },
+      {
+        "key": "transactional-email",
+        "label": "Transactional email",
+        "description": "Amazon SES is required for opt-in, booking, reminder, account, and delivery email.",
+        "evaluation": "all_of",
+        "providers": [
+          {
+            "providerKey": "aws_ses",
+            "environment": "both",
+            "credentialMode": "live"
+          }
+        ]
+      }
+    ],
+    "recommended": [
+      {
+        "key": "analytics",
+        "label": "Private analytics",
+        "description": "PostHog enables the consented, PII-free page and booking funnel declared by this template.",
+        "evaluation": "all_of",
+        "providers": [
+          {
+            "providerKey": "posthog",
+            "environment": "both",
+            "credentialMode": "live"
+          }
+        ]
+      }
+    ],
+    "optional": []
+  },
   "assets": {
     "contractVersion": 1,
     "manifestPath": "astropages/assets.manifest.json",
@@ -485,7 +853,31 @@
       "ap_leads",
       "ap_email_templates",
       "ap_email_events",
-      "ap_email_variable_mappings"
+      "ap_email_variable_mappings",
+      "ap_vera_services",
+      "ap_vera_calendly_mappings",
+      "ap_vera_bookings",
+      "ap_vera_booking_slot_holds",
+      "ap_vera_booking_events",
+      "ap_vera_reschedule_requests",
+      "ap_vera_payment_attempts",
+      "ap_vera_payment_events",
+      "ap_vera_refunds",
+      "ap_vera_invoices",
+      "ap_vera_gift_certificates",
+      "ap_vera_gift_redemptions",
+      "ap_vera_waitlist_entries",
+      "ap_vera_contact_requests",
+      "ap_vera_newsletter_subscriptions",
+      "ap_vera_newsletter_campaigns",
+      "ap_vera_newsletter_deliveries",
+      "ap_vera_email_outbox",
+      "ap_vera_email_suppressions",
+      "ap_vera_private_files",
+      "ap_vera_reports",
+      "ap_vera_message_threads",
+      "ap_vera_messages",
+      "ap_vera_follow_ups"
     ]
   }
 }

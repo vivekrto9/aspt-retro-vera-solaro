@@ -10,7 +10,7 @@ import { errorResponse, jsonResponse } from "../../../../../server/generated-sit
 
 export const prerender = false;
 
-const feature = "base-template.content-editor.mcp-token";
+const feature = "aspt-retro-vera-solaro.content-editor.mcp-token";
 const systemUserEmail = "builder-mcp@astropages.local";
 const systemUserName = "AstroPages Builder MCP";
 const adminRole = 50;
