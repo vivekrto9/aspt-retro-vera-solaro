@@ -22,7 +22,7 @@ const customerSession = await getCustomerSession(env as never, Astro.request);
 const accountCsrfToken = customerSession?.csrfToken ?? "";
 
 // Return query parameters only choose helpful interim copy. The state returned by
-// the server remains authoritative; only Stripe's signed webhook can move payment.
+// the server remains authoritative; only the selected provider's signed webhook can move payment.
 const returnHint = Astro.url.searchParams.get("payment");
 const authoritativeState = String(booking.confirmationState || "awaiting_payment");
 const initialState = authoritativeState === "confirmed" || authoritativeState === "action_required" || authoritativeState === "paid_scheduling"
@@ -291,6 +291,7 @@ const confirmationEmailReply = String(content.confirmed_email_reply ?? "").split
     asText,
     browserTimezone,
     forgetAccess,
+    openProviderCheckout,
     readAccess,
     requestJson,
     slotDateLabel,
@@ -516,9 +517,10 @@ const confirmationEmailReply = String(content.confirmed_email_reply ?? "").split
         headers: mutationHeaders(),
         body: JSON.stringify({ manageToken, kind: "full" }),
       });
-      const url = asText(asRecord(data.checkout).url);
-      if (!/^https:\/\//.test(url)) throw new Error("invalid checkout");
-      window.location.assign(url);
+      await openProviderCheckout(
+        asRecord(data.checkout),
+        `/booking/${encodeURIComponent(bookingId)}/confirmation?${manageToken ? `token=${encodeURIComponent(manageToken)}&` : ""}payment=processing`,
+      );
     } catch {
       renderState("failed");
       paymentOpening = false;
