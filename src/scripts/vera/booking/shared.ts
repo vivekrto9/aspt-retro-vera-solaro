@@ -218,14 +218,14 @@ export const zoneLabel = (zone: string) => {
 
 export const formatMoney = (cents: number, code = "USD") => {
   try {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat(code === "INR" ? "en-IN" : "en-US", {
       style: "currency",
       currency: code || "USD",
       minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
       maximumFractionDigits: 2,
     }).format(cents / 100);
   } catch {
-    return `$${(cents / 100).toFixed(2)}`;
+    return "";
   }
 };
 

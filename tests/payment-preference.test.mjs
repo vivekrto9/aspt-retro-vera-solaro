@@ -10,6 +10,7 @@ import { readPaymentPreference, updatePaymentPreference } from "../src/server/ag
 import { listVeraCatalog } from "../src/server/vera/catalog.ts";
 import { hmacSha256Hex, sha256Hex } from "../src/server/vera/db.ts";
 import { createRazorpayCheckoutForBooking, createRazorpayRefund, processRazorpayWebhook } from "../src/server/vera/razorpay.ts";
+import { dispatchDueFollowUps } from "../src/server/vera/email.ts";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
@@ -142,6 +143,18 @@ test("Razorpay checkout, failure, capture, refund and replay use authoritative s
   assert.equal((await processRazorpayWebhook({ env, body: refundBody, signatureHeader: refundSignature, eventIdHeader: "rzp-refund" })).ok, true);
   assert.equal(sqlite.prepare("SELECT payment_state FROM ap_vera_bookings WHERE id=?").get(booking.id).payment_state, "refunded");
   assert.equal(sqlite.prepare("SELECT status FROM ap_vera_invoices WHERE booking_id=?").get(booking.id).status, "refunded");
+});
+
+test("balance reminder displays the saved booking currency", async (t) => {
+  const { sqlite, env } = database(t);
+  env.ASTROPAGES_SITE_URL = "https://site.example";
+  const booking = await insertInrBooking(sqlite, { EMDASH_ENCRYPTION_KEY: "contract-key" });
+  const now = new Date().toISOString();
+  sqlite.prepare("INSERT INTO ap_vera_follow_ups (id,booking_id,kind,due_at,status,created_at,updated_at) VALUES (?,?,'balance_reminder',?,'pending',?,?)")
+    .run("vfollow_inr_contract", booking.id, now, now, now);
+  assert.equal((await dispatchDueFollowUps({ env, now: new Date(now) })).dispatched, 1);
+  const mail = sqlite.prepare("SELECT payload_json FROM ap_vera_email_outbox WHERE idempotency_key='follow-up:vfollow_inr_contract'").get();
+  assert.equal(JSON.parse(mail.payload_json).balanceAmount, "₹19,900.00");
 });
 
 test("currency implementation contains no conversion arithmetic or fallback", () => {
