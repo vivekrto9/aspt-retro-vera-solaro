@@ -1,0 +1,39 @@
+18:54:23 [@astrojs/cloudflare] Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
+18:54:23 [@astrojs/cloudflare] Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
+
+
+  [1m[36m— E M D A S H —[39m[22m
+   
+
+  [2m›[22m Admin UI    [36m/_emdash/admin[39m
+  [2m›[22m API         [36m/_emdash/api/*[39m
+
+18:54:23 [WARN] [vite] Default inspector port 9229 not available, using 9231 instead
+
+18:54:32 [WARN] [vite] warning: 
+/private/var/folders/vm/g3nbyl9n1r7_fbvkc48t_m0w0000gn/T/vera-currency-dev-5qQYeC/.currency-dev-cache/vite/deps_ssr/chunk-4QF5AWOA.js
+15014 |          const migration = await import(
+15015 |            /* webpackIgnore: true */
+15016 |            this.#props.path.join(this.#props.migrationFolder, fileName)
+      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15017 |          );
+15018 |          const migrationKey = fileName.substring(0, fileName.lastIndexOf("."));
+The above dynamic import cannot be analyzed by Vite.
+See https://github.com/rollup/plugins/tree/master/packages/dynamic-import-vars#limitations for supported dynamic import formats. If this is intended to be left as-is, you can use the /* @vite-ignore */ comment inside the import() call to suppress this warning.
+
+  Plugin: vite:import-analysis
+  File: /private/var/folders/vm/g3nbyl9n1r7_fbvkc48t_m0w0000gn/T/vera-currency-dev-5qQYeC/.currency-dev-cache/vite/deps_ssr/chunk-4QF5AWOA.js?v=3367e589
+18:54:33 [types] Generated 1ms
+ astro  v6.3.7 ready in 13161 ms
+┃ Local    http://127.0.0.1:54860/
+18:54:34 watching for file changes...
+
+ update  ▶ New version of Astro available: 7.3.2
+  Run pnpm dlx @astrojs/upgrade to update
+
+18:54:43 [vite] Auto-seeded default collections
+18:54:43 [ERROR] [vite] [emdash] EMDASH_ENCRYPTION_KEY is invalid: EMDASH_ENCRYPTION_KEY entry is malformed (expected "emdash_enc_v1_" followed by 43 base64url chars). Generate one with `emdash secrets generate`. Plugin-secret encryption will fail once it ships. Generate a fresh key with `emdash secrets generate`.
+18:54:43 [emdash] Generated emdash-env.d.ts (1 collections)
+18:55:03 [vite] ✨ new dependencies optimized: posthog-js
+18:55:03 [vite] ✨ optimized dependencies changed. reloading
+18:56:05 [vite]   ➜  Tunnel closed

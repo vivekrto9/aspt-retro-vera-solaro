@@ -1,0 +1,106 @@
+{
+  "runtime": "built production Worker",
+  "cases": [
+    {
+      "preference": "INR",
+      "country": "US",
+      "currency": "INR",
+      "prices": [
+        10000,
+        3150000,
+        3490000
+      ],
+      "deposit": 650000,
+      "home": true,
+      "readings": true,
+      "detail": true,
+      "booking": true,
+      "mobile": true,
+      "checkoutProvider": "razorpay",
+      "signedWebhook": true,
+      "invoice": true
+    },
+    {
+      "preference": "USD",
+      "country": "IN",
+      "currency": "USD",
+      "prices": [
+        200,
+        38500,
+        42000
+      ],
+      "deposit": 8000,
+      "home": true,
+      "readings": true,
+      "detail": true,
+      "booking": true,
+      "mobile": true,
+      "checkoutProvider": "stripe",
+      "signedWebhook": true,
+      "invoice": true
+    },
+    {
+      "preference": "AUTO",
+      "country": "IN",
+      "currency": "INR",
+      "prices": [
+        10000,
+        3150000,
+        3490000
+      ],
+      "deposit": 650000,
+      "home": true,
+      "readings": true,
+      "detail": true,
+      "booking": true,
+      "mobile": true,
+      "checkoutProvider": "razorpay",
+      "signedWebhook": true,
+      "invoice": true
+    },
+    {
+      "preference": "AUTO",
+      "country": "NL",
+      "currency": "USD",
+      "prices": [
+        200,
+        38500,
+        42000
+      ],
+      "deposit": 8000,
+      "home": true,
+      "readings": true,
+      "detail": true,
+      "booking": true,
+      "mobile": true,
+      "checkoutProvider": "stripe",
+      "signedWebhook": true,
+      "invoice": true
+    },
+    {
+      "preference": "AUTO",
+      "country": "unknown",
+      "currency": "USD",
+      "prices": [
+        200,
+        38500,
+        42000
+      ],
+      "deposit": 8000,
+      "home": true,
+      "readings": true,
+      "detail": true,
+      "booking": true,
+      "mobile": true,
+      "checkoutProvider": "stripe",
+      "signedWebhook": true,
+      "invoice": true
+    }
+  ],
+  "customIndependentPrices": {
+    "INR": 10000,
+    "USD": 200
+  },
+  "authenticSignedWebhooks": true,
+  "status": "PASS"
+}

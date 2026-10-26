@@ -5,6 +5,8 @@ import { loadPublicPageContent } from "../builder/public-page.ts";
 import VeraFrame from "../components/vera/VeraFrame.astro";
 import VeraImage from "../components/vera/VeraImage.astro";
 import ZodiacWheel from "../components/vera/ZodiacWheel.astro";
+import { listVeraCatalog } from "../server/vera/catalog.ts";
+import { getVeraEnv } from "../server/vera/http.ts";
 
 export const prerender = false;
 
@@ -15,6 +17,15 @@ const readings = [1, 2, 3].filter(isOfferedReading);
 const testimonials = [1, 2, 3];
 const locale = getBlogLocale(Astro.request.url);
 const { posts } = await listBlogPosts(locale);
+const catalog = await listVeraCatalog(await getVeraEnv(Astro as never));
+const readingSlugs = ["natal-hour", "year-ahead", "two-charts"];
+const money = (index: number) => {
+  const service = catalog.services.find((entry) => entry.slug === readingSlugs[index - 1]);
+  if (!service) return "Unavailable";
+  return new Intl.NumberFormat(service.currency === "INR" ? "en-IN" : "en-US", {
+    style: "currency", currency: service.currency, maximumFractionDigits: 2,
+  }).format(service.priceCents / 100);
+};
 const journal = posts.slice(0, 3).map((post, index) => {
   const image = blogImageAt(post, index);
   return { ...post, src: image.src, imageAlt: image.alt };
@@ -136,8 +147,8 @@ const journal = posts.slice(0, 3).map((post, index) => {
             ))}
           </ul>
           <footer class="vera-reading-card__footer">
-            <span class="vera-price" {...builderEdit(`reading_${index}_price`)}>
-              {content[`reading_${index}_price`]}
+            <span class="vera-price">
+              {money(index)}
             </span>
             <a
               class:list={[
